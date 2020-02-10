@@ -65,20 +65,20 @@ public class NPC {
     }
 
     protected void show(@NotNull Player player, @NotNull JavaPlugin javaPlugin) {
-        this.visibilityModifier.addToPlayerList().send(player);
-        this.visibilityModifier.spawn().send(player);
+        this.visibilityModifier.queueAddToPlayerList().send(player);
+        this.visibilityModifier.queueSpawn().send(player);
 
         this.seeingPlayers.add(player);
 
         this.spawnCustomizer.handleSpawn(this, player);
 
-        Bukkit.getScheduler().runTaskLater(javaPlugin, () -> this.visibilityModifier.removeFromPlayerList().send(player), 5L);
+        Bukkit.getScheduler().runTaskLater(javaPlugin, () -> this.visibilityModifier.queueRemoveFromPlayerList().send(player), 5L);
     }
 
     protected void hide(@NotNull Player player) {
         this.visibilityModifier
-                .removeFromPlayerList()
-                .destroy()
+                .queueRemoveFromPlayerList()
+                .queueDestroy()
                 .send(player);
 
         this.seeingPlayers.remove(player);
@@ -124,6 +124,7 @@ public class NPC {
         return this.metadataModifier;
     }
 
+
     public WrappedGameProfile getGameProfile() {
         return gameProfile;
     }
@@ -151,6 +152,7 @@ public class NPC {
     public void setImitatePlayer(boolean imitatePlayer) {
         this.imitatePlayer = imitatePlayer;
     }
+
 
     public static class Builder {
 
@@ -226,7 +228,7 @@ public class NPC {
 
         /**
          * Sets an executor which will be called every time the NPC is spawned for a certain player.
-         * Modifications the NPC should have the whole time should be done inside of this executor.
+         * Permanent NPC modifications should be done in this method, otherwise they will be lost at the next respawn of the NPC.
          *
          * @param spawnCustomizer the spawn customizer which will be called on every spawn
          * @return this builder instance
@@ -237,7 +239,7 @@ public class NPC {
         }
 
         /**
-         * Passes the NPC to a pool which handles events and spawning and destruction of this NPC for players
+         * Passes the NPC to a pool which handles events, spawning and destruction of this NPC for players
          *
          * @param pool the pool the NPC will be passed to
          * @return this builder instance

@@ -20,12 +20,12 @@ public class MetadataModifier extends NPCModifier {
         super(npc);
     }
 
-    public MetadataModifier skinLayers(boolean showSkinLayers) {
-        return this.putSingle(16, (byte) (showSkinLayers ? 0xff : 0), Byte.class);
+    public MetadataModifier queueSkinLayers(boolean showSkinLayers) {
+        return this.queue(16, (byte) (showSkinLayers ? 0xff : 0), Byte.class);
     }
 
-    public MetadataModifier sneaking(boolean sneaking) {
-        return this.putSingle(0, (byte) (sneaking ? 0x02 : 0), Byte.class);
+    public MetadataModifier queueSneaking(boolean sneaking) {
+        return this.queue(0, (byte) (sneaking ? 0x02 : 0), Byte.class);
     }
 
     private void setMetadata(@NotNull List<WrappedWatchableObject> metadata) {
@@ -34,7 +34,7 @@ public class MetadataModifier extends NPCModifier {
         packetContainer.getWatchableCollectionModifier().write(0, metadata);
     }
 
-    public <T> MetadataModifier putSingle(int index, @NotNull T value, @NotNull WrappedDataWatcher.Serializer serializer) {
+    public <T> MetadataModifier queue(int index, @NotNull T value, @NotNull WrappedDataWatcher.Serializer serializer) {
         this.metadata.add(new WrappedWatchableObject(
                 new WrappedDataWatcher.WrappedDataWatcherObject(index, serializer),
                 value
@@ -43,8 +43,8 @@ public class MetadataModifier extends NPCModifier {
         return this;
     }
 
-    public <T> MetadataModifier putSingle(int index, @NotNull T value, @NotNull Class<T> clazz) {
-        return this.putSingle(index, value, WrappedDataWatcher.Registry.get(clazz));
+    public <T> MetadataModifier queue(int index, @NotNull T value, @NotNull Class<T> clazz) {
+        return this.queue(index, value, WrappedDataWatcher.Registry.get(clazz));
     }
 
     @Override

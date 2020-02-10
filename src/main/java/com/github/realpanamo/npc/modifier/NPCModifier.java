@@ -14,6 +14,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * An NPCModifier queues packets for NPC modification which can then be send to players via the {@link NPCModifier#send(Player...)} method.
+ */
 public class NPCModifier {
 
     protected NPC npc;
@@ -50,6 +53,11 @@ public class NPCModifier {
         return this.lastContainer();
     }
 
+    /**
+     * Sends the queued modifications to certain players
+     *
+     * @param targetPlayers the players which should see the modification
+     */
     public void send(@NotNull Player... targetPlayers) {
         for (Player targetPlayer : targetPlayers.length != 0 ? Arrays.asList(targetPlayers) : Bukkit.getOnlinePlayers()) {
             if (this.npc.isShownFor(targetPlayer)) {

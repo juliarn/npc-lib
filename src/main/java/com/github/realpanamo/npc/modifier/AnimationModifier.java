@@ -11,7 +11,7 @@ public class AnimationModifier extends NPCModifier {
         super(npc);
     }
 
-    public AnimationModifier play(@NotNull EntityAnimation entityAnimation) {
+    public AnimationModifier queue(@NotNull EntityAnimation entityAnimation) {
         super.newContainer(PacketType.Play.Server.ANIMATION).getIntegers().write(1, entityAnimation.id);
         return this;
     }

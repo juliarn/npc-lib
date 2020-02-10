@@ -13,7 +13,7 @@ public class RotationModifier extends NPCModifier {
         super(npc);
     }
 
-    public RotationModifier rotate(float yaw, float pitch) {
+    public RotationModifier queueRotate(float yaw, float pitch) {
         byte yawAngle = (byte) (yaw * 256.0F / 360.0F);
 
         PacketContainer entityHeadLookContainer = super.newContainer(PacketType.Play.Server.ENTITY_HEAD_ROTATION);
@@ -30,7 +30,7 @@ public class RotationModifier extends NPCModifier {
         return this;
     }
 
-    public RotationModifier lookAt(@NotNull Location location) {
+    public RotationModifier queueLookAt(@NotNull Location location) {
         double xDifference = location.getX() - super.npc.getLocation().getX();
         double yDifference = location.getY() - super.npc.getLocation().getY();
         double zDifference = location.getZ() - super.npc.getLocation().getZ();
@@ -42,7 +42,7 @@ public class RotationModifier extends NPCModifier {
 
         float pitch = (float) (-Math.asin(yDifference / r) / Math.PI * 180);
 
-        return this.rotate(yaw, pitch);
+        return this.queueRotate(yaw, pitch);
     }
 
 }

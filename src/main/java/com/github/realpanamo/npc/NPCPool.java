@@ -75,7 +75,7 @@ public class NPCPool implements Listener {
                     }
 
                     if (npc.isLookAtPlayer() && distance <= this.actionDistance) {
-                        npc.rotation().lookAt(player.getLocation()).send(player);
+                        npc.rotation().queueLookAt(player.getLocation()).send(player);
                     }
                 }
             }
@@ -97,7 +97,7 @@ public class NPCPool implements Listener {
 
         this.npcMap.values().stream()
                 .filter(npc -> npc.isImitatePlayer() && npc.getLocation().distance(player.getLocation()) <= this.actionDistance)
-                .forEach(npc -> npc.metadata().sneaking(event.isSneaking()).send(player));
+                .forEach(npc -> npc.metadata().queueSneaking(event.isSneaking()).send(player));
     }
 
     @EventHandler
@@ -107,7 +107,7 @@ public class NPCPool implements Listener {
         if (event.getAction() == Action.LEFT_CLICK_AIR || event.getAction() == Action.LEFT_CLICK_BLOCK) {
             this.npcMap.values().stream()
                     .filter(npc -> npc.isImitatePlayer() && npc.getLocation().distance(player.getLocation()) <= this.actionDistance)
-                    .forEach(npc -> npc.animation().play(AnimationModifier.EntityAnimation.SWING_MAIN_ARM).send(player));
+                    .forEach(npc -> npc.animation().queue(AnimationModifier.EntityAnimation.SWING_MAIN_ARM).send(player));
         }
     }
 

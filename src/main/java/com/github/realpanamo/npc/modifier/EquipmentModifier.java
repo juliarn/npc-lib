@@ -14,7 +14,7 @@ public class EquipmentModifier extends NPCModifier {
         super(npc);
     }
 
-    public EquipmentModifier put(@NotNull EnumWrappers.ItemSlot itemSlot, @NotNull ItemStack equipment) {
+    public EquipmentModifier queue(@NotNull EnumWrappers.ItemSlot itemSlot, @NotNull ItemStack equipment) {
         PacketContainer packetContainer = super.newContainer(PacketType.Play.Server.ENTITY_EQUIPMENT);
 
         packetContainer.getItemSlots().write(0, itemSlot);

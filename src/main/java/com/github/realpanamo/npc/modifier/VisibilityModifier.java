@@ -16,7 +16,7 @@ public class VisibilityModifier extends NPCModifier {
         super(npc);
     }
 
-    public VisibilityModifier addToPlayerList() {
+    public VisibilityModifier queueAddToPlayerList() {
         PacketContainer packetContainer = super.newContainer(PacketType.Play.Server.PLAYER_INFO, false);
 
         packetContainer.getPlayerInfoAction().write(0, EnumWrappers.PlayerInfoAction.ADD_PLAYER);
@@ -32,7 +32,7 @@ public class VisibilityModifier extends NPCModifier {
         return this;
     }
 
-    public VisibilityModifier removeFromPlayerList() {
+    public VisibilityModifier queueRemoveFromPlayerList() {
         PacketContainer packetContainer = super.newContainer(PacketType.Play.Server.PLAYER_INFO, false);
 
         packetContainer.getPlayerInfoAction().write(0, EnumWrappers.PlayerInfoAction.REMOVE_PLAYER);
@@ -48,7 +48,7 @@ public class VisibilityModifier extends NPCModifier {
         return this;
     }
 
-    public VisibilityModifier spawn() {
+    public VisibilityModifier queueSpawn() {
         PacketContainer packetContainer = super.newContainer(PacketType.Play.Server.NAMED_ENTITY_SPAWN);
 
         packetContainer.getUUIDs().write(0, super.npc.getGameProfile().getUUID());
@@ -63,7 +63,7 @@ public class VisibilityModifier extends NPCModifier {
         return this;
     }
 
-    public VisibilityModifier destroy() {
+    public VisibilityModifier queueDestroy() {
         PacketContainer packetContainer = super.newContainer(PacketType.Play.Server.ENTITY_DESTROY, false);
         packetContainer.getIntegerArrays().write(0, new int[]{super.npc.getEntityId()});
         return this;
