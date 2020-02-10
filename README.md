@@ -16,7 +16,7 @@ Add the repository and dependency to your plugin:
 <dependency>
     <groupId>com.github.realpanamo</groupId>
     <artifactId>npc-lib</artifactId>
-    <version>1.1-SNAPSHOT</version>
+    <version>1.2-SNAPSHOT</version>
 </dependency>
 ```
 Add ProtocolLib as dependency to your plugin.yml. It could look like this:

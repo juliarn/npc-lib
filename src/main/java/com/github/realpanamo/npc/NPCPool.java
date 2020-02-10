@@ -2,6 +2,7 @@ package com.github.realpanamo.npc;
 
 
 import com.github.realpanamo.npc.modifier.AnimationModifier;
+import com.google.common.base.Preconditions;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -21,9 +22,9 @@ public class NPCPool implements Listener {
 
     private JavaPlugin javaPlugin;
 
-    private int spawnDistance = 50;
+    private int spawnDistance;
 
-    private int actionDistance = 20;
+    private int actionDistance;
 
     private Map<Integer, NPC> npcMap = new HashMap<>();
 
@@ -34,11 +35,7 @@ public class NPCPool implements Listener {
      * @param javaPlugin the instance of the plugin which creates this pool
      */
     public NPCPool(@NotNull JavaPlugin javaPlugin) {
-        this.javaPlugin = javaPlugin;
-
-        Bukkit.getPluginManager().registerEvents(this, javaPlugin);
-
-        this.npcTick();
+        this(javaPlugin, 50, 20);
     }
 
     /**
@@ -49,22 +46,23 @@ public class NPCPool implements Listener {
      * @param actionDistance the distance in which NPC actions are displayed for players
      */
     public NPCPool(@NotNull JavaPlugin javaPlugin, int spawnDistance, int actionDistance) {
-        this(javaPlugin);
+        Preconditions.checkArgument(spawnDistance > 0 && actionDistance > 0, "Distance has to be > 0!");
+        Preconditions.checkArgument(actionDistance <= spawnDistance, "Action distance cannot be higher than spawn distance!");
 
-        if (spawnDistance < 0 || actionDistance < 0) {
-            throw new IllegalArgumentException("Distance has to be > 0!");
-        }
-        if (actionDistance > spawnDistance) {
-            throw new IllegalArgumentException("Action distance cannot be higher than spawn distance!");
-        }
+        this.javaPlugin = javaPlugin;
 
         this.spawnDistance = spawnDistance;
         this.actionDistance = actionDistance;
+
+        Bukkit.getPluginManager().registerEvents(this, javaPlugin);
+
+        this.npcTick();
     }
 
     private void npcTick() {
         Bukkit.getScheduler().scheduleSyncRepeatingTask(this.javaPlugin, () -> {
             for (Player player : Bukkit.getOnlinePlayers()) {
+
                 for (NPC npc : this.npcMap.values()) {
                     double distance = npc.getLocation().distance(player.getLocation());
 
@@ -78,6 +76,7 @@ public class NPCPool implements Listener {
                         npc.rotation().queueLookAt(player.getLocation()).send(player);
                     }
                 }
+
             }
         }, 20, 3);
     }

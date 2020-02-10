@@ -43,7 +43,7 @@ public class NPCModifier {
     }
 
     protected PacketContainer lastContainer() {
-        return this.packetContainers.get(packetContainers.size() - 1);
+        return this.packetContainers.get(this.packetContainers.size() - 1);
     }
 
     protected PacketContainer lastContainer(PacketContainer def) {

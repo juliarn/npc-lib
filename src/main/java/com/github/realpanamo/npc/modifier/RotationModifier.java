@@ -14,7 +14,7 @@ public class RotationModifier extends NPCModifier {
     }
 
     public RotationModifier queueRotate(float yaw, float pitch) {
-        byte yawAngle = (byte) (yaw * 256.0F / 360.0F);
+        byte yawAngle = (byte) (yaw * 256F / 360F);
 
         PacketContainer entityHeadLookContainer = super.newContainer(PacketType.Play.Server.ENTITY_HEAD_ROTATION);
 
@@ -24,7 +24,7 @@ public class RotationModifier extends NPCModifier {
 
         entityLookContainer.getBytes()
                 .write(0, yawAngle)
-                .write(1, (byte) (pitch * 256.0F / 360.0F));
+                .write(1, (byte) (pitch * 256F / 360F));
         entityLookContainer.getBooleans().write(0, true);
 
         return this;
@@ -37,10 +37,10 @@ public class RotationModifier extends NPCModifier {
 
         double r = Math.sqrt(Math.pow(xDifference, 2) + Math.pow(yDifference, 2) + Math.pow(zDifference, 2));
 
-        float yaw = (float) (-Math.atan2(xDifference, zDifference) / Math.PI * 180);
+        float yaw = (float) (-Math.atan2(xDifference, zDifference) / Math.PI * 180D);
         yaw = yaw < 0 ? yaw + 360 : yaw;
 
-        float pitch = (float) (-Math.asin(yDifference / r) / Math.PI * 180);
+        float pitch = (float) (-Math.asin(yDifference / r) / Math.PI * 180D);
 
         return this.queueRotate(yaw, pitch);
     }
