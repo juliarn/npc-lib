@@ -60,14 +60,12 @@ public class NPCModifier {
      */
     public void send(@NotNull Player... targetPlayers) {
         for (Player targetPlayer : targetPlayers.length != 0 ? Arrays.asList(targetPlayers) : Bukkit.getOnlinePlayers()) {
-            if (this.npc.isShownFor(targetPlayer)) {
-                try {
-                    for (PacketContainer packetContainer : this.packetContainers) {
-                        ProtocolLibrary.getProtocolManager().sendServerPacket(targetPlayer, packetContainer);
-                    }
-                } catch (InvocationTargetException exception) {
-                    exception.printStackTrace();
+            try {
+                for (PacketContainer packetContainer : this.packetContainers) {
+                    ProtocolLibrary.getProtocolManager().sendServerPacket(targetPlayer, packetContainer);
                 }
+            } catch (InvocationTargetException exception) {
+                exception.printStackTrace();
             }
         }
 
