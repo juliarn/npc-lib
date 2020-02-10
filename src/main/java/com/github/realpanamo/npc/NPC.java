@@ -66,13 +66,17 @@ public class NPC {
 
     protected void show(@NotNull Player player, @NotNull JavaPlugin javaPlugin) {
         this.visibilityModifier.queueAddToPlayerList().send(player);
-        this.visibilityModifier.queueSpawn().send(player);
 
-        this.seeingPlayers.add(player);
+        Bukkit.getScheduler().runTaskLater(javaPlugin, () -> {
+            this.visibilityModifier.queueSpawn().send(player);
 
-        this.spawnCustomizer.handleSpawn(this, player);
+            this.seeingPlayers.add(player);
 
-        Bukkit.getScheduler().runTaskLater(javaPlugin, () -> this.visibilityModifier.queueRemoveFromPlayerList().send(player), 5L);
+            this.spawnCustomizer.handleSpawn(this, player);
+
+            // keeping the NPC longer in the player list, otherwise the skin might not be shown on some versions.
+            Bukkit.getScheduler().runTaskLater(javaPlugin, () -> this.visibilityModifier.queueRemoveFromPlayerList().send(player), 10L);
+        }, 3L);
     }
 
     protected void hide(@NotNull Player player) {

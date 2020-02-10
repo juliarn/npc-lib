@@ -6,6 +6,7 @@ import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.wrappers.WrappedDataWatcher;
 import com.comphenix.protocol.wrappers.WrappedWatchableObject;
 import com.github.realpanamo.npc.NPC;
+import com.github.realpanamo.npc.VersionUtil;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
@@ -21,7 +22,8 @@ public class MetadataModifier extends NPCModifier {
     }
 
     public MetadataModifier queueSkinLayers(boolean showSkinLayers) {
-        return this.queue(16, (byte) (showSkinLayers ? 0xff : 0), Byte.class);
+        int index = VersionUtil.getMinecraftVersion() < 15 ? VersionUtil.getMinecraftVersion() < 14 ? 13 : 15 : 16;
+        return this.queue(index, (byte) (showSkinLayers ? 0xff : 0), Byte.class);
     }
 
     public MetadataModifier queueSneaking(boolean sneaking) {
