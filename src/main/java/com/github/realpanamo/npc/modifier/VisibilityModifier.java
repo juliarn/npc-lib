@@ -7,7 +7,6 @@ import com.comphenix.protocol.wrappers.EnumWrappers;
 import com.comphenix.protocol.wrappers.PlayerInfoData;
 import com.comphenix.protocol.wrappers.WrappedDataWatcher;
 import com.github.realpanamo.npc.NPC;
-import com.github.realpanamo.npc.VersionUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -64,7 +63,7 @@ public class VisibilityModifier extends NPCModifier {
                 .write(0, (byte) (super.npc.getLocation().getYaw() * 256F / 360F))
                 .write(1, (byte) (super.npc.getLocation().getPitch() * 256F / 360F));
 
-        if (VersionUtil.getMinecraftVersion() < 15) {
+        if (MINECRAFT_VERSION < 15) {
             packetContainer.getDataWatcherModifier().write(0, new WrappedDataWatcher());
         }
 

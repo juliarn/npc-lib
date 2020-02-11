@@ -1,6 +1,13 @@
 package com.github.realpanamo.npc;
 
 
+import com.comphenix.protocol.PacketType;
+import com.comphenix.protocol.ProtocolLibrary;
+import com.comphenix.protocol.events.PacketAdapter;
+import com.comphenix.protocol.events.PacketContainer;
+import com.comphenix.protocol.events.PacketEvent;
+import com.comphenix.protocol.wrappers.EnumWrappers;
+import com.github.realpanamo.npc.event.PlayerNPCInteractEvent;
 import com.github.realpanamo.npc.modifier.AnimationModifier;
 import com.google.common.base.Preconditions;
 import org.bukkit.Bukkit;
@@ -56,7 +63,27 @@ public class NPCPool implements Listener {
 
         Bukkit.getPluginManager().registerEvents(this, javaPlugin);
 
+        this.addInteractListener();
         this.npcTick();
+    }
+
+    private void addInteractListener() {
+        ProtocolLibrary.getProtocolManager().addPacketListener(new PacketAdapter(this.javaPlugin, PacketType.Play.Client.USE_ENTITY) {
+
+            @Override
+            public void onPacketReceiving(PacketEvent event) {
+                PacketContainer packetContainer = event.getPacket();
+                int targetId = packetContainer.getIntegers().read(0);
+
+                if (npcMap.containsKey(targetId)) {
+                    NPC npc = npcMap.get(targetId);
+                    EnumWrappers.EntityUseAction action = packetContainer.getEntityUseActions().read(0);
+
+                    Bukkit.getPluginManager().callEvent(new PlayerNPCInteractEvent(event.getPlayer(), npc, PlayerNPCInteractEvent.Action.fromProtocolLib(action)));
+                }
+            }
+
+        });
     }
 
     private void npcTick() {

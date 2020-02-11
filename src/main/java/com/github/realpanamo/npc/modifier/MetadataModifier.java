@@ -6,7 +6,6 @@ import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.wrappers.WrappedDataWatcher;
 import com.comphenix.protocol.wrappers.WrappedWatchableObject;
 import com.github.realpanamo.npc.NPC;
-import com.github.realpanamo.npc.VersionUtil;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
@@ -21,19 +20,29 @@ public class MetadataModifier extends NPCModifier {
         super(npc);
     }
 
-    public MetadataModifier queueSkinLayers(boolean showSkinLayers) {
-        int index = VersionUtil.getMinecraftVersion() < 15 ? VersionUtil.getMinecraftVersion() < 14 ? 13 : 15 : 16;
-        return this.queue(index, (byte) (showSkinLayers ? 0xff : 0), Byte.class);
-    }
-
     public MetadataModifier queueSneaking(boolean sneaking) {
         return this.queue(0, (byte) (sneaking ? 0x02 : 0), Byte.class);
     }
 
-    private void setMetadata(@NotNull List<WrappedWatchableObject> metadata) {
-        PacketContainer packetContainer = super.newContainer(PacketType.Play.Server.ENTITY_METADATA);
+    public MetadataModifier queuePotionEffect(int color) {
+        return this.queuePotionEffect(color, false);
+    }
 
-        packetContainer.getWatchableCollectionModifier().write(0, metadata);
+    public MetadataModifier queuePotionEffect(int color, boolean ambient) {
+        int indexModifier = MINECRAFT_VERSION < 14 ? -1 : 0;
+        return this
+                .queue(9 + indexModifier, color, Integer.class)
+                .queue(10 + indexModifier, ambient, Boolean.class);
+    }
+
+    public MetadataModifier queueArrows(int arrowAmount) {
+        int index = MINECRAFT_VERSION < 14 ? 10 : 11;
+        return this.queue(index, arrowAmount, Integer.class);
+    }
+
+    public MetadataModifier queueSkinLayers(boolean showSkinLayers) {
+        int index = MINECRAFT_VERSION < 15 ? (MINECRAFT_VERSION < 14 ? 13 : 15) : 16;
+        return this.queue(index, (byte) (showSkinLayers ? 0xff : 0), Byte.class);
     }
 
     public <T> MetadataModifier queue(int index, @NotNull T value, @NotNull WrappedDataWatcher.Serializer serializer) {
@@ -47,6 +56,12 @@ public class MetadataModifier extends NPCModifier {
 
     public <T> MetadataModifier queue(int index, @NotNull T value, @NotNull Class<T> clazz) {
         return this.queue(index, value, WrappedDataWatcher.Registry.get(clazz));
+    }
+
+    private void setMetadata(@NotNull List<WrappedWatchableObject> metadata) {
+        PacketContainer packetContainer = super.newContainer(PacketType.Play.Server.ENTITY_METADATA);
+
+        packetContainer.getWatchableCollectionModifier().write(0, metadata);
     }
 
     @Override

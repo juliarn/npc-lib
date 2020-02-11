@@ -19,6 +19,8 @@ import java.util.List;
  */
 public class NPCModifier {
 
+    public static final int MINECRAFT_VERSION = ProtocolLibrary.getProtocolManager().getMinecraftVersion().getMajor();
+
     protected NPC npc;
 
     private List<PacketContainer> packetContainers = new ArrayList<>();
