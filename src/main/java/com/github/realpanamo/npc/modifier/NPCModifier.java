@@ -19,7 +19,7 @@ import java.util.List;
  */
 public class NPCModifier {
 
-    public static final int MINECRAFT_VERSION = ProtocolLibrary.getProtocolManager().getMinecraftVersion().getMajor();
+    public static final int MINECRAFT_VERSION = ProtocolLibrary.getProtocolManager().getMinecraftVersion().getMinor();
 
     protected NPC npc;
 

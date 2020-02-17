@@ -6,7 +6,7 @@
 
     <groupId>com.github.realpanamo</groupId>
     <artifactId>npc-lib</artifactId>
-    <version>1.5-SNAPSHOT</version>
+    <version>1.6-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <properties>
@@ -41,6 +41,7 @@
             <groupId>com.comphenix.protocol</groupId>
             <artifactId>ProtocolLib</artifactId>
             <version>4.5.0</version>
+            <scope>provided</scope>
         </dependency>
     </dependencies>
 
