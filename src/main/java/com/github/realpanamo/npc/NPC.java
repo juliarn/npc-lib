@@ -96,6 +96,13 @@ public class NPC {
         this.seeingPlayers.remove(player);
     }
 
+    /**
+     * @return a copy of all players seeing this NPC
+     */
+    public Collection<Player> getSeeingPlayers() {
+        return new HashSet<>(this.seeingPlayers);
+    }
+
     public boolean isShownFor(Player player) {
         return this.seeingPlayers.contains(player);
     }

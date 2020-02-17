@@ -79,7 +79,10 @@ public class NPCPool implements Listener {
                     NPC npc = npcMap.get(targetId);
                     EnumWrappers.EntityUseAction action = packetContainer.getEntityUseActions().read(0);
 
-                    Bukkit.getPluginManager().callEvent(new PlayerNPCInteractEvent(event.getPlayer(), npc, PlayerNPCInteractEvent.Action.fromProtocolLib(action)));
+                    Bukkit.getScheduler().runTask(javaPlugin, () ->
+                            Bukkit.getPluginManager().callEvent(
+                                    new PlayerNPCInteractEvent(event.getPlayer(), npc, PlayerNPCInteractEvent.Action.fromProtocolLib(action))
+                            ));
                 }
             }
 
@@ -115,6 +118,15 @@ public class NPCPool implements Listener {
     @Nullable
     public NPC getNPC(int entityId) {
         return this.npcMap.get(entityId);
+    }
+
+    public void removeNPC(int entityId) {
+        NPC npc = this.getNPC(entityId);
+
+        if (npc != null) {
+            this.npcMap.remove(entityId);
+            npc.getSeeingPlayers().forEach(npc::hide);
+        }
     }
 
     @EventHandler
