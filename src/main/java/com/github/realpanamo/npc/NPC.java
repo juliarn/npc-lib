@@ -25,17 +25,25 @@ public class NPC {
     private final WrappedGameProfile gameProfile;
 
     private final Location location;
+
     private final VisibilityModifier visibilityModifier = new VisibilityModifier(this);
+
     private final AnimationModifier animationModifier = new AnimationModifier(this);
+
     private final EquipmentModifier equipmentModifier = new EquipmentModifier(this);
+
     private final RotationModifier rotationModifier = new RotationModifier(this);
+
     private final MetadataModifier metadataModifier = new MetadataModifier(this);
+
     private boolean lookAtPlayer;
+
     private boolean imitatePlayer;
+
     private SpawnCustomizer spawnCustomizer;
 
-    private NPC(Set<ProfileProperty> profileProperties, String name, Location location, boolean lookAtPlayer, boolean imitatePlayer, SpawnCustomizer spawnCustomizer) {
-        this.gameProfile = new WrappedGameProfile(new UUID(RANDOM.nextLong(), 0), name);
+    private NPC(Set<ProfileProperty> profileProperties, WrappedGameProfile gameProfile, Location location, boolean lookAtPlayer, boolean imitatePlayer, SpawnCustomizer spawnCustomizer) {
+        this.gameProfile = gameProfile;
 
         this.appendProperties(profileProperties);
 
@@ -45,8 +53,8 @@ public class NPC {
         this.spawnCustomizer = spawnCustomizer;
     }
 
-    private NPC(UUID textureUUID, String name, Location location, boolean lookAtPlayer, boolean imitatePlayer, SpawnCustomizer spawnCustomizer) {
-        this.gameProfile = new WrappedGameProfile(new UUID(RANDOM.nextLong(), 0), name);
+    private NPC(UUID textureUUID, WrappedGameProfile gameProfile, Location location, boolean lookAtPlayer, boolean imitatePlayer, SpawnCustomizer spawnCustomizer) {
+        this.gameProfile = gameProfile;
 
         PlayerProfile profile = Bukkit.createProfile(textureUUID);
         profile.complete();
@@ -74,7 +82,7 @@ public class NPC {
 
             this.spawnCustomizer.handleSpawn(this, player);
 
-            // keeping the NPC longer in the player list, otherwise the skin might not be shown on some versions.
+            // keeping the NPC longer in the player list, otherwise the skin might not be shown sometimes.
             Bukkit.getScheduler().runTaskLater(javaPlugin, () -> this.visibilityModifier.queueRemoveFromPlayerList().send(player), 10L);
         }, 3L);
     }
@@ -162,9 +170,11 @@ public class NPC {
 
         private Set<ProfileProperty> profileProperties;
 
+        private String name;
+
         private UUID textureUUID;
 
-        private String name;
+        private UUID uuid = new UUID(RANDOM.nextLong(), 0);
 
         private Location location = new Location(Bukkit.getWorlds().get(0), 0D, 0D, 0D);
 
@@ -195,6 +205,17 @@ public class NPC {
         public Builder(@NotNull Set<ProfileProperty> profileProperties, @NotNull String name) {
             this.profileProperties = profileProperties;
             this.name = name;
+        }
+
+        /**
+         * Sets a custom uuid for the NPC instead of generating a random one
+         *
+         * @param uuid the uuid the NPC should have
+         * @return this builder instance
+         */
+        public Builder uuid(UUID uuid) {
+            this.uuid = uuid;
+            return this;
         }
 
         /**
@@ -251,8 +272,8 @@ public class NPC {
         @NotNull
         public NPC build(@NotNull NPCPool pool) {
             NPC npc = this.profileProperties != null
-                    ? new NPC(this.profileProperties, this.name, this.location, this.lookAtPlayer, this.imitatePlayer, this.spawnCustomizer)
-                    : new NPC(this.textureUUID, this.name, this.location, this.lookAtPlayer, this.imitatePlayer, this.spawnCustomizer);
+                    ? new NPC(this.profileProperties, new WrappedGameProfile(this.uuid, this.name), this.location, this.lookAtPlayer, this.imitatePlayer, this.spawnCustomizer)
+                    : new NPC(this.textureUUID, new WrappedGameProfile(this.uuid, this.name), this.location, this.lookAtPlayer, this.imitatePlayer, this.spawnCustomizer);
 
             pool.takeCareOf(npc);
 
