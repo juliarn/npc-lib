@@ -5,13 +5,13 @@ import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.events.PacketContainer;
 import com.github.realpanamo.npc.NPC;
+import com.google.common.collect.ImmutableList;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -56,12 +56,19 @@ public class NPCModifier {
     }
 
     /**
+     * Sends the queued modifications to all players
+     */
+    public void send() {
+        this.send((Player[]) Bukkit.getOnlinePlayers().toArray());
+    }
+
+    /**
      * Sends the queued modifications to certain players
      *
      * @param targetPlayers the players which should see the modification
      */
     public void send(@NotNull Player... targetPlayers) {
-        for (Player targetPlayer : targetPlayers.length != 0 ? Arrays.asList(targetPlayers) : Bukkit.getOnlinePlayers()) {
+        for (Player targetPlayer : ImmutableList.copyOf(targetPlayers)) {
             try {
                 for (PacketContainer packetContainer : this.packetContainers) {
                     ProtocolLibrary.getProtocolManager().sendServerPacket(targetPlayer, packetContainer);

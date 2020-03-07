@@ -93,6 +93,10 @@ public class NPC {
                 .queueDestroy()
                 .send(player);
 
+        this.removeSeeingPlayer(player);
+    }
+
+    protected void removeSeeingPlayer(Player player) {
         this.seeingPlayers.remove(player);
     }
 
