@@ -7,6 +7,8 @@ The plugin [ProtocolLib](https://www.spigotmc.org/resources/protocollib.1997/) i
 
 ## How to use
 Add the repository and dependency to your plugin:
+
+Maven
 ```xml
 <repository>
     <id>jitpack.io</id>
@@ -19,6 +21,17 @@ Add the repository and dependency to your plugin:
     <version>1.8-SNAPSHOT</version>
 </dependency>
 ```
+
+Gradle
+```groovy
+maven {
+    name 'jitpack.io'
+    url 'https://jitpack.io'
+}
+
+compile group: 'com.github.realpanamo', name: 'npc-lib', version: '1.7-SNAPSHOT'
+```
+
 Add ProtocolLib as dependency to your plugin.yml. It could look like this:
 ```yml
 name: Hub
