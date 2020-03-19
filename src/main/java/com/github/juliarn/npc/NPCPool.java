@@ -1,4 +1,4 @@
-package com.github.realpanamo.npc;
+package com.github.juliarn.npc;
 
 
 import com.comphenix.protocol.PacketType;
@@ -7,8 +7,8 @@ import com.comphenix.protocol.events.PacketAdapter;
 import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.events.PacketEvent;
 import com.comphenix.protocol.wrappers.EnumWrappers;
-import com.github.realpanamo.npc.event.PlayerNPCInteractEvent;
-import com.github.realpanamo.npc.modifier.AnimationModifier;
+import com.github.juliarn.npc.event.PlayerNPCInteractEvent;
+import com.github.juliarn.npc.modifier.AnimationModifier;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import org.bukkit.Bukkit;

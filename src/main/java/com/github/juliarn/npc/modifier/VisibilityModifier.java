@@ -1,4 +1,4 @@
-package com.github.realpanamo.npc.modifier;
+package com.github.juliarn.npc.modifier;
 
 
 import com.comphenix.protocol.PacketType;
@@ -6,7 +6,7 @@ import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.wrappers.EnumWrappers;
 import com.comphenix.protocol.wrappers.PlayerInfoData;
 import com.comphenix.protocol.wrappers.WrappedDataWatcher;
-import com.github.realpanamo.npc.NPC;
+import com.github.juliarn.npc.NPC;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;

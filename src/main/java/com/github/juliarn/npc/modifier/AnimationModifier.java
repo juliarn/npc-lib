@@ -1,8 +1,8 @@
-package com.github.realpanamo.npc.modifier;
+package com.github.juliarn.npc.modifier;
 
 
 import com.comphenix.protocol.PacketType;
-import com.github.realpanamo.npc.NPC;
+import com.github.juliarn.npc.NPC;
 import org.jetbrains.annotations.NotNull;
 
 public class AnimationModifier extends NPCModifier {

@@ -1,10 +1,10 @@
-package com.github.realpanamo.npc.modifier;
+package com.github.juliarn.npc.modifier;
 
 
 import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.wrappers.EnumWrappers;
-import com.github.realpanamo.npc.NPC;
+import com.github.juliarn.npc.NPC;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
