@@ -13,28 +13,19 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 public class NPC {
 
     private static final Random RANDOM = new Random();
 
-    private final Collection<Player> seeingPlayers = new HashSet<>();
+    private final Collection<Player> seeingPlayers = new CopyOnWriteArraySet<>();
 
     private final int entityId = RANDOM.nextInt(Short.MAX_VALUE);
 
     private final WrappedGameProfile gameProfile;
 
     private final Location location;
-
-    private final VisibilityModifier visibilityModifier = new VisibilityModifier(this);
-
-    private final AnimationModifier animationModifier = new AnimationModifier(this);
-
-    private final EquipmentModifier equipmentModifier = new EquipmentModifier(this);
-
-    private final RotationModifier rotationModifier = new RotationModifier(this);
-
-    private final MetadataModifier metadataModifier = new MetadataModifier(this);
 
     private boolean lookAtPlayer;
 
@@ -73,22 +64,24 @@ public class NPC {
     }
 
     protected void show(@NotNull Player player, @NotNull JavaPlugin javaPlugin) {
-        this.visibilityModifier.queueAddToPlayerList().send(player);
+        VisibilityModifier visibilityModifier = new VisibilityModifier(this);
+
+        visibilityModifier.queueAddToPlayerList().send(player);
 
         Bukkit.getScheduler().runTaskLater(javaPlugin, () -> {
-            this.visibilityModifier.queueSpawn().send(player);
+            visibilityModifier.queueSpawn().send(player);
 
             this.seeingPlayers.add(player);
 
             this.spawnCustomizer.handleSpawn(this, player);
 
             // keeping the NPC longer in the player list, otherwise the skin might not be shown sometimes.
-            Bukkit.getScheduler().runTaskLater(javaPlugin, () -> this.visibilityModifier.queueRemoveFromPlayerList().send(player), 10L);
-        }, 3L);
+            Bukkit.getScheduler().runTaskLater(javaPlugin, () -> visibilityModifier.queueRemoveFromPlayerList().send(player), 10L);
+        }, 5L);
     }
 
     protected void hide(@NotNull Player player) {
-        this.visibilityModifier
+        new VisibilityModifier(this)
                 .queueRemoveFromPlayerList()
                 .queueDestroy()
                 .send(player);
@@ -112,39 +105,39 @@ public class NPC {
     }
 
     /**
-     * Serves methods to play animations on an NPC
+     * Creates a new animation modifier which serves methods to play animations on an NPC
      *
-     * @return the animation modifier modifying this NPC
+     * @return a animation modifier modifying this NPC
      */
     public AnimationModifier animation() {
-        return this.animationModifier;
+        return new AnimationModifier(this);
     }
 
     /**
-     * Serves methods related to entity rotation
+     * Creates a new rotation modifier which serves methods related to entity rotation
      *
-     * @return the rotation modifier modifying this NPC
+     * @return a rotation modifier modifying this NPC
      */
     public RotationModifier rotation() {
-        return this.rotationModifier;
+        return new RotationModifier(this);
     }
 
     /**
-     * Serves methods to change an NPCs equipment
+     * Creates a new equipemt modifier which serves methods to change an NPCs equipment
      *
-     * @return the equipment modifier modifying this NPC
+     * @return an equipment modifier modifying this NPC
      */
     public EquipmentModifier equipment() {
-        return this.equipmentModifier;
+        return new EquipmentModifier(this);
     }
 
     /**
-     * Serves methods to change an NPCs metadata, including sneaking etc.
+     * Creates a new metadata modifier which serves methods to change an NPCs metadata, including sneaking etc.
      *
-     * @return the metadata modifier modifying this NPC
+     * @return a metadata modifier modifying this NPC
      */
     public MetadataModifier metadata() {
-        return this.metadataModifier;
+        return new MetadataModifier(this);
     }
 
 

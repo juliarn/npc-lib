@@ -18,7 +18,7 @@ Maven
 <dependency>
     <groupId>com.github.realpanamo</groupId>
     <artifactId>npc-lib</artifactId>
-    <version>1.7-SNAPSHOT</version>
+    <version>1.8-SNAPSHOT</version>
 </dependency>
 ```
 
