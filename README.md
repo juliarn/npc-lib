@@ -16,9 +16,9 @@ Maven
 </repository>
 
 <dependency>
-    <groupId>com.github.realpanamo</groupId>
+    <groupId>com.github.juliarn</groupId>
     <artifactId>npc-lib</artifactId>
-    <version>1.8-SNAPSHOT</version>
+    <version>1.0-RELEASE</version>
 </dependency>
 ```
 
@@ -29,7 +29,7 @@ maven {
     url 'https://jitpack.io'
 }
 
-compile group: 'com.github.realpanamo', name: 'npc-lib', version: '1.7-SNAPSHOT'
+compile group: 'com.github.juliarn', name: 'npc-lib', version: '1.0-RELEASE'
 ```
 
 Add ProtocolLib as dependency to your plugin.yml. It could look like this:
@@ -42,5 +42,5 @@ author: Panamo
 main: de.panamo.server.hub.ServerHub
 ```
 Now you're all set! You can start by creating an instance of the 
-[NPCPool](https://github.com/realPanamo/NPC-Lib/blob/master/src/main/java/com/github/realpanamo/npc/NPCPool.java) and the 
-[NPC.Builder](https://github.com/realPanamo/NPC-Lib/blob/master/src/main/java/com/github/realpanamo/npc/NPC.java).
+[NPCPool](https://github.com/juliarn/NPC-Lib/blob/master/src/main/java/com/github/juliarn/npc/NPCPool.java) and the 
+[NPC.Builder](https://github.com/juliarn/NPC-Lib/blob/master/src/main/java/com/github/juliarn/npc/NPC.java).

@@ -1,4 +1,4 @@
-package com.github.realpanamo.npc;
+package com.github.juliarn.npc;
 
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;

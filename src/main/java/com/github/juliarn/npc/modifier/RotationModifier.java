@@ -1,9 +1,9 @@
-package com.github.realpanamo.npc.modifier;
+package com.github.juliarn.npc.modifier;
 
 
 import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.events.PacketContainer;
-import com.github.realpanamo.npc.NPC;
+import com.github.juliarn.npc.NPC;
 import org.bukkit.Location;
 import org.jetbrains.annotations.NotNull;
 

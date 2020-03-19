@@ -1,8 +1,8 @@
-package com.github.realpanamo.npc.event;
+package com.github.juliarn.npc.event;
 
 
 import com.comphenix.protocol.wrappers.EnumWrappers;
-import com.github.realpanamo.npc.NPC;
+import com.github.juliarn.npc.NPC;
 import org.bukkit.entity.Player;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.player.PlayerEvent;

@@ -1,11 +1,11 @@
-package com.github.realpanamo.npc;
+package com.github.juliarn.npc;
 
 
 import com.comphenix.protocol.wrappers.WrappedGameProfile;
 import com.comphenix.protocol.wrappers.WrappedSignedProperty;
 import com.destroystokyo.paper.profile.PlayerProfile;
 import com.destroystokyo.paper.profile.ProfileProperty;
-import com.github.realpanamo.npc.modifier.*;
+import com.github.juliarn.npc.modifier.*;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
