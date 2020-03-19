@@ -5,14 +5,13 @@ import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.events.PacketContainer;
 import com.github.realpanamo.npc.NPC;
-import com.google.common.collect.ImmutableList;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * An NPCModifier queues packets for NPC modification which can then be send to players via the {@link NPCModifier#send(Player...)} method.
@@ -23,7 +22,7 @@ public class NPCModifier {
 
     protected NPC npc;
 
-    private List<PacketContainer> packetContainers = new ArrayList<>();
+    private List<PacketContainer> packetContainers = new CopyOnWriteArrayList<>();
 
     public NPCModifier(@NotNull NPC npc) {
         this.npc = npc;
@@ -59,7 +58,7 @@ public class NPCModifier {
      * Sends the queued modifications to all players
      */
     public void send() {
-        this.send((Player[]) Bukkit.getOnlinePlayers().toArray());
+        this.send(Bukkit.getOnlinePlayers().toArray(new Player[0]));
     }
 
     /**
@@ -68,7 +67,7 @@ public class NPCModifier {
      * @param targetPlayers the players which should see the modification
      */
     public void send(@NotNull Player... targetPlayers) {
-        for (Player targetPlayer : ImmutableList.copyOf(targetPlayers)) {
+        for (Player targetPlayer : targetPlayers) {
             try {
                 for (PacketContainer packetContainer : this.packetContainers) {
                     ProtocolLibrary.getProtocolManager().sendServerPacket(targetPlayer, packetContainer);
