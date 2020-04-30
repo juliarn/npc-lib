@@ -31,7 +31,7 @@ public class NPC {
 
     private boolean imitatePlayer;
 
-    private SpawnCustomizer spawnCustomizer;
+    private final SpawnCustomizer spawnCustomizer;
 
     private NPC(Set<ProfileProperty> profileProperties, WrappedGameProfile gameProfile, Location location, boolean lookAtPlayer, boolean imitatePlayer, SpawnCustomizer spawnCustomizer) {
         this.gameProfile = gameProfile;
@@ -174,7 +174,7 @@ public class NPC {
 
         private Set<ProfileProperty> profileProperties;
 
-        private String name;
+        private final String name;
 
         private UUID textureUUID;
 

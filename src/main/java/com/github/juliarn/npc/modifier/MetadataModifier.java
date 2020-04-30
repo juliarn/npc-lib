@@ -14,7 +14,7 @@ import java.util.List;
 
 public class MetadataModifier extends NPCModifier {
 
-    private List<WrappedWatchableObject> metadata = new ArrayList<>();
+    private final List<WrappedWatchableObject> metadata = new ArrayList<>();
 
     public MetadataModifier(@NotNull NPC npc) {
         super(npc);

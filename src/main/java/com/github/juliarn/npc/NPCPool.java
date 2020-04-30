@@ -29,13 +29,13 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class NPCPool implements Listener {
 
-    private JavaPlugin javaPlugin;
+    private final JavaPlugin javaPlugin;
 
-    private int spawnDistance;
+    private final double spawnDistance;
 
-    private int actionDistance;
+    private final double actionDistance;
 
-    private Map<Integer, NPC> npcMap = new ConcurrentHashMap<>();
+    private final Map<Integer, NPC> npcMap = new ConcurrentHashMap<>();
 
     /**
      * Creates a new NPC pool which handles events, spawning and destruction of the NPCs for players
@@ -59,8 +59,8 @@ public class NPCPool implements Listener {
 
         this.javaPlugin = javaPlugin;
 
-        this.spawnDistance = spawnDistance;
-        this.actionDistance = actionDistance;
+        this.spawnDistance = spawnDistance * spawnDistance;
+        this.actionDistance = actionDistance * actionDistance;
 
         Bukkit.getPluginManager().registerEvents(this, javaPlugin);
 
@@ -82,7 +82,7 @@ public class NPCPool implements Listener {
 
                     Bukkit.getScheduler().runTask(javaPlugin, () ->
                             Bukkit.getPluginManager().callEvent(
-                                    new PlayerNPCInteractEvent(event.getPlayer(), npc, PlayerNPCInteractEvent.Action.fromProtocolLib(action))
+                                    new PlayerNPCInteractEvent(event.getPlayer(), npc, action)
                             ));
                 }
             }
@@ -95,7 +95,7 @@ public class NPCPool implements Listener {
             for (Player player : ImmutableList.copyOf(Bukkit.getOnlinePlayers())) {
 
                 for (NPC npc : this.npcMap.values()) {
-                    double distance = npc.getLocation().distance(player.getLocation());
+                    double distance = npc.getLocation().distanceSquared(player.getLocation());
 
                     if (distance >= this.spawnDistance && npc.isShownFor(player)) {
                         npc.hide(player);
@@ -143,7 +143,7 @@ public class NPCPool implements Listener {
         Player player = event.getPlayer();
 
         this.npcMap.values().stream()
-                .filter(npc -> npc.isImitatePlayer() && npc.isShownFor(player) && npc.getLocation().distance(player.getLocation()) <= this.actionDistance)
+                .filter(npc -> npc.isImitatePlayer() && npc.isShownFor(player) && npc.getLocation().distanceSquared(player.getLocation()) <= this.actionDistance)
                 .forEach(npc -> npc.metadata().queueSneaking(event.isSneaking()).send(player));
     }
 
@@ -153,7 +153,7 @@ public class NPCPool implements Listener {
 
         if (event.getAction() == Action.LEFT_CLICK_AIR || event.getAction() == Action.LEFT_CLICK_BLOCK) {
             this.npcMap.values().stream()
-                    .filter(npc -> npc.isImitatePlayer() && npc.isShownFor(player) && npc.getLocation().distance(player.getLocation()) <= this.actionDistance)
+                    .filter(npc -> npc.isImitatePlayer() && npc.isShownFor(player) && npc.getLocation().distanceSquared(player.getLocation()) <= this.actionDistance)
                     .forEach(npc -> npc.animation().queue(AnimationModifier.EntityAnimation.SWING_MAIN_ARM).send(player));
         }
     }
