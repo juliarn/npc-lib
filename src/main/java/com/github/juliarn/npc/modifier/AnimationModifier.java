@@ -24,7 +24,7 @@ public class AnimationModifier extends NPCModifier {
         CRITICAL_EFFECT(4),
         MAGIC_CRITICAL_EFFECT(5);
 
-        private int id;
+        private final int id;
 
         EntityAnimation(int id) {
             this.id = id;

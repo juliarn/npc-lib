@@ -22,7 +22,7 @@ public class NPCModifier {
 
     protected NPC npc;
 
-    private List<PacketContainer> packetContainers = new CopyOnWriteArrayList<>();
+    private final List<PacketContainer> packetContainers = new CopyOnWriteArrayList<>();
 
     public NPCModifier(@NotNull NPC npc) {
         this.npc = npc;
