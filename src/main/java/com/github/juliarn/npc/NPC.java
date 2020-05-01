@@ -1,10 +1,7 @@
 package com.github.juliarn.npc;
 
-
 import com.comphenix.protocol.wrappers.WrappedGameProfile;
 import com.comphenix.protocol.wrappers.WrappedSignedProperty;
-import com.destroystokyo.paper.profile.PlayerProfile;
-import com.destroystokyo.paper.profile.ProfileProperty;
 import com.github.juliarn.npc.modifier.*;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -12,7 +9,10 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Random;
+import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 public class NPC {
@@ -33,34 +33,15 @@ public class NPC {
 
     private final SpawnCustomizer spawnCustomizer;
 
-    private NPC(Set<ProfileProperty> profileProperties, WrappedGameProfile gameProfile, Location location, boolean lookAtPlayer, boolean imitatePlayer, SpawnCustomizer spawnCustomizer) {
+    private NPC(Collection<WrappedSignedProperty> profileProperties, WrappedGameProfile gameProfile, Location location, boolean lookAtPlayer, boolean imitatePlayer, SpawnCustomizer spawnCustomizer) {
         this.gameProfile = gameProfile;
 
-        this.appendProperties(profileProperties);
+        profileProperties.forEach(property -> this.gameProfile.getProperties().put(property.getName(), property));
 
         this.location = location;
         this.lookAtPlayer = lookAtPlayer;
         this.imitatePlayer = imitatePlayer;
         this.spawnCustomizer = spawnCustomizer;
-    }
-
-    private NPC(UUID textureUUID, WrappedGameProfile gameProfile, Location location, boolean lookAtPlayer, boolean imitatePlayer, SpawnCustomizer spawnCustomizer) {
-        this.gameProfile = gameProfile;
-
-        PlayerProfile profile = Bukkit.createProfile(textureUUID);
-        profile.complete();
-        this.appendProperties(profile.getProperties());
-
-        this.location = location;
-        this.lookAtPlayer = lookAtPlayer;
-        this.imitatePlayer = imitatePlayer;
-        this.spawnCustomizer = spawnCustomizer;
-    }
-
-    private void appendProperties(Set<ProfileProperty> profileProperties) {
-        profileProperties.stream()
-                .map(property -> new WrappedSignedProperty(property.getName(), property.getValue(), property.getSignature()))
-                .forEach(property -> this.gameProfile.getProperties().put(property.getName(), property));
     }
 
     protected void show(@NotNull Player player, @NotNull JavaPlugin javaPlugin) {
@@ -172,7 +153,7 @@ public class NPC {
 
     public static class Builder {
 
-        private Set<ProfileProperty> profileProperties;
+        private Collection<WrappedSignedProperty> profileProperties;
 
         private final String name;
 
@@ -203,10 +184,10 @@ public class NPC {
         /**
          * Creates a new instance of the NPC builder
          *
-         * @param profileProperties a set of Paper profile properties, including textures
+         * @param profileProperties a collection of profile properties, including textures
          * @param name              the name the NPC should have
          */
-        public Builder(@NotNull Set<ProfileProperty> profileProperties, @NotNull String name) {
+        public Builder(@NotNull Collection<WrappedSignedProperty> profileProperties, @NotNull String name) {
             this.profileProperties = profileProperties;
             this.name = name;
         }
@@ -275,10 +256,19 @@ public class NPC {
          */
         @NotNull
         public NPC build(@NotNull NPCPool pool) {
-            NPC npc = this.profileProperties != null
-                    ? new NPC(this.profileProperties, new WrappedGameProfile(this.uuid, this.name), this.location, this.lookAtPlayer, this.imitatePlayer, this.spawnCustomizer)
-                    : new NPC(this.textureUUID, new WrappedGameProfile(this.uuid, this.name), this.location, this.lookAtPlayer, this.imitatePlayer, this.spawnCustomizer);
+            if (this.profileProperties == null) {
+                WrappedGameProfile textureProfile = new WrappedGameProfile(this.textureUUID, name);
+                this.profileProperties = textureProfile.getProperties().values();
+            }
 
+            NPC npc = new NPC(
+                    this.profileProperties,
+                    new WrappedGameProfile(this.uuid, this.name),
+                    this.location,
+                    this.lookAtPlayer,
+                    this.imitatePlayer,
+                    this.spawnCustomizer
+            );
             pool.takeCareOf(npc);
 
             return npc;
