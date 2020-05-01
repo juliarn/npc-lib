@@ -5,6 +5,7 @@ import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.wrappers.EnumWrappers;
 import com.comphenix.protocol.wrappers.PlayerInfoData;
+import com.comphenix.protocol.wrappers.WrappedChatComponent;
 import com.comphenix.protocol.wrappers.WrappedDataWatcher;
 import com.github.juliarn.npc.NPC;
 import org.jetbrains.annotations.NotNull;
@@ -17,32 +18,16 @@ public class VisibilityModifier extends NPCModifier {
         super(npc);
     }
 
-    public VisibilityModifier queueAddToPlayerList() {
+    public VisibilityModifier queuePlayerListChange(EnumWrappers.PlayerInfoAction action) {
         PacketContainer packetContainer = super.newContainer(PacketType.Play.Server.PLAYER_INFO, false);
 
-        packetContainer.getPlayerInfoAction().write(0, EnumWrappers.PlayerInfoAction.ADD_PLAYER);
+        packetContainer.getPlayerInfoAction().write(0, action);
 
         PlayerInfoData playerInfoData = new PlayerInfoData(
                 super.npc.getGameProfile(),
                 20,
-                EnumWrappers.NativeGameMode.CREATIVE,
-                null
-        );
-        packetContainer.getPlayerInfoDataLists().write(0, Collections.singletonList(playerInfoData));
-
-        return this;
-    }
-
-    public VisibilityModifier queueRemoveFromPlayerList() {
-        PacketContainer packetContainer = super.newContainer(PacketType.Play.Server.PLAYER_INFO, false);
-
-        packetContainer.getPlayerInfoAction().write(0, EnumWrappers.PlayerInfoAction.REMOVE_PLAYER);
-
-        PlayerInfoData playerInfoData = new PlayerInfoData(
-                super.npc.getGameProfile(),
-                20,
-                EnumWrappers.NativeGameMode.NOT_SET,
-                null
+                EnumWrappers.NativeGameMode.SURVIVAL,
+                WrappedChatComponent.fromText(super.npc.getGameProfile().getName())
         );
         packetContainer.getPlayerInfoDataLists().write(0, Collections.singletonList(playerInfoData));
 
@@ -54,10 +39,21 @@ public class VisibilityModifier extends NPCModifier {
 
         packetContainer.getUUIDs().write(0, super.npc.getGameProfile().getUUID());
 
-        packetContainer.getDoubles()
-                .write(0, super.npc.getLocation().getX())
-                .write(1, super.npc.getLocation().getY())
-                .write(2, super.npc.getLocation().getZ());
+        double x = super.npc.getLocation().getX();
+        double y = super.npc.getLocation().getY();
+        double z = super.npc.getLocation().getZ();
+
+        if (MINECRAFT_VERSION < 9) {
+            packetContainer.getIntegers()
+                    .write(1, (int) Math.floor(x * 32.0D))
+                    .write(2, (int) Math.floor(y * 32.0D))
+                    .write(3, (int) Math.floor(z * 32.0D));
+        } else {
+            packetContainer.getDoubles()
+                    .write(0, x)
+                    .write(1, y)
+                    .write(2, z);
+        }
 
         packetContainer.getBytes()
                 .write(0, (byte) (super.npc.getLocation().getYaw() * 256F / 360F))

@@ -1,5 +1,6 @@
 package com.github.juliarn.npc;
 
+import com.comphenix.protocol.wrappers.EnumWrappers;
 import com.comphenix.protocol.wrappers.WrappedGameProfile;
 import com.comphenix.protocol.wrappers.WrappedSignedProperty;
 import com.github.juliarn.npc.modifier.*;
@@ -45,25 +46,23 @@ public class NPC {
     }
 
     protected void show(@NotNull Player player, @NotNull JavaPlugin javaPlugin) {
-        VisibilityModifier visibilityModifier = new VisibilityModifier(this);
+        this.seeingPlayers.add(player);
 
-        visibilityModifier.queueAddToPlayerList().send(player);
+        VisibilityModifier visibilityModifier = new VisibilityModifier(this);
+        visibilityModifier.queuePlayerListChange(EnumWrappers.PlayerInfoAction.ADD_PLAYER).send(player);
 
         Bukkit.getScheduler().runTaskLater(javaPlugin, () -> {
             visibilityModifier.queueSpawn().send(player);
-
-            this.seeingPlayers.add(player);
-
             this.spawnCustomizer.handleSpawn(this, player);
 
             // keeping the NPC longer in the player list, otherwise the skin might not be shown sometimes.
-            Bukkit.getScheduler().runTaskLater(javaPlugin, () -> visibilityModifier.queueRemoveFromPlayerList().send(player), 10L);
+            Bukkit.getScheduler().runTaskLater(javaPlugin, () -> visibilityModifier.queuePlayerListChange(EnumWrappers.PlayerInfoAction.REMOVE_PLAYER).send(player), 15L);
         }, 5L);
     }
 
     protected void hide(@NotNull Player player) {
         new VisibilityModifier(this)
-                .queueRemoveFromPlayerList()
+                .queuePlayerListChange(EnumWrappers.PlayerInfoAction.REMOVE_PLAYER)
                 .queueDestroy()
                 .send(player);
 
@@ -257,7 +256,7 @@ public class NPC {
         @NotNull
         public NPC build(@NotNull NPCPool pool) {
             if (this.profileProperties == null) {
-                WrappedGameProfile textureProfile = new WrappedGameProfile(this.textureUUID, name);
+                WrappedGameProfile textureProfile = new WrappedGameProfile(this.textureUUID, null);
                 this.profileProperties = textureProfile.getProperties().values();
             }
 
