@@ -4,6 +4,8 @@ import com.comphenix.protocol.wrappers.EnumWrappers;
 import com.comphenix.protocol.wrappers.WrappedGameProfile;
 import com.comphenix.protocol.wrappers.WrappedSignedProperty;
 import com.github.juliarn.npc.modifier.*;
+import com.github.juliarn.npc.utils.Profile;
+import com.github.juliarn.npc.utils.SessionUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
@@ -34,10 +36,11 @@ public class NPC {
 
     private final SpawnCustomizer spawnCustomizer;
 
-    private NPC(Collection<WrappedSignedProperty> profileProperties, WrappedGameProfile gameProfile, Location location, boolean lookAtPlayer, boolean imitatePlayer, SpawnCustomizer spawnCustomizer) {
+    private NPC(Profile textureProfile, WrappedGameProfile gameProfile, Location location, boolean lookAtPlayer, boolean imitatePlayer, SpawnCustomizer spawnCustomizer) {
         this.gameProfile = gameProfile;
-
-        profileProperties.forEach(property -> this.gameProfile.getProperties().put(property.getName(), property));
+        for (Profile.Property property : textureProfile.getProperties()) {
+            this.gameProfile.getProperties().put(property.getName(), property.asWrapped());
+        }
 
         this.location = location;
         this.lookAtPlayer = lookAtPlayer;
@@ -255,13 +258,18 @@ public class NPC {
          */
         @NotNull
         public NPC build(@NotNull NPCPool pool) {
+            Profile profile;
             if (this.profileProperties == null) {
-                WrappedGameProfile textureProfile = new WrappedGameProfile(this.textureUUID, null);
-                this.profileProperties = textureProfile.getProperties().values();
+                profile = SessionUtils.getProfile(this.textureUUID);
+            } else {
+                profile = SessionUtils.getProfile(this.textureUUID);
+                if (profile != null) {
+                    profile.setProperties(this.profileProperties);
+                }
             }
 
             NPC npc = new NPC(
-                    this.profileProperties,
+                    profile == null ? Profile.empty(this.textureUUID) : profile,
                     new WrappedGameProfile(this.uuid, this.name),
                     this.location,
                     this.lookAtPlayer,
