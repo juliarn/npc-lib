@@ -1,6 +1,5 @@
-package com.github.juliarn.npc.utils;
+package com.github.juliarn.npc.util;
 
-import com.comphenix.protocol.wrappers.WrappedGameProfile;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import de.derklaro.requestbuilder.RequestBuilder;
@@ -16,9 +15,9 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
-public final class SessionUtils {
+public final class ProfileFetcher {
 
-    private SessionUtils() {
+    private ProfileFetcher() {
         throw new UnsupportedOperationException();
     }
 
@@ -29,21 +28,6 @@ public final class SessionUtils {
     private static final ThreadLocal<Gson> GSON = ThreadLocal.withInitial(
             () -> new GsonBuilder().serializeNulls().create()
     );
-
-    public static void fillGameProfile(@NotNull WrappedGameProfile gameProfile, boolean secure) {
-        if (gameProfile.getUUID() == null) {
-            return;
-        }
-
-        Profile profile = getProfile(gameProfile.getUUID(), secure);
-        if (profile == null) {
-            return;
-        }
-
-        for (Profile.Property property : profile.getProperties()) {
-            gameProfile.getProperties().put(property.getName(), property.asWrapped());
-        }
-    }
 
     @Nullable
     public static Profile getProfile(@NotNull UUID uniqueID) {
@@ -80,10 +64,11 @@ public final class SessionUtils {
 
             CACHE.put(uniqueID, profile);
             return profile;
-        } catch (final Exception ex) {
-            ex.printStackTrace();
+        } catch (Exception exception) {
+            exception.printStackTrace();
         }
 
         return null;
     }
+
 }

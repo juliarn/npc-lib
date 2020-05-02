@@ -1,4 +1,4 @@
-package com.github.juliarn.npc.utils;
+package com.github.juliarn.npc.util;
 
 import com.comphenix.protocol.wrappers.WrappedGameProfile;
 import com.comphenix.protocol.wrappers.WrappedSignedProperty;
@@ -8,14 +8,20 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.UUID;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class Profile {
 
     private static final Pattern UNIQUE_ID_PATTERN = Pattern.compile("(\\w{8})(\\w{4})(\\w{4})(\\w{4})(\\w{12})");
 
+    private final String id;
+    private final String name;
+    private final Collection<Property> properties;
+    private transient UUID uniqueId;
+
     @NotNull
-    public static Profile empty(@NotNull UUID uniqueID) {
-        return new Profile(uniqueID.toString().replace("-", ""), null, new ArrayList<>());
+    public static Profile empty(@NotNull UUID uniqueId) {
+        return new Profile(uniqueId.toString().replace("-", ""), null, new ArrayList<>());
     }
 
     public Profile(String id, String name, Collection<Property> properties) {
@@ -24,20 +30,12 @@ public class Profile {
         this.properties = properties;
     }
 
-    private transient UUID uniqueID;
-
-    private final String id;
-
-    private final String name;
-
-    private final Collection<Property> properties;
-
-    public UUID getUniqueID() {
-        if (uniqueID == null) {
-            uniqueID = UUID.fromString(UNIQUE_ID_PATTERN.matcher(this.id).replaceAll("$1-$2-$3-$4-$5"));
+    public UUID getUniqueId() {
+        if (this.uniqueId == null) {
+            this.uniqueId = UUID.fromString(UNIQUE_ID_PATTERN.matcher(this.id).replaceAll("$1-$2-$3-$4-$5"));
         }
 
-        return uniqueID;
+        return this.uniqueId;
     }
 
     public String getId() {
@@ -52,22 +50,23 @@ public class Profile {
         return properties;
     }
 
-    public void setProperties(@NotNull Collection<WrappedSignedProperty> profileProperties) {
-        for (WrappedSignedProperty profileProperty : profileProperties) {
-            this.properties.add(new Property(profileProperty.getName(), profileProperty.getValue(), profileProperty.getSignature()));
-        }
+    public Collection<WrappedSignedProperty> getWrappedProperties() {
+        return this.properties.stream().map(Property::asWrapped).collect(Collectors.toList());
     }
 
     @NotNull
-    public WrappedGameProfile asWrappedWithoutProperties() {
-        return new WrappedGameProfile(this.getUniqueID(), this.getName());
+    public WrappedGameProfile asWrapped() {
+        return this.asWrapped(true);
     }
 
     @NotNull
-    public WrappedGameProfile asWrappedWithProperties() {
-        WrappedGameProfile profile = new WrappedGameProfile(this.getUniqueID(), this.getName());
-        for (Property property : this.getProperties()) {
-            profile.getProperties().put(property.getName(), property.asWrapped());
+    public WrappedGameProfile asWrapped(boolean properties) {
+        WrappedGameProfile profile = new WrappedGameProfile(this.getUniqueId(), this.getName());
+
+        if (properties) {
+            for (Property property : this.getProperties()) {
+                profile.getProperties().put(property.getName(), property.asWrapped());
+            }
         }
 
         return profile;
@@ -107,5 +106,6 @@ public class Profile {
         public WrappedSignedProperty asWrapped() {
             return new WrappedSignedProperty(this.getName(), this.getValue(), this.getSignature());
         }
+
     }
 }
