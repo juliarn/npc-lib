@@ -69,8 +69,7 @@ public final class SessionUtils {
                 .enableRedirectFollow()
                 .accepts(MimeTypes.getMimeType("json"));
 
-        try {
-            RequestResult requestResult = builder.fireAndForget();
+        try (RequestResult requestResult = builder.fireAndForget()) {
             if (StatusCode.getByResult(requestResult.getStatusCode()) != StatusCode.OK) {
                 return null;
             }
@@ -82,7 +81,7 @@ public final class SessionUtils {
 
             CACHE.put(uniqueID, profile);
             return profile;
-        } catch (final IOException ex) {
+        } catch (final Exception ex) {
             ex.printStackTrace();
         }
 
