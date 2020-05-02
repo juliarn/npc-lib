@@ -26,7 +26,7 @@ public class VisibilityModifier extends NPCModifier {
         PlayerInfoData playerInfoData = new PlayerInfoData(
                 super.npc.getGameProfile(),
                 20,
-                EnumWrappers.NativeGameMode.SURVIVAL,
+                EnumWrappers.NativeGameMode.NOT_SET,
                 WrappedChatComponent.fromText(super.npc.getGameProfile().getName())
         );
         packetContainer.getPlayerInfoDataLists().write(0, Collections.singletonList(playerInfoData));
