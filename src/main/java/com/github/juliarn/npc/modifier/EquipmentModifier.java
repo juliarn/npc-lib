@@ -17,7 +17,7 @@ public class EquipmentModifier extends NPCModifier {
     public EquipmentModifier queue(@NotNull EnumWrappers.ItemSlot itemSlot, @NotNull ItemStack equipment) {
         PacketContainer packetContainer = super.newContainer(PacketType.Play.Server.ENTITY_EQUIPMENT);
 
-        packetContainer.getItemSlots().write(0, itemSlot);
+        packetContainer.getItemSlots().write(MINECRAFT_VERSION < 9 ? 1 : 0, itemSlot);
         packetContainer.getItemModifier().write(0, equipment);
 
         return this;

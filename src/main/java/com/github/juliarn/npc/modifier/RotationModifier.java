@@ -15,17 +15,29 @@ public class RotationModifier extends NPCModifier {
 
     public RotationModifier queueRotate(float yaw, float pitch) {
         byte yawAngle = (byte) (yaw * 256F / 360F);
+        byte pitchAngle = (byte) (pitch * 256F / 360F);
 
         PacketContainer entityHeadLookContainer = super.newContainer(PacketType.Play.Server.ENTITY_HEAD_ROTATION);
-
         entityHeadLookContainer.getBytes().write(0, yawAngle);
 
-        PacketContainer entityLookContainer = super.newContainer(PacketType.Play.Server.ENTITY_LOOK);
+        PacketContainer bodyRotateContainer;
+        if (MINECRAFT_VERSION < 9) {
+            bodyRotateContainer = super.newContainer(PacketType.Play.Server.ENTITY_TELEPORT);
 
-        entityLookContainer.getBytes()
+            Location location = super.npc.getLocation();
+
+            bodyRotateContainer.getIntegers()
+                    .write(1, (int) Math.floor(location.getX() * 32.0D))
+                    .write(2, (int) Math.floor(location.getY() * 32.0D))
+                    .write(3, (int) Math.floor(location.getZ() * 32.0D));
+        } else {
+            bodyRotateContainer = super.newContainer(PacketType.Play.Server.ENTITY_LOOK);
+        }
+
+        bodyRotateContainer.getBytes()
                 .write(0, yawAngle)
-                .write(1, (byte) (pitch * 256F / 360F));
-        entityLookContainer.getBooleans().write(0, true);
+                .write(1, pitchAngle);
+        bodyRotateContainer.getBooleans().write(0, true);
 
         return this;
     }
