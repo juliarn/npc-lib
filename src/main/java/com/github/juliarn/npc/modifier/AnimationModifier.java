@@ -12,7 +12,11 @@ public class AnimationModifier extends NPCModifier {
     }
 
     public AnimationModifier queue(@NotNull EntityAnimation entityAnimation) {
-        super.newContainer(PacketType.Play.Server.ANIMATION).getIntegers().write(1, entityAnimation.id);
+        return this.queue(entityAnimation.id);
+    }
+
+    public AnimationModifier queue(int animationId) {
+        super.newContainer(PacketType.Play.Server.ANIMATION).getIntegers().write(1, animationId);
         return this;
     }
 
