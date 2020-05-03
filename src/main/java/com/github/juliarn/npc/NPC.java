@@ -5,7 +5,7 @@ import com.comphenix.protocol.wrappers.WrappedGameProfile;
 import com.comphenix.protocol.wrappers.WrappedSignedProperty;
 import com.github.juliarn.npc.modifier.*;
 import com.github.juliarn.npc.profile.Profile;
-import com.github.juliarn.npc.profile.ProfileFetcher;
+import com.github.juliarn.npc.profile.ProfileBuilder;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
@@ -258,9 +258,9 @@ public class NPC {
         @NotNull
         public NPC build(@NotNull NPCPool pool) {
             if (this.profileProperties == null) {
-                Profile profile = ProfileFetcher.getProfile(this.textureUUID);
+                Profile profile = new ProfileBuilder(this.textureUUID).complete(true).build();
 
-                this.profileProperties = profile == null ? new HashSet<>() : profile.getWrappedProperties();
+                this.profileProperties = profile.getWrappedProperties();
             }
 
             NPC npc = new NPC(
