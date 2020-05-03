@@ -1,12 +1,12 @@
 package com.github.juliarn.npc.util;
 
+import com.github.derklaro.requestbuilder.RequestBuilder;
+import com.github.derklaro.requestbuilder.method.RequestMethod;
+import com.github.derklaro.requestbuilder.result.RequestResult;
+import com.github.derklaro.requestbuilder.result.http.StatusCode;
+import com.github.derklaro.requestbuilder.types.MimeTypes;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import de.derklaro.requestbuilder.RequestBuilder;
-import de.derklaro.requestbuilder.method.RequestMethod;
-import de.derklaro.requestbuilder.result.RequestResult;
-import de.derklaro.requestbuilder.result.http.StatusCode;
-import de.derklaro.requestbuilder.types.MimeTypes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,7 +53,7 @@ public final class ProfileFetcher {
                 .accepts(MimeTypes.getMimeType("json"));
 
         try (RequestResult requestResult = builder.fireAndForget()) {
-            if (StatusCode.getByResult(requestResult.getStatusCode()) != StatusCode.OK) {
+            if (requestResult.getStatus() != StatusCode.OK) {
                 return null;
             }
 
