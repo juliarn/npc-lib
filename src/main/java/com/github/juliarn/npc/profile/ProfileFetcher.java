@@ -1,4 +1,4 @@
-package com.github.juliarn.npc.util;
+package com.github.juliarn.npc.profile;
 
 import com.github.derklaro.requestbuilder.RequestBuilder;
 import com.github.derklaro.requestbuilder.method.RequestMethod;

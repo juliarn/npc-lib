@@ -9,7 +9,7 @@ import com.comphenix.protocol.events.PacketEvent;
 import com.comphenix.protocol.wrappers.EnumWrappers;
 import com.github.juliarn.npc.event.PlayerNPCInteractEvent;
 import com.github.juliarn.npc.modifier.AnimationModifier;
-import com.github.juliarn.npc.util.EntityMetadata;
+import com.github.juliarn.npc.modifier.MetadataModifier;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import org.bukkit.Bukkit;
@@ -145,7 +145,7 @@ public class NPCPool implements Listener {
 
         this.npcMap.values().stream()
                 .filter(npc -> npc.isImitatePlayer() && npc.isShownFor(player) && npc.getLocation().distanceSquared(player.getLocation()) <= this.actionDistance)
-                .forEach(npc -> npc.metadata().queue(EntityMetadata.SNEAKING, event.isSneaking()).send(player));
+                .forEach(npc -> npc.metadata().queue(MetadataModifier.EntityMetadata.SNEAKING, event.isSneaking()).send(player));
     }
 
     @EventHandler

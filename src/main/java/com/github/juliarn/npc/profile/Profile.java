@@ -1,4 +1,4 @@
-package com.github.juliarn.npc.util;
+package com.github.juliarn.npc.profile;
 
 import com.comphenix.protocol.wrappers.WrappedGameProfile;
 import com.comphenix.protocol.wrappers.WrappedSignedProperty;
