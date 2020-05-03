@@ -6,22 +6,37 @@ import com.github.juliarn.npc.modifier.NPCModifier;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.function.Function;
 
-public class EntityMetadata<T> {
+public class EntityMetadata<I, O> {
 
-    public static final EntityMetadata<Byte> POSE = new EntityMetadata<>(0, Byte.class, Collections.emptyList());
-    public static final EntityMetadata<Byte> SKIN_LAYERS = new EntityMetadata<>(13, Byte.class, Arrays.asList(14, 14, 15));
+    public static final EntityMetadata<Boolean, Byte> SNEAKING = new EntityMetadata<>(
+            0,
+            Byte.class,
+            Collections.emptyList(),
+            input -> (byte) (input ? 0x02 : 0)
+    );
+
+    public static final EntityMetadata<Boolean, Byte> SKIN_LAYERS = new EntityMetadata<>(
+            10,
+            Byte.class,
+            Arrays.asList(9, 9, 10, 14, 14, 15),
+            input -> (byte) (input ? 0xff : 0)
+    );
 
     private final int baseIndex;
 
-    private final Class<T> type;
+    private final Class<O> outputType;
 
     private final Collection<Integer> shiftVersions;
 
-    EntityMetadata(int baseIndex, Class<T> type, Collection<Integer> shiftVersions) {
+    private final Function<I, O> mapper;
+
+    EntityMetadata(int baseIndex, Class<O> outputType, Collection<Integer> shiftVersions, Function<I, O> mapper) {
         this.baseIndex = baseIndex;
-        this.type = type;
+        this.outputType = outputType;
         this.shiftVersions = shiftVersions;
+        this.mapper = mapper;
     }
 
     public int getIndex() {
@@ -32,12 +47,16 @@ public class EntityMetadata<T> {
         return baseIndex;
     }
 
-    public Class<T> getType() {
-        return type;
+    public Class<O> getOutputType() {
+        return outputType;
     }
 
     public Collection<Integer> getShiftVersions() {
         return shiftVersions;
+    }
+
+    public Function<I, O> getMapper() {
+        return mapper;
     }
 
 }

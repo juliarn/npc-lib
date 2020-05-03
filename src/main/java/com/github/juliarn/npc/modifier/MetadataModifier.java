@@ -22,16 +22,12 @@ public class MetadataModifier extends NPCModifier {
         super(npc);
     }
 
-    public MetadataModifier queueSneaking(boolean sneaking) {
-        return this.queue(EntityMetadata.POSE, (byte) (sneaking ? 0x02 : 0));
+    public <I, O> MetadataModifier queue(EntityMetadata<I, O> metadata, I value) {
+        return this.queue(metadata.getIndex(), metadata.getMapper().apply(value), metadata.getOutputType());
     }
 
-    public MetadataModifier queueSkinLayers(boolean showSkinLayers) {
-        return this.queue(EntityMetadata.SKIN_LAYERS, (byte) (showSkinLayers ? 0xff : 0));
-    }
-
-    public <T> MetadataModifier queue(EntityMetadata<T> metadata, T value) {
-        return this.queue(metadata.getIndex(), value, metadata.getType());
+    public <T> MetadataModifier queue(int index, @NotNull T value, @NotNull Class<T> clazz) {
+        return this.queue(index, value, MINECRAFT_VERSION < 9 ? null : WrappedDataWatcher.Registry.get(clazz));
     }
 
     public <T> MetadataModifier queue(int index, @NotNull T value, @Nullable WrappedDataWatcher.Serializer serializer) {
@@ -48,10 +44,6 @@ public class MetadataModifier extends NPCModifier {
         );
 
         return this;
-    }
-
-    public <T> MetadataModifier queue(int index, @NotNull T value, @NotNull Class<T> clazz) {
-        return this.queue(index, value, MINECRAFT_VERSION < 9 ? null : WrappedDataWatcher.Registry.get(clazz));
     }
 
     @Override

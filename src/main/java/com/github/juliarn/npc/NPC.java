@@ -58,8 +58,8 @@ public class NPC {
             this.spawnCustomizer.handleSpawn(this, player);
 
             // keeping the NPC longer in the player list, otherwise the skin might not be shown sometimes.
-            Bukkit.getScheduler().runTaskLater(javaPlugin, () -> visibilityModifier.queuePlayerListChange(EnumWrappers.PlayerInfoAction.REMOVE_PLAYER).send(player), 15L);
-        }, 5L);
+            Bukkit.getScheduler().runTaskLater(javaPlugin, () -> visibilityModifier.queuePlayerListChange(EnumWrappers.PlayerInfoAction.REMOVE_PLAYER).send(player), 60L);
+        }, 10L);
     }
 
     protected void hide(@NotNull Player player) {

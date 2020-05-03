@@ -1,8 +1,10 @@
 # NPC-Lib
-Minecraft NPC library for Paper 1.12.2+ servers.
+Minecraft NPC library for 1.8-1.15 servers.
+This Library does only support the latest patch release of a supported version (for example 1.13.2).
+Issues with older patch versions (for example 1.13.1) won't be fixed.
 
 ## Requirements
-This library can only be used on PaperSpigot servers higher or on version 1.12.2. 
+This library can only be used on spigot servers higher or on version 1.8.8. 
 The plugin [ProtocolLib](https://www.spigotmc.org/resources/protocollib.1997/) is required on your server.
 
 ## How to use
@@ -18,7 +20,7 @@ Maven
 <dependency>
     <groupId>com.github.juliarn</groupId>
     <artifactId>npc-lib</artifactId>
-    <version>1.1-RELEASE</version>
+    <version>2.0-RELEASE</version>
 </dependency>
 ```
 
@@ -29,7 +31,7 @@ maven {
     url 'https://jitpack.io'
 }
 
-compile group: 'com.github.juliarn', name: 'npc-lib', version: '1.1-RELEASE'
+compile group: 'com.github.juliarn', name: 'npc-lib', version: '2.0-RELEASE'
 ```
 
 Add ProtocolLib as dependency to your plugin.yml. It could look like this:
@@ -38,8 +40,8 @@ name: Hub
 version: 1.0-SNAPSHOT
 api-version: "1.13"
 depend: [ProtocolLib]
-author: Panamo
-main: de.panamo.server.hub.ServerHub
+author: juliarn
+main: com.github.juliarn.server.hub.ServerHub
 ```
 Now you're all set! You can start by creating an instance of the 
 [NPCPool](https://github.com/juliarn/NPC-Lib/blob/master/src/main/java/com/github/juliarn/npc/NPCPool.java) and the 
