@@ -40,6 +40,7 @@ public class Profile {
     private Collection<Property> properties;
 
     Profile(UUID uniqueId, String name, Collection<Property> properties) {
+        this.uniqueId = uniqueId;
         this.name = name;
         this.properties = properties;
     }

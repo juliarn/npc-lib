@@ -21,7 +21,7 @@ public class MetadataModifier extends NPCModifier {
         super(npc);
     }
 
-    public <I, O> MetadataModifier queue(EntityMetadata<I, O> metadata, I value) {
+    public <I, O> MetadataModifier queue(@NotNull EntityMetadata<I, O> metadata, @NotNull I value) {
         return this.queue(metadata.getIndex(), metadata.getMapper().apply(value), metadata.getOutputType());
     }
 
@@ -89,16 +89,8 @@ public class MetadataModifier extends NPCModifier {
             return this.baseIndex + Math.toIntExact(this.shiftVersions.stream().filter(minor -> NPCModifier.MINECRAFT_VERSION >= minor).count());
         }
 
-        public int getBaseIndex() {
-            return baseIndex;
-        }
-
         public Class<O> getOutputType() {
             return outputType;
-        }
-
-        public Collection<Integer> getShiftVersions() {
-            return shiftVersions;
         }
 
         public Function<I, O> getMapper() {
