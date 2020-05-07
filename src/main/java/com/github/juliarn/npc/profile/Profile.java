@@ -10,9 +10,11 @@ import com.github.derklaro.requestbuilder.types.MimeTypes;
 import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Type;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
@@ -45,16 +47,37 @@ public class Profile {
         this.properties = properties;
     }
 
+    /**
+     * @return if this profile is complete (has UUID and name)
+     */
     public boolean isComplete() {
-        return this.name != null && this.uniqueId != null && !this.properties.isEmpty();
+        return this.uniqueId != null && this.name != null;
     }
 
+    /**
+     * @return if this profile has properties
+     */
+    public boolean hasProperties() {
+        return this.properties != null;
+    }
+
+    /**
+     * Fills this profiles with all missing attributes
+     *
+     * @return if the profile was successfully completed
+     */
     public boolean complete() {
-        return this.complete(Boolean.TRUE);
+        return this.complete(true);
     }
 
-    public boolean complete(boolean texturesAndName) {
-        if (this.isComplete()) {
+    /**
+     * Fills this profiles with all missing attributes
+     *
+     * @param propertiesAndName if properties and name should be filled for this profile
+     * @return if the profile was successfully completed
+     */
+    public boolean complete(boolean propertiesAndName) {
+        if (this.isComplete() && this.hasProperties()) {
             return true;
         }
 
@@ -89,7 +112,7 @@ public class Profile {
             }
         }
 
-        if ((this.name == null || this.properties.isEmpty()) && texturesAndName) {
+        if ((this.name == null || this.properties == null) && propertiesAndName) {
             RequestBuilder builder = RequestBuilder
                     .newBuilder(String.format(TEXTURES_REQUEST_URL, this.uniqueId.toString().replace("-", ""), false))
                     .setConnectTimeout(10, TimeUnit.SECONDS)
@@ -108,8 +131,10 @@ public class Profile {
                     JsonObject jsonObject = jsonElement.getAsJsonObject();
 
                     if (jsonObject.has("name") && jsonObject.has("properties")) {
-                        this.name = jsonObject.get("name").getAsString();
-                        this.properties = GSON.get().fromJson(jsonObject.get("properties"), PROPERTY_LIST_TYPE);
+                        this.name = this.name == null ? jsonObject.get("name").getAsString() : this.name;
+                        this.properties = this.properties == null ? GSON.get().fromJson(jsonObject.get("properties"), PROPERTY_LIST_TYPE) : this.properties;
+                    } else {
+                        return false;
                     }
                 }
             } catch (Exception exception) {
@@ -131,12 +156,12 @@ public class Profile {
 
     @NotNull
     public Collection<Property> getProperties() {
-        return properties;
+        return this.properties == null ? new HashSet<>() : this.properties;
     }
 
     @NotNull
     public Collection<WrappedSignedProperty> getWrappedProperties() {
-        return this.properties.stream().map(Property::asWrapped).collect(Collectors.toList());
+        return this.getProperties().stream().map(Property::asWrapped).collect(Collectors.toList());
     }
 
     @NotNull
@@ -157,7 +182,7 @@ public class Profile {
 
     public static class Property {
 
-        public Property(String name, String value, String signature) {
+        public Property(@NotNull String name, @NotNull String value, @Nullable String signature) {
             this.name = name;
             this.value = value;
             this.signature = signature;
@@ -169,14 +194,17 @@ public class Profile {
 
         private final String signature;
 
+        @NotNull
         public String getName() {
             return name;
         }
 
+        @NotNull
         public String getValue() {
             return value;
         }
 
+        @Nullable
         public String getSignature() {
             return signature;
         }

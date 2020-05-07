@@ -2,10 +2,8 @@ package com.github.juliarn.npc;
 
 import com.comphenix.protocol.wrappers.EnumWrappers;
 import com.comphenix.protocol.wrappers.WrappedGameProfile;
-import com.comphenix.protocol.wrappers.WrappedSignedProperty;
 import com.github.juliarn.npc.modifier.*;
 import com.github.juliarn.npc.profile.Profile;
-import com.github.juliarn.npc.profile.ProfileBuilder;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
@@ -15,7 +13,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Random;
-import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 public class NPC {
@@ -36,10 +33,8 @@ public class NPC {
 
     private final SpawnCustomizer spawnCustomizer;
 
-    private NPC(Collection<WrappedSignedProperty> profileProperties, WrappedGameProfile gameProfile, Location location, boolean lookAtPlayer, boolean imitatePlayer, SpawnCustomizer spawnCustomizer) {
+    private NPC(WrappedGameProfile gameProfile, Location location, boolean lookAtPlayer, boolean imitatePlayer, SpawnCustomizer spawnCustomizer) {
         this.gameProfile = gameProfile;
-
-        profileProperties.forEach(property -> this.gameProfile.getProperties().put(property.getName(), property));
 
         this.location = location;
         this.lookAtPlayer = lookAtPlayer;
@@ -58,7 +53,7 @@ public class NPC {
             this.spawnCustomizer.handleSpawn(this, player);
 
             // keeping the NPC longer in the player list, otherwise the skin might not be shown sometimes.
-            Bukkit.getScheduler().runTaskLater(javaPlugin, () -> visibilityModifier.queuePlayerListChange(EnumWrappers.PlayerInfoAction.REMOVE_PLAYER).send(player), 10L);
+            Bukkit.getScheduler().runTaskLater(javaPlugin, () -> visibilityModifier.queuePlayerListChange(EnumWrappers.PlayerInfoAction.REMOVE_PLAYER).send(player), 15L);
         }, 20L);
     }
 
@@ -122,7 +117,7 @@ public class NPC {
         return new MetadataModifier(this);
     }
 
-
+    @NotNull
     public WrappedGameProfile getGameProfile() {
         return gameProfile;
     }
@@ -131,6 +126,7 @@ public class NPC {
         return entityId;
     }
 
+    @NotNull
     public Location getLocation() {
         return location;
     }
@@ -154,13 +150,7 @@ public class NPC {
 
     public static class Builder {
 
-        private Collection<WrappedSignedProperty> profileProperties;
-
-        private final String name;
-
-        private UUID textureUUID;
-
-        private UUID uuid = new UUID(RANDOM.nextLong(), 0);
+        private final Profile profile;
 
         private Location location = new Location(Bukkit.getWorlds().get(0), 0D, 0D, 0D);
 
@@ -174,34 +164,10 @@ public class NPC {
         /**
          * Creates a new instance of the NPC builder
          *
-         * @param textureUUID textures of this profile will be fetched and shown on the NPC
-         * @param name        the name the NPC should have
+         * @param profile a player profile defining UUID, name and textures of the NPC
          */
-        public Builder(@NotNull UUID textureUUID, @NotNull String name) {
-            this.textureUUID = textureUUID;
-            this.name = name;
-        }
-
-        /**
-         * Creates a new instance of the NPC builder
-         *
-         * @param profileProperties a collection of profile properties, including textures
-         * @param name              the name the NPC should have
-         */
-        public Builder(@NotNull Collection<WrappedSignedProperty> profileProperties, @NotNull String name) {
-            this.profileProperties = profileProperties;
-            this.name = name;
-        }
-
-        /**
-         * Sets a custom uuid for the NPC instead of generating a random one
-         *
-         * @param uuid the uuid the NPC should have
-         * @return this builder instance
-         */
-        public Builder uuid(UUID uuid) {
-            this.uuid = uuid;
-            return this;
+        public Builder(@NotNull Profile profile) {
+            this.profile = profile;
         }
 
         /**
@@ -257,15 +223,8 @@ public class NPC {
          */
         @NotNull
         public NPC build(@NotNull NPCPool pool) {
-            if (this.profileProperties == null) {
-                Profile profile = new ProfileBuilder(this.textureUUID).complete(true).build();
-
-                this.profileProperties = profile.getWrappedProperties();
-            }
-
             NPC npc = new NPC(
-                    this.profileProperties,
-                    new WrappedGameProfile(this.uuid, this.name),
+                    this.profile.asWrapped(),
                     this.location,
                     this.lookAtPlayer,
                     this.imitatePlayer,
