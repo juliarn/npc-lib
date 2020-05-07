@@ -4,7 +4,6 @@ package com.github.juliarn.npc.profile;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.UUID;
 
 public class ProfileBuilder {
@@ -13,7 +12,7 @@ public class ProfileBuilder {
 
     private String name;
 
-    private Collection<Profile.Property> profileProperties = new HashSet<>();
+    private Collection<Profile.Property> profileProperties;
 
     private boolean complete = false;
 
@@ -42,8 +41,8 @@ public class ProfileBuilder {
 
     @NotNull
     public Profile build() {
-        if (this.name == null || this.uniqueId == null) {
-            throw new IllegalStateException("Either name or unique id has to be given");
+        if (this.name == null && this.uniqueId == null) {
+            throw new IllegalStateException("Either name or uniqueId has to be given!");
         }
 
         Profile profile = new Profile(this.uniqueId, this.name, this.profileProperties);

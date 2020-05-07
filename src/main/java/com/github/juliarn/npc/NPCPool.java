@@ -95,7 +95,7 @@ public class NPCPool implements Listener {
         Bukkit.getScheduler().runTaskTimerAsynchronously(this.javaPlugin, () -> {
             for (Player player : ImmutableList.copyOf(Bukkit.getOnlinePlayers())) {
                 for (NPC npc : this.npcMap.values()) {
-                    if (!npc.getLocation().getWorld().getName().equals(player.getLocation().getWorld().getName())) {
+                    if (!npc.getLocation().getWorld().equals(player.getLocation().getWorld())) {
                         continue;
                     }
 
