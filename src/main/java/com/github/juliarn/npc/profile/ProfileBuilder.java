@@ -42,7 +42,7 @@ public class ProfileBuilder {
 
     @NotNull
     public Profile build() {
-        if (this.name == null || this.uniqueId == null) {
+        if (this.name == null && this.uniqueId == null) {
             throw new IllegalStateException("Either name or unique id has to be given");
         }
 
