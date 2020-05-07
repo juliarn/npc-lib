@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -36,6 +37,8 @@ public class NPCPool implements Listener {
 
     private final double actionDistance;
 
+    private final long tabListRemoveTicks;
+
     private final Map<Integer, NPC> npcMap = new ConcurrentHashMap<>();
 
     /**
@@ -44,24 +47,27 @@ public class NPCPool implements Listener {
      * @param javaPlugin the instance of the plugin which creates this pool
      */
     public NPCPool(@NotNull JavaPlugin javaPlugin) {
-        this(javaPlugin, 50, 20);
+        this(javaPlugin, 50, 20, 30);
     }
 
     /**
      * Creates a new NPC pool which handles events, spawning and destruction of the NPCs for players
      *
-     * @param javaPlugin     the instance of the plugin which creates this pool
-     * @param spawnDistance  the distance in which NPCs are spawned for players
-     * @param actionDistance the distance in which NPC actions are displayed for players
+     * @param javaPlugin         the instance of the plugin which creates this pool
+     * @param spawnDistance      the distance in which NPCs are spawned for players
+     * @param actionDistance     the distance in which NPC actions are displayed for players
+     * @param tabListRemoveTicks the time in ticks after which the NPC will be removed from the players tab
      */
-    public NPCPool(@NotNull JavaPlugin javaPlugin, int spawnDistance, int actionDistance) {
+    public NPCPool(@NotNull JavaPlugin javaPlugin, int spawnDistance, int actionDistance, long tabListRemoveTicks) {
         Preconditions.checkArgument(spawnDistance > 0 && actionDistance > 0, "Distance has to be > 0!");
         Preconditions.checkArgument(actionDistance <= spawnDistance, "Action distance cannot be higher than spawn distance!");
+        Preconditions.checkArgument(tabListRemoveTicks > 0, "TabListRemoveTicks have to be > 0!");
 
         this.javaPlugin = javaPlugin;
 
         this.spawnDistance = spawnDistance * spawnDistance;
         this.actionDistance = actionDistance * actionDistance;
+        this.tabListRemoveTicks = tabListRemoveTicks;
 
         Bukkit.getPluginManager().registerEvents(this, javaPlugin);
 
@@ -104,7 +110,7 @@ public class NPCPool implements Listener {
                     if (distance >= this.spawnDistance && npc.isShownFor(player)) {
                         npc.hide(player);
                     } else if (distance <= this.spawnDistance && !npc.isShownFor(player)) {
-                        npc.show(player, this.javaPlugin);
+                        npc.show(player, this.javaPlugin, this.tabListRemoveTicks);
                     }
 
                     if (npc.isLookAtPlayer() && distance <= this.actionDistance) {
@@ -162,8 +168,11 @@ public class NPCPool implements Listener {
         }
     }
 
+    /**
+     * @return a copy of the NPCs this pool manages
+     */
     public Collection<NPC> getNPCs() {
-        return this.npcMap.values();
+        return new HashSet<>(this.npcMap.values());
     }
 
 }

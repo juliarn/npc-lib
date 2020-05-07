@@ -42,7 +42,7 @@ public class NPC {
         this.spawnCustomizer = spawnCustomizer;
     }
 
-    protected void show(@NotNull Player player, @NotNull JavaPlugin javaPlugin) {
+    protected void show(@NotNull Player player, @NotNull JavaPlugin javaPlugin, long tabListRemoveTicks) {
         this.seeingPlayers.add(player);
 
         VisibilityModifier visibilityModifier = new VisibilityModifier(this);
@@ -53,8 +53,8 @@ public class NPC {
             this.spawnCustomizer.handleSpawn(this, player);
 
             // keeping the NPC longer in the player list, otherwise the skin might not be shown sometimes.
-            Bukkit.getScheduler().runTaskLater(javaPlugin, () -> visibilityModifier.queuePlayerListChange(EnumWrappers.PlayerInfoAction.REMOVE_PLAYER).send(player), 15L);
-        }, 20L);
+            Bukkit.getScheduler().runTaskLater(javaPlugin, () -> visibilityModifier.queuePlayerListChange(EnumWrappers.PlayerInfoAction.REMOVE_PLAYER).send(player), tabListRemoveTicks);
+        }, 10L);
     }
 
     protected void hide(@NotNull Player player) {
@@ -223,6 +223,10 @@ public class NPC {
          */
         @NotNull
         public NPC build(@NotNull NPCPool pool) {
+            if (!this.profile.isComplete()) {
+                throw new IllegalStateException("The provided profile has to be complete!");
+            }
+
             NPC npc = new NPC(
                     this.profile.asWrapped(),
                     this.location,
