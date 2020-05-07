@@ -41,7 +41,27 @@ public class Profile {
 
     private Collection<Property> properties;
 
-    Profile(UUID uniqueId, String name, Collection<Property> properties) {
+    public Profile(@NotNull UUID uniqueId) {
+        this(uniqueId, null);
+    }
+
+    public Profile(@NotNull UUID uniqueId, Collection<Property> properties) {
+        this(uniqueId, null, properties);
+    }
+
+    public Profile(@NotNull String name) {
+        this(name, null);
+    }
+
+    public Profile(@NotNull String name, Collection<Property> properties) {
+        this(null, name, properties);
+    }
+
+    public Profile(UUID uniqueId, String name, Collection<Property> properties) {
+        if (name == null && uniqueId == null) {
+            throw new IllegalArgumentException("Either name or uniqueId has to be given!");
+        }
+
         this.uniqueId = uniqueId;
         this.name = name;
         this.properties = properties;
@@ -150,13 +170,25 @@ public class Profile {
         return uniqueId;
     }
 
+    public void setUniqueId(UUID uniqueId) {
+        this.uniqueId = uniqueId;
+    }
+
     public String getName() {
         return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
     @NotNull
     public Collection<Property> getProperties() {
         return this.properties == null ? new HashSet<>() : this.properties;
+    }
+
+    public void setProperties(Collection<Property> properties) {
+        this.properties = properties;
     }
 
     @NotNull
