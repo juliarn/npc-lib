@@ -20,7 +20,7 @@ Maven
 <dependency>
     <groupId>com.github.juliarn</groupId>
     <artifactId>npc-lib</artifactId>
-    <version>2.2-RELEASE</version>
+    <version>2.3-RELEASE</version>
 </dependency>
 ```
 
@@ -31,7 +31,7 @@ maven {
     url 'https://jitpack.io'
 }
 
-compile group: 'com.github.juliarn', name: 'npc-lib', version: '2.2-RELEASE'
+compile group: 'com.github.juliarn', name: 'npc-lib', version: '2.3-RELEASE'
 ```
 
 Add ProtocolLib as dependency to your plugin.yml. It could look like this:
