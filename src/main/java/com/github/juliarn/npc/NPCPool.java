@@ -94,8 +94,11 @@ public class NPCPool implements Listener {
     private void npcTick() {
         Bukkit.getScheduler().runTaskTimerAsynchronously(this.javaPlugin, () -> {
             for (Player player : ImmutableList.copyOf(Bukkit.getOnlinePlayers())) {
-
                 for (NPC npc : this.npcMap.values()) {
+                    if (!npc.getLocation().getWorld().getName().equals(player.getLocation().getWorld().getName())) {
+                        continue;
+                    }
+
                     double distance = npc.getLocation().distanceSquared(player.getLocation());
 
                     if (distance >= this.spawnDistance && npc.isShownFor(player)) {

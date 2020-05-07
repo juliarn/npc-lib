@@ -42,8 +42,11 @@ public class ProfileBuilder {
 
     @NotNull
     public Profile build() {
-        Profile profile = new Profile(this.uniqueId, this.name, this.profileProperties);
+        if (this.name == null || this.uniqueId == null) {
+            throw new IllegalStateException("Either name or unique id has to be given");
+        }
 
+        Profile profile = new Profile(this.uniqueId, this.name, this.profileProperties);
         if (this.complete) {
             profile.complete();
         }

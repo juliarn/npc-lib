@@ -50,6 +50,10 @@ public class Profile {
     }
 
     public boolean complete() {
+        return this.complete(Boolean.TRUE);
+    }
+
+    public boolean complete(boolean texturesAndName) {
         if (this.isComplete()) {
             return true;
         }
@@ -74,6 +78,8 @@ public class Profile {
 
                     if (jsonObject.has("id")) {
                         this.uniqueId = UUID.fromString(UNIQUE_ID_PATTERN.matcher(jsonObject.get("id").getAsString()).replaceAll("$1-$2-$3-$4-$5"));
+                    } else {
+                        return false;
                     }
                 }
 
@@ -83,7 +89,7 @@ public class Profile {
             }
         }
 
-        if (this.name == null || this.properties.isEmpty()) {
+        if ((this.name == null || this.properties.isEmpty()) && texturesAndName) {
             RequestBuilder builder = RequestBuilder
                     .newBuilder(String.format(TEXTURES_REQUEST_URL, this.uniqueId.toString().replace("-", ""), false))
                     .setConnectTimeout(10, TimeUnit.SECONDS)
