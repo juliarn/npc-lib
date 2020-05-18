@@ -19,6 +19,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.event.player.PlayerToggleSneakEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
@@ -137,6 +138,18 @@ public class NPCPool implements Listener {
             this.npcMap.remove(entityId);
             npc.getSeeingPlayers().forEach(npc::hide);
         }
+    }
+
+    @EventHandler
+    public void handleRespawn(PlayerRespawnEvent event) {
+        Player player = event.getPlayer();
+
+        this.npcMap.values().stream()
+                .filter(npc -> npc.isShownFor(player))
+                .forEach(npc -> {
+                    npc.hide(player);
+                    npc.show(player, this.javaPlugin, this.tabListRemoveTicks);
+                });
     }
 
     @EventHandler
