@@ -166,7 +166,8 @@ public class NPCPool implements Listener {
         Player player = event.getPlayer();
 
         this.npcMap.values().stream()
-                .filter(npc -> npc.isImitatePlayer() && npc.isShownFor(player) && npc.getLocation().distanceSquared(player.getLocation()) <= this.actionDistance)
+                .filter(npc -> npc.isImitatePlayer() && npc.isShownFor(player))
+                .filter(npc -> npc.getLocation().getWorld().equals(player.getWorld()) && npc.getLocation().distanceSquared(player.getLocation()) <= this.actionDistance)
                 .forEach(npc -> npc.metadata().queue(MetadataModifier.EntityMetadata.SNEAKING, event.isSneaking()).send(player));
     }
 
@@ -176,7 +177,8 @@ public class NPCPool implements Listener {
 
         if (event.getAction() == Action.LEFT_CLICK_AIR || event.getAction() == Action.LEFT_CLICK_BLOCK) {
             this.npcMap.values().stream()
-                    .filter(npc -> npc.isImitatePlayer() && npc.isShownFor(player) && npc.getLocation().distanceSquared(player.getLocation()) <= this.actionDistance)
+                    .filter(npc -> npc.isImitatePlayer() && npc.isShownFor(player))
+                    .filter(npc -> npc.getLocation().getWorld().equals(player.getWorld()) && npc.getLocation().distanceSquared(player.getLocation()) <= this.actionDistance)
                     .forEach(npc -> npc.animation().queue(AnimationModifier.EntityAnimation.SWING_MAIN_ARM).send(player));
         }
     }
