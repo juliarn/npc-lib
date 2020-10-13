@@ -21,6 +21,8 @@ public class NPC {
 
     private final Collection<Player> seeingPlayers = new CopyOnWriteArraySet<>();
 
+    private final Collection<Player> excludedPlayers = new CopyOnWriteArraySet<>();
+
     private final int entityId = RANDOM.nextInt(Short.MAX_VALUE);
 
     private final WrappedGameProfile gameProfile;
@@ -79,6 +81,35 @@ public class NPC {
 
     public boolean isShownFor(Player player) {
         return this.seeingPlayers.contains(player);
+    }
+
+    /**
+     * Adds a player which should be explicitly excluded from seeing this NPC
+     *
+     * @param player the player to be excluded
+     */
+    public void addExcludedPlayer(Player player) {
+        this.excludedPlayers.add(player);
+    }
+
+    /**
+     * Removes a player from being explicitly excluded from seeing this NPC
+     *
+     * @param player the player to be included again
+     */
+    public void removeExcludedPlayer(Player player) {
+        this.excludedPlayers.remove(player);
+    }
+
+    /**
+     * @return a modifiable collection of all players which are explicitly excluded from seeing this NPC
+     */
+    public Collection<Player> getExcludedPlayers() {
+        return this.excludedPlayers;
+    }
+
+    public boolean isExcluded(Player player) {
+        return this.excludedPlayers.contains(player);
     }
 
     /**
