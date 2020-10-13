@@ -1,5 +1,6 @@
 # NPC-Lib
-Minecraft NPC library for 1.8-1.15 servers.
+Asynchronous, high-performance Minecraft NPC library for 1.8-1.16 servers.
+
 This Library does only support the latest patch release of a supported version (for example 1.13.2).
 Issues with older patch versions (for example 1.13.1) won't be fixed.
 
@@ -20,7 +21,7 @@ Maven
 <dependency>
     <groupId>com.github.juliarn</groupId>
     <artifactId>npc-lib</artifactId>
-    <version>2.3-RELEASE</version>
+    <version>2.4-RELEASE</version>
 </dependency>
 ```
 
@@ -31,7 +32,7 @@ maven {
     url 'https://jitpack.io'
 }
 
-compile group: 'com.github.juliarn', name: 'npc-lib', version: '2.3-RELEASE'
+compile group: 'com.github.juliarn', name: 'npc-lib', version: '2.4-RELEASE'
 ```
 
 Add ProtocolLib as dependency to your plugin.yml. It could look like this:

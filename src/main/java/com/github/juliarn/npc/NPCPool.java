@@ -19,6 +19,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.event.player.PlayerToggleSneakEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
@@ -102,18 +103,21 @@ public class NPCPool implements Listener {
             for (Player player : ImmutableList.copyOf(Bukkit.getOnlinePlayers())) {
                 for (NPC npc : this.npcMap.values()) {
                     if (!npc.getLocation().getWorld().equals(player.getLocation().getWorld())) {
+                        if (npc.isShownFor(player)) {
+                            npc.hide(player);
+                        }
                         continue;
                     }
 
                     double distance = npc.getLocation().distanceSquared(player.getLocation());
 
-                    if (distance >= this.spawnDistance && npc.isShownFor(player)) {
+                    if ((npc.isExcluded(player) || distance >= this.spawnDistance) && npc.isShownFor(player)) {
                         npc.hide(player);
-                    } else if (distance <= this.spawnDistance && !npc.isShownFor(player)) {
+                    } else if ((!npc.isExcluded(player) && distance <= this.spawnDistance) && !npc.isShownFor(player)) {
                         npc.show(player, this.javaPlugin, this.tabListRemoveTicks);
                     }
 
-                    if (npc.isLookAtPlayer() && distance <= this.actionDistance) {
+                    if (npc.isShownFor(player) && npc.isLookAtPlayer() && distance <= this.actionDistance) {
                         npc.rotation().queueLookAt(player.getLocation()).send(player);
                     }
                 }
@@ -140,12 +144,24 @@ public class NPCPool implements Listener {
     }
 
     @EventHandler
-    public void handleQuit(PlayerQuitEvent event) {
+    public void handleRespawn(PlayerRespawnEvent event) {
         Player player = event.getPlayer();
 
         this.npcMap.values().stream()
                 .filter(npc -> npc.isShownFor(player))
-                .forEach(npc -> npc.removeSeeingPlayer(player));
+                .forEach(npc -> npc.hide(player));
+    }
+
+    @EventHandler
+    public void handleQuit(PlayerQuitEvent event) {
+        Player player = event.getPlayer();
+
+        this.npcMap.values().stream()
+                .filter(npc -> npc.isShownFor(player) || npc.isExcluded(player))
+                .forEach(npc -> {
+                    npc.removeSeeingPlayer(player);
+                    npc.removeExcludedPlayer(player);
+                });
     }
 
     @EventHandler
@@ -153,7 +169,8 @@ public class NPCPool implements Listener {
         Player player = event.getPlayer();
 
         this.npcMap.values().stream()
-                .filter(npc -> npc.isImitatePlayer() && npc.isShownFor(player) && npc.getLocation().distanceSquared(player.getLocation()) <= this.actionDistance)
+                .filter(npc -> npc.isImitatePlayer() && npc.isShownFor(player))
+                .filter(npc -> npc.getLocation().getWorld().equals(player.getWorld()) && npc.getLocation().distanceSquared(player.getLocation()) <= this.actionDistance)
                 .forEach(npc -> npc.metadata().queue(MetadataModifier.EntityMetadata.SNEAKING, event.isSneaking()).send(player));
     }
 
@@ -163,7 +180,8 @@ public class NPCPool implements Listener {
 
         if (event.getAction() == Action.LEFT_CLICK_AIR || event.getAction() == Action.LEFT_CLICK_BLOCK) {
             this.npcMap.values().stream()
-                    .filter(npc -> npc.isImitatePlayer() && npc.isShownFor(player) && npc.getLocation().distanceSquared(player.getLocation()) <= this.actionDistance)
+                    .filter(npc -> npc.isImitatePlayer() && npc.isShownFor(player))
+                    .filter(npc -> npc.getLocation().getWorld().equals(player.getWorld()) && npc.getLocation().distanceSquared(player.getLocation()) <= this.actionDistance)
                     .forEach(npc -> npc.animation().queue(AnimationModifier.EntityAnimation.SWING_MAIN_ARM).send(player));
         }
     }
