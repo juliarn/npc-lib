@@ -103,6 +103,9 @@ public class NPCPool implements Listener {
             for (Player player : ImmutableList.copyOf(Bukkit.getOnlinePlayers())) {
                 for (NPC npc : this.npcMap.values()) {
                     if (!npc.getLocation().getWorld().equals(player.getLocation().getWorld())) {
+                        if (npc.isShownFor(player)) {
+                            npc.hide(player);
+                        }
                         continue;
                     }
 
@@ -146,10 +149,7 @@ public class NPCPool implements Listener {
 
         this.npcMap.values().stream()
                 .filter(npc -> npc.isShownFor(player))
-                .forEach(npc -> {
-                    npc.hide(player);
-                    npc.show(player, this.javaPlugin, this.tabListRemoveTicks);
-                });
+                .forEach(npc -> npc.hide(player));
     }
 
     @EventHandler
