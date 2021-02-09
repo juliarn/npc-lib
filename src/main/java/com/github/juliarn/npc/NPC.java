@@ -16,9 +16,10 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.Collections;
 import java.util.Random;
 import java.util.concurrent.CopyOnWriteArraySet;
 
@@ -39,6 +40,15 @@ public class NPC {
   private boolean lookAtPlayer;
   private boolean imitatePlayer;
 
+  /**
+   * Creates a new npc instance.
+   *
+   * @param profile         The profile of the npc.
+   * @param location        The location of the npc.
+   * @param lookAtPlayer    If the npc should always look in the direction of the player.
+   * @param imitatePlayer   If the npc should imitate the player.
+   * @param spawnCustomizer The spawn customizer of the npc.
+   */
   private NPC(Profile profile, Location location, boolean lookAtPlayer, boolean imitatePlayer, SpawnCustomizer spawnCustomizer) {
     this.profile = profile;
     this.gameProfile = this.convertProfile(profile);
@@ -49,11 +59,25 @@ public class NPC {
     this.spawnCustomizer = spawnCustomizer;
   }
 
+  /**
+   * Creates a new builder instance for a npc.
+   *
+   * @return a new builder instance for a npc.
+   * @since 2.5-SNAPSHOT
+   */
   @NotNull
   public static NPC.Builder builder() {
     return new NPC.Builder();
   }
 
+  /**
+   * Shows this npc to a player.
+   *
+   * @param player             The player to show this npc to.
+   * @param javaPlugin         The plugin requesting the change.
+   * @param tabListRemoveTicks The ticks before removing the player from the player list after spawning.
+   *                           A negative value indicates that this npc shouldn't get removed from the player list.
+   */
   protected void show(@NotNull Player player, @NotNull JavaPlugin javaPlugin, long tabListRemoveTicks) {
     this.seeingPlayers.add(player);
 
@@ -64,11 +88,22 @@ public class NPC {
       visibilityModifier.queueSpawn().send(player);
       this.spawnCustomizer.handleSpawn(this, player);
 
-      // keeping the NPC longer in the player list, otherwise the skin might not be shown sometimes.
-      Bukkit.getScheduler().runTaskLater(javaPlugin, () -> visibilityModifier.queuePlayerListChange(EnumWrappers.PlayerInfoAction.REMOVE_PLAYER).send(player), tabListRemoveTicks);
+      if (tabListRemoveTicks >= 0) {
+        // keeping the NPC longer in the player list, otherwise the skin might not be shown sometimes.
+        Bukkit.getScheduler().runTaskLater(
+          javaPlugin,
+          () -> visibilityModifier.queuePlayerListChange(EnumWrappers.PlayerInfoAction.REMOVE_PLAYER).send(player),
+          tabListRemoveTicks
+        );
+      }
     }, 10L);
   }
 
+  /**
+   * Hides this npc from a player.
+   *
+   * @param player The player to hide the npc for.
+   */
   protected void hide(@NotNull Player player) {
     new VisibilityModifier(this)
       .queuePlayerListChange(EnumWrappers.PlayerInfoAction.REMOVE_PLAYER)
@@ -78,6 +113,13 @@ public class NPC {
     this.removeSeeingPlayer(player);
   }
 
+  /**
+   * Converts a profile to a protocol lib profile wrapper.
+   *
+   * @param profile The profile to convert.
+   * @return The protocol lib wrapper.
+   * @since 2.5-SNAPSHOT
+   */
   @NotNull
   protected WrappedGameProfile convertProfile(@NotNull Profile profile) {
     WrappedGameProfile gameProfile = new WrappedGameProfile(profile.getUniqueId(), profile.getName());
@@ -88,18 +130,33 @@ public class NPC {
     return gameProfile;
   }
 
-  protected void removeSeeingPlayer(Player player) {
+  /**
+   * Removes this player from the players that can see the npc.
+   *
+   * @param player The player to remove.
+   */
+  protected void removeSeeingPlayer(@NotNull Player player) {
     this.seeingPlayers.remove(player);
   }
 
   /**
-   * @return a copy of all players seeing this NPC
+   * Get an immutable copy of all players which can see this npc.
+   *
+   * @return a copy of all players seeing this npc.
    */
+  @NotNull
+  @Unmodifiable
   public Collection<Player> getSeeingPlayers() {
-    return new HashSet<>(this.seeingPlayers);
+    return Collections.unmodifiableCollection(this.seeingPlayers);
   }
 
-  public boolean isShownFor(Player player) {
+  /**
+   * Get if this npc is shown for the given {@code player}.
+   *
+   * @param player The player to check.
+   * @return If the npc is shown for the given {@code player}.
+   */
+  public boolean isShownFor(@NotNull Player player) {
     return this.seeingPlayers.contains(player);
   }
 
@@ -108,7 +165,7 @@ public class NPC {
    *
    * @param player the player to be excluded
    */
-  public void addExcludedPlayer(Player player) {
+  public void addExcludedPlayer(@NotNull Player player) {
     this.excludedPlayers.add(player);
   }
 
@@ -117,18 +174,29 @@ public class NPC {
    *
    * @param player the player to be included again
    */
-  public void removeExcludedPlayer(Player player) {
+  public void removeExcludedPlayer(@NotNull Player player) {
     this.excludedPlayers.remove(player);
   }
 
   /**
-   * @return a modifiable collection of all players which are explicitly excluded from seeing this NPC
+   * A modifiable collection of all players which are not allowed to see this player. Modifications
+   * to the returned collection should be done using {@link #addExcludedPlayer(Player)} and
+   * {@link #removeExcludedPlayer(Player)}.
+   *
+   * @return a collection of all players which are explicitly excluded from seeing this NPC.
    */
+  @NotNull
   public Collection<Player> getExcludedPlayers() {
     return this.excludedPlayers;
   }
 
-  public boolean isExcluded(Player player) {
+  /**
+   * Get if the specified {@code player} is explicitly not allowed to see this npc.
+   *
+   * @param player The player to check.
+   * @return if the specified {@code player} is explicitly not allowed to see this npc.
+   */
+  public boolean isExcluded(@NotNull Player player) {
     return this.excludedPlayers.contains(player);
   }
 
@@ -137,6 +205,7 @@ public class NPC {
    *
    * @return a animation modifier modifying this NPC
    */
+  @NotNull
   public AnimationModifier animation() {
     return new AnimationModifier(this);
   }
@@ -146,6 +215,7 @@ public class NPC {
    *
    * @return a rotation modifier modifying this NPC
    */
+  @NotNull
   public RotationModifier rotation() {
     return new RotationModifier(this);
   }
@@ -155,6 +225,7 @@ public class NPC {
    *
    * @return an equipment modifier modifying this NPC
    */
+  @NotNull
   public EquipmentModifier equipment() {
     return new EquipmentModifier(this);
   }
@@ -164,8 +235,20 @@ public class NPC {
    *
    * @return a metadata modifier modifying this NPC
    */
+  @NotNull
   public MetadataModifier metadata() {
     return new MetadataModifier(this);
+  }
+
+  /**
+   * Creates a new visibility modifier which serves methods to change an NPCs visibility.
+   *
+   * @return a visibility modifier modifying this NPC
+   * @since 2.5-SNAPSHOT
+   */
+  @NotNull
+  public VisibilityModifier visibility() {
+    return new VisibilityModifier(this);
   }
 
   /**
@@ -179,49 +262,89 @@ public class NPC {
     return this.gameProfile;
   }
 
+  /**
+   * The profile of this npc. The returned profile is mutable, however this has no effect to this npc.
+   *
+   * @return The profile of this npc.
+   * @since 2.5-SNAPSHOT
+   */
   @NotNull
   public Profile getProfile() {
     return this.profile;
   }
 
+  /**
+   * Get the entity id of this npc.
+   *
+   * @return the entity id of this npc.
+   */
   public int getEntityId() {
     return this.entityId;
   }
 
+  /**
+   * Get the location where this npc is located.
+   *
+   * @return the location where this npc is located.
+   */
   @NotNull
   public Location getLocation() {
     return this.location;
   }
 
+  /**
+   * Gets if this npc should always look to the player.
+   *
+   * @return if this npc should always look to the player.
+   */
   public boolean isLookAtPlayer() {
     return this.lookAtPlayer;
   }
 
+  /**
+   * Sets if this npc should always look to the player.
+   *
+   * @param lookAtPlayer if this npc should always look to the player.
+   */
   public void setLookAtPlayer(boolean lookAtPlayer) {
     this.lookAtPlayer = lookAtPlayer;
   }
 
+  /**
+   * Gets if this npc should always imitate the player, including sneaking and hitting.
+   *
+   * @return if this npc should always imitate the player.
+   */
   public boolean isImitatePlayer() {
     return this.imitatePlayer;
   }
 
+  /**
+   * Sets if this npc should always imitate the player, including sneaking and hitting.
+   *
+   * @param imitatePlayer if this npc should always imitate the player.
+   */
   public void setImitatePlayer(boolean imitatePlayer) {
     this.imitatePlayer = imitatePlayer;
   }
 
+  /**
+   * A builder for a npc.
+   */
   public static class Builder {
 
     private Profile profile;
 
-    private Location location = new Location(Bukkit.getWorlds().get(0), 0D, 0D, 0D);
-
     private boolean lookAtPlayer = true;
-
     private boolean imitatePlayer = true;
 
+    private Location location = new Location(Bukkit.getWorlds().get(0), 0D, 0D, 0D);
     private SpawnCustomizer spawnCustomizer = (npc, player) -> {
     };
 
+    /**
+     * Creates a new builder instance.
+     */
     private Builder() {
     }
 
