@@ -3,6 +3,7 @@ package com.github.juliarn.npc;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
+@FunctionalInterface
 public interface SpawnCustomizer {
 
   /**
@@ -14,5 +15,4 @@ public interface SpawnCustomizer {
    * @param player the player the NPC has been spawned for
    */
   void handleSpawn(@NotNull NPC npc, @NotNull Player player);
-
 }
