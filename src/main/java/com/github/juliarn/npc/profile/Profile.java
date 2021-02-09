@@ -170,7 +170,7 @@ public class Profile implements Cloneable {
       JsonObject object = profileElement.getAsJsonObject();
       if (object.has("name") && object.has("properties")) {
         this.name = this.name == null ? object.get("name").getAsString() : this.name;
-        this.properties.addAll(GSON.get().fromJson(object.get("properties"), PROPERTY_LIST_TYPE));
+        this.getProperties().addAll(GSON.get().fromJson(object.get("properties"), PROPERTY_LIST_TYPE));
       } else {
         return false;
       }
@@ -370,7 +370,7 @@ public class Profile implements Cloneable {
     WrappedGameProfile profile = new WrappedGameProfile(this.getUniqueId(), this.getName());
 
     if (withProperties) {
-      this.getProperties().forEach(property -> profile.getProperties().put(property.name, property.asWrapped()));
+      this.getProperties().forEach(property -> profile.getProperties().put(property.getName(), property.asWrapped()));
     }
 
     return profile;
@@ -386,7 +386,7 @@ public class Profile implements Cloneable {
     try {
       return (Profile) super.clone();
     } catch (CloneNotSupportedException exception) {
-      return new Profile(this.uniqueId, this.name, new HashSet<>(this.properties));
+      return new Profile(this.uniqueId, this.name, this.properties == null ? null : new HashSet<>(this.properties));
     }
   }
 
