@@ -1,6 +1,5 @@
 package com.github.juliarn.npc.modifier;
 
-
 import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.wrappers.EnumWrappers;
@@ -8,19 +7,48 @@ import com.comphenix.protocol.wrappers.PlayerInfoData;
 import com.comphenix.protocol.wrappers.WrappedChatComponent;
 import com.comphenix.protocol.wrappers.WrappedDataWatcher;
 import com.github.juliarn.npc.NPC;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 
+/**
+ * A modifier for modifying the visibility of a player.
+ */
 public class VisibilityModifier extends NPCModifier {
 
+  /**
+   * Creates a new modifier.
+   *
+   * @param npc The npc this modifier is for.
+   * @see NPC#visibility()
+   */
+  @ApiStatus.Internal
   public VisibilityModifier(@NotNull NPC npc) {
     super(npc);
   }
 
-  public VisibilityModifier queuePlayerListChange(EnumWrappers.PlayerInfoAction action) {
-    PacketContainer packetContainer = super.newContainer(PacketType.Play.Server.PLAYER_INFO, false);
+  /**
+   * Enqueues the change of the player list for the wrapped npc.
+   *
+   * @param action The action of the player list change.
+   * @return The same instance of this class, for chaining.
+   * @since 2.5-SNAPSHOT
+   */
+  @NotNull
+  public VisibilityModifier queuePlayerListChange(@NotNull PlayerInfoAction action) {
+    return this.queuePlayerListChange(action.handle);
+  }
 
+  /**
+   * Enqueues the change of the player list for the wrapped npc.
+   *
+   * @param action The action of the player list change as a protocol lib wrapper.
+   * @return The same instance of this class, for chaining.
+   */
+  @NotNull
+  public VisibilityModifier queuePlayerListChange(@NotNull EnumWrappers.PlayerInfoAction action) {
+    PacketContainer packetContainer = super.newContainer(PacketType.Play.Server.PLAYER_INFO, false);
     packetContainer.getPlayerInfoAction().write(0, action);
 
     PlayerInfoData playerInfoData = new PlayerInfoData(
@@ -34,9 +62,14 @@ public class VisibilityModifier extends NPCModifier {
     return this;
   }
 
+  /**
+   * Enqueues the spawn of the wrapped npc.
+   *
+   * @return The same instance of this class, for chaining.
+   */
+  @NotNull
   public VisibilityModifier queueSpawn() {
     PacketContainer packetContainer = super.newContainer(PacketType.Play.Server.NAMED_ENTITY_SPAWN);
-
     packetContainer.getUUIDs().write(0, super.npc.getProfile().getUniqueId());
 
     double x = super.npc.getLocation().getX();
@@ -66,10 +99,57 @@ public class VisibilityModifier extends NPCModifier {
     return this;
   }
 
+  /**
+   * Enqueues the de-spawn of the wrapped npc.
+   *
+   * @return The same instance of this class, for chaining.
+   */
+  @NotNull
   public VisibilityModifier queueDestroy() {
     PacketContainer packetContainer = super.newContainer(PacketType.Play.Server.ENTITY_DESTROY, false);
     packetContainer.getIntegerArrays().write(0, new int[]{super.npc.getEntityId()});
     return this;
   }
 
+  /**
+   * A wrapper for all available player info actions.
+   *
+   * @since 2.5-SNAPSHOT
+   */
+  public enum PlayerInfoAction {
+    /**
+     * Adds a player to the player list.
+     */
+    ADD_PLAYER(EnumWrappers.PlayerInfoAction.ADD_PLAYER),
+    /**
+     * Updates the game mode of a player.
+     */
+    UPDATE_GAME_MODE(EnumWrappers.PlayerInfoAction.UPDATE_GAME_MODE),
+    /**
+     * Updates the latency of a player.
+     */
+    UPDATE_LATENCY(EnumWrappers.PlayerInfoAction.UPDATE_LATENCY),
+    /**
+     * Updates the display name of a player.
+     */
+    UPDATE_DISPLAY_NAME(EnumWrappers.PlayerInfoAction.UPDATE_DISPLAY_NAME),
+    /**
+     * Removes a specific player from the player list.
+     */
+    REMOVE_PLAYER(EnumWrappers.PlayerInfoAction.REMOVE_PLAYER);
+
+    /**
+     * The protocol lib wrapper for the action.
+     */
+    private final EnumWrappers.PlayerInfoAction handle;
+
+    /**
+     * Creates a new action.
+     *
+     * @param handle The protocol lib wrapper for the action.
+     */
+    PlayerInfoAction(EnumWrappers.PlayerInfoAction handle) {
+      this.handle = handle;
+    }
+  }
 }

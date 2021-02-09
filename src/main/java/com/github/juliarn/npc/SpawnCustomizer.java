@@ -3,6 +3,9 @@ package com.github.juliarn.npc;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * A spawn customizer for modifying a npc at spawn time for a specific player.
+ */
 @FunctionalInterface
 public interface SpawnCustomizer {
 
