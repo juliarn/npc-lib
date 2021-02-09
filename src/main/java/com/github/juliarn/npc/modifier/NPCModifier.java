@@ -18,66 +18,64 @@ import java.util.concurrent.CopyOnWriteArrayList;
  */
 public class NPCModifier {
 
-    public static final int MINECRAFT_VERSION = ProtocolLibrary.getProtocolManager().getMinecraftVersion().getMinor();
+  public static final int MINECRAFT_VERSION = ProtocolLibrary.getProtocolManager().getMinecraftVersion().getMinor();
+  private final List<PacketContainer> packetContainers = new CopyOnWriteArrayList<>();
+  protected NPC npc;
 
-    protected NPC npc;
+  public NPCModifier(@NotNull NPC npc) {
+    this.npc = npc;
+  }
 
-    private final List<PacketContainer> packetContainers = new CopyOnWriteArrayList<>();
+  protected PacketContainer newContainer(@NotNull PacketType packetType) {
+    return this.newContainer(packetType, true);
+  }
 
-    public NPCModifier(@NotNull NPC npc) {
-        this.npc = npc;
+  protected PacketContainer newContainer(@NotNull PacketType packetType, boolean withEntityId) {
+    PacketContainer packetContainer = new PacketContainer(packetType);
+
+    if (withEntityId) {
+      packetContainer.getIntegers().write(0, this.npc.getEntityId());
     }
+    this.packetContainers.add(packetContainer);
 
-    protected PacketContainer newContainer(@NotNull PacketType packetType) {
-        return this.newContainer(packetType, true);
+    return packetContainer;
+  }
+
+  protected PacketContainer lastContainer() {
+    return this.packetContainers.get(this.packetContainers.size() - 1);
+  }
+
+  protected PacketContainer lastContainer(PacketContainer def) {
+    if (this.packetContainers.isEmpty()) {
+      return def;
     }
+    return this.lastContainer();
+  }
 
-    protected PacketContainer newContainer(@NotNull PacketType packetType, boolean withEntityId) {
-        PacketContainer packetContainer = new PacketContainer(packetType);
+  /**
+   * Sends the queued modifications to all players
+   */
+  public void send() {
+    this.send(Bukkit.getOnlinePlayers().toArray(new Player[0]));
+  }
 
-        if (withEntityId) {
-            packetContainer.getIntegers().write(0, this.npc.getEntityId());
+  /**
+   * Sends the queued modifications to certain players
+   *
+   * @param targetPlayers the players which should see the modification
+   */
+  public void send(@NotNull Player... targetPlayers) {
+    for (Player targetPlayer : targetPlayers) {
+      try {
+        for (PacketContainer packetContainer : this.packetContainers) {
+          ProtocolLibrary.getProtocolManager().sendServerPacket(targetPlayer, packetContainer);
         }
-        this.packetContainers.add(packetContainer);
-
-        return packetContainer;
+      } catch (InvocationTargetException exception) {
+        exception.printStackTrace();
+      }
     }
 
-    protected PacketContainer lastContainer() {
-        return this.packetContainers.get(this.packetContainers.size() - 1);
-    }
-
-    protected PacketContainer lastContainer(PacketContainer def) {
-        if (this.packetContainers.isEmpty()) {
-            return def;
-        }
-        return this.lastContainer();
-    }
-
-    /**
-     * Sends the queued modifications to all players
-     */
-    public void send() {
-        this.send(Bukkit.getOnlinePlayers().toArray(new Player[0]));
-    }
-
-    /**
-     * Sends the queued modifications to certain players
-     *
-     * @param targetPlayers the players which should see the modification
-     */
-    public void send(@NotNull Player... targetPlayers) {
-        for (Player targetPlayer : targetPlayers) {
-            try {
-                for (PacketContainer packetContainer : this.packetContainers) {
-                    ProtocolLibrary.getProtocolManager().sendServerPacket(targetPlayer, packetContainer);
-                }
-            } catch (InvocationTargetException exception) {
-                exception.printStackTrace();
-            }
-        }
-
-        this.packetContainers.clear();
-    }
+    this.packetContainers.clear();
+  }
 
 }
