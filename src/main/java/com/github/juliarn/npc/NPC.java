@@ -13,6 +13,7 @@ import com.google.common.base.Preconditions;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -74,24 +75,24 @@ public class NPC {
    * Shows this npc to a player.
    *
    * @param player             The player to show this npc to.
-   * @param javaPlugin         The plugin requesting the change.
+   * @param plugin         The plugin requesting the change.
    * @param tabListRemoveTicks The ticks before removing the player from the player list after spawning.
    *                           A negative value indicates that this npc shouldn't get removed from the player list.
    */
-  protected void show(@NotNull Player player, @NotNull JavaPlugin javaPlugin, long tabListRemoveTicks) {
+  protected void show(@NotNull Player player, @NotNull Plugin plugin, long tabListRemoveTicks) {
     this.seeingPlayers.add(player);
 
     VisibilityModifier visibilityModifier = new VisibilityModifier(this);
     visibilityModifier.queuePlayerListChange(EnumWrappers.PlayerInfoAction.ADD_PLAYER).send(player);
 
-    Bukkit.getScheduler().runTaskLater(javaPlugin, () -> {
+    Bukkit.getScheduler().runTaskLater(plugin, () -> {
       visibilityModifier.queueSpawn().send(player);
       this.spawnCustomizer.handleSpawn(this, player);
 
       if (tabListRemoveTicks >= 0) {
         // keeping the NPC longer in the player list, otherwise the skin might not be shown sometimes.
         Bukkit.getScheduler().runTaskLater(
-          javaPlugin,
+          plugin,
           () -> visibilityModifier.queuePlayerListChange(EnumWrappers.PlayerInfoAction.REMOVE_PLAYER).send(player),
           tabListRemoveTicks
         );
