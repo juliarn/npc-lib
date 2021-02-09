@@ -14,7 +14,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
-import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
@@ -75,7 +74,7 @@ public class NPC {
    * Shows this npc to a player.
    *
    * @param player             The player to show this npc to.
-   * @param plugin         The plugin requesting the change.
+   * @param plugin             The plugin requesting the change.
    * @param tabListRemoveTicks The ticks before removing the player from the player list after spawning.
    *                           A negative value indicates that this npc shouldn't get removed from the player list.
    */
