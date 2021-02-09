@@ -129,7 +129,7 @@ public class LabyModModifier extends NPCModifier {
     EMOTE("emote_api", "emote_id"),
     /**
      * Plays a sticker to the client. For a overview of all stickers see
-     * <a href="https://dl.labymod.net/stickers.json>here</a>.
+     * <a href="https://dl.labymod.net/stickers.json">here</a>.
      */
     STICKER("sticker_api", "sticker_id");
 
