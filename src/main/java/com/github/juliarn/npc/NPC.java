@@ -5,6 +5,7 @@ import com.comphenix.protocol.wrappers.WrappedGameProfile;
 import com.comphenix.protocol.wrappers.WrappedSignedProperty;
 import com.github.juliarn.npc.modifier.AnimationModifier;
 import com.github.juliarn.npc.modifier.EquipmentModifier;
+import com.github.juliarn.npc.modifier.LabyModModifier;
 import com.github.juliarn.npc.modifier.MetadataModifier;
 import com.github.juliarn.npc.modifier.RotationModifier;
 import com.github.juliarn.npc.modifier.VisibilityModifier;
@@ -249,6 +250,17 @@ public class NPC {
   @NotNull
   public VisibilityModifier visibility() {
     return new VisibilityModifier(this);
+  }
+
+  /**
+   * Creates a new labymod modifier which serves methods to play emotes and stickers.
+   *
+   * @return a labymod modifier modifying this NPC
+   * @since 2.5-SNAPSHOT
+   */
+  @NotNull
+  public LabyModModifier labymod() {
+    return new LabyModModifier(this);
   }
 
   /**
