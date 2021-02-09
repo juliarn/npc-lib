@@ -2,16 +2,19 @@ package com.github.juliarn.npc;
 
 import com.comphenix.protocol.wrappers.EnumWrappers;
 import com.comphenix.protocol.wrappers.WrappedGameProfile;
+import com.comphenix.protocol.wrappers.WrappedSignedProperty;
 import com.github.juliarn.npc.modifier.AnimationModifier;
 import com.github.juliarn.npc.modifier.EquipmentModifier;
 import com.github.juliarn.npc.modifier.MetadataModifier;
 import com.github.juliarn.npc.modifier.RotationModifier;
 import com.github.juliarn.npc.modifier.VisibilityModifier;
 import com.github.juliarn.npc.profile.Profile;
+import com.google.common.base.Preconditions;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -24,25 +27,31 @@ public class NPC {
   private static final Random RANDOM = new Random();
 
   private final Collection<Player> seeingPlayers = new CopyOnWriteArraySet<>();
-
   private final Collection<Player> excludedPlayers = new CopyOnWriteArraySet<>();
 
   private final int entityId = RANDOM.nextInt(Short.MAX_VALUE);
 
-  private final WrappedGameProfile gameProfile;
-
   private final Location location;
+  private final Profile profile;
+  private final WrappedGameProfile gameProfile;
   private final SpawnCustomizer spawnCustomizer;
+
   private boolean lookAtPlayer;
   private boolean imitatePlayer;
 
-  private NPC(WrappedGameProfile gameProfile, Location location, boolean lookAtPlayer, boolean imitatePlayer, SpawnCustomizer spawnCustomizer) {
-    this.gameProfile = gameProfile;
+  private NPC(Profile profile, Location location, boolean lookAtPlayer, boolean imitatePlayer, SpawnCustomizer spawnCustomizer) {
+    this.profile = profile;
+    this.gameProfile = this.convertProfile(profile);
 
     this.location = location;
     this.lookAtPlayer = lookAtPlayer;
     this.imitatePlayer = imitatePlayer;
     this.spawnCustomizer = spawnCustomizer;
+  }
+
+  @NotNull
+  public static NPC.Builder builder() {
+    return new NPC.Builder();
   }
 
   protected void show(@NotNull Player player, @NotNull JavaPlugin javaPlugin, long tabListRemoveTicks) {
@@ -67,6 +76,16 @@ public class NPC {
       .send(player);
 
     this.removeSeeingPlayer(player);
+  }
+
+  @NotNull
+  protected WrappedGameProfile convertProfile(@NotNull Profile profile) {
+    WrappedGameProfile gameProfile = new WrappedGameProfile(profile.getUniqueId(), profile.getName());
+    profile.getProperties().forEach(property -> gameProfile.getProperties().put(
+      property.getName(),
+      new WrappedSignedProperty(property.getName(), property.getValue(), property.getSignature())
+    ));
+    return gameProfile;
   }
 
   protected void removeSeeingPlayer(Player player) {
@@ -149,9 +168,20 @@ public class NPC {
     return new MetadataModifier(this);
   }
 
+  /**
+   * Get the protocol lib profile wrapper for this npc. To use this method {@code ProtocolLib} is needed
+   * as a dependency of your project. If you don't want to do that, use {@link #getProfile()} instead.
+   *
+   * @return the protocol lib profile wrapper for this npc
+   */
   @NotNull
   public WrappedGameProfile getGameProfile() {
     return this.gameProfile;
+  }
+
+  @NotNull
+  public Profile getProfile() {
+    return this.profile;
   }
 
   public int getEntityId() {
@@ -179,10 +209,9 @@ public class NPC {
     this.imitatePlayer = imitatePlayer;
   }
 
-
   public static class Builder {
 
-    private final Profile profile;
+    private Profile profile;
 
     private Location location = new Location(Bukkit.getWorlds().get(0), 0D, 0D, 0D);
 
@@ -193,13 +222,30 @@ public class NPC {
     private SpawnCustomizer spawnCustomizer = (npc, player) -> {
     };
 
+    private Builder() {
+    }
+
     /**
      * Creates a new instance of the NPC builder
      *
      * @param profile a player profile defining UUID, name and textures of the NPC
+     * @deprecated Use {@link NPC#builder()} instead
      */
+    @Deprecated
+    @ApiStatus.ScheduledForRemoval
     public Builder(@NotNull Profile profile) {
       this.profile = profile;
+    }
+
+    /**
+     * Sets the profile of the npc, cannot be changed afterwards
+     *
+     * @param profile the profile
+     * @return this builder instance
+     */
+    public Builder profile(@NotNull Profile profile) {
+      this.profile = Preconditions.checkNotNull(profile, "profile");
+      return this;
     }
 
     /**
@@ -209,7 +255,7 @@ public class NPC {
      * @return this builder instance
      */
     public Builder location(@NotNull Location location) {
-      this.location = location;
+      this.location = Preconditions.checkNotNull(location, "location");
       return this;
     }
 
@@ -243,7 +289,7 @@ public class NPC {
      * @return this builder instance
      */
     public Builder spawnCustomizer(@NotNull SpawnCustomizer spawnCustomizer) {
-      this.spawnCustomizer = spawnCustomizer;
+      this.spawnCustomizer = Preconditions.checkNotNull(spawnCustomizer, "spawnCustomizer");
       return this;
     }
 
@@ -255,12 +301,11 @@ public class NPC {
      */
     @NotNull
     public NPC build(@NotNull NPCPool pool) {
-      if (!this.profile.isComplete()) {
-        throw new IllegalStateException("The provided profile has to be complete!");
-      }
+      Preconditions.checkNotNull(this.profile, "A profile must be given");
+      Preconditions.checkArgument(this.profile.isComplete(), "The provided profile has to be complete!");
 
       NPC npc = new NPC(
-        this.profile.asWrapped(),
+        this.profile,
         this.location,
         this.lookAtPlayer,
         this.imitatePlayer,
@@ -270,7 +315,5 @@ public class NPC {
 
       return npc;
     }
-
   }
-
 }

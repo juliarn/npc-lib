@@ -88,13 +88,12 @@ public class NPCPool implements Listener {
           NPC npc = NPCPool.this.npcMap.get(targetId);
           EnumWrappers.EntityUseAction action = packetContainer.getEntityUseActions().read(0);
 
-          Bukkit.getScheduler().runTask(NPCPool.this.javaPlugin, () ->
-            Bukkit.getPluginManager().callEvent(
-              new PlayerNPCInteractEvent(event.getPlayer(), npc, action)
-            ));
+          Bukkit.getScheduler().runTask(
+            NPCPool.this.javaPlugin,
+            () -> Bukkit.getPluginManager().callEvent(new PlayerNPCInteractEvent(event.getPlayer(), npc, action))
+          );
         }
       }
-
     });
   }
 

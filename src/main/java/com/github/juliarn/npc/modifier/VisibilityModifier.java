@@ -37,7 +37,7 @@ public class VisibilityModifier extends NPCModifier {
   public VisibilityModifier queueSpawn() {
     PacketContainer packetContainer = super.newContainer(PacketType.Play.Server.NAMED_ENTITY_SPAWN);
 
-    packetContainer.getUUIDs().write(0, super.npc.getGameProfile().getUUID());
+    packetContainer.getUUIDs().write(0, super.npc.getProfile().getUniqueId());
 
     double x = super.npc.getLocation().getX();
     double y = super.npc.getLocation().getY();
