@@ -9,6 +9,8 @@ import com.comphenix.protocol.wrappers.EnumWrappers;
 import com.github.juliarn.npc.event.PlayerNPCInteractEvent;
 import com.github.juliarn.npc.modifier.AnimationModifier;
 import com.github.juliarn.npc.modifier.MetadataModifier;
+import com.github.juliarn.npc.properties.Property;
+import com.github.juliarn.npc.properties.PropertyMap;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import org.bukkit.Bukkit;
@@ -30,16 +32,17 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class NPCPool implements Listener {
+public class NPCPool extends PropertyMap implements Listener {
 
-  private final Plugin plugin;
+  public static final Property<Plugin> PLUGIN = Property.named("plugin");
 
-  private final double spawnDistance;
-  private final double actionDistance;
-  private final long tabListRemoveTicks;
+  public static final Property<Double> SPAWN_DISTANCE = Property.named("spawnDistance");
+  public static final Property<Double> ACTION_DISTANCE = Property.named("actionDistance");
+  public static final Property<Long> TAB_LIST_REMOVE_TICKS = Property.named("tabListRemoveTicks");
 
   private final Map<Integer, NPC> npcMap = new ConcurrentHashMap<>();
 
@@ -71,11 +74,11 @@ public class NPCPool implements Listener {
     Preconditions.checkArgument(spawnDistance > 0 && actionDistance > 0, "Distance has to be > 0!");
     Preconditions.checkArgument(actionDistance <= spawnDistance, "Action distance cannot be higher than spawn distance!");
 
-    this.plugin = plugin;
+    this.setProperty(PLUGIN.shallowClone().setCurrentValue(plugin).unmodifiable());
 
-    this.spawnDistance = spawnDistance * spawnDistance;
-    this.actionDistance = actionDistance * actionDistance;
-    this.tabListRemoveTicks = tabListRemoveTicks;
+    this.setProperty(SPAWN_DISTANCE.shallowClone().setCurrentValue((double) spawnDistance * spawnDistance));
+    this.setProperty(ACTION_DISTANCE.shallowClone().setCurrentValue((double) actionDistance * actionDistance));
+    this.setProperty(TAB_LIST_REMOVE_TICKS.shallowClone().setCurrentValue(tabListRemoveTicks));
 
     Bukkit.getPluginManager().registerEvents(this, plugin);
 
@@ -113,7 +116,7 @@ public class NPCPool implements Listener {
    * Adds a packet listener for listening to all use entity packets sent by a client.
    */
   protected void addInteractListener() {
-    ProtocolLibrary.getProtocolManager().addPacketListener(new PacketAdapter(this.plugin, PacketType.Play.Client.USE_ENTITY) {
+    ProtocolLibrary.getProtocolManager().addPacketListener(new PacketAdapter(this.getPropertyUnchecked(PLUGIN).getValueUnchecked(), PacketType.Play.Client.USE_ENTITY) {
       @Override
       public void onPacketReceiving(PacketEvent event) {
         PacketContainer packetContainer = event.getPacket();
@@ -124,7 +127,7 @@ public class NPCPool implements Listener {
           EnumWrappers.EntityUseAction action = packetContainer.getEntityUseActions().read(0);
 
           Bukkit.getScheduler().runTask(
-            NPCPool.this.plugin,
+            NPCPool.this.getPropertyUnchecked(PLUGIN).getValueUnchecked(),
             () -> Bukkit.getPluginManager().callEvent(new PlayerNPCInteractEvent(event.getPlayer(), npc, action))
           );
         }
@@ -136,7 +139,7 @@ public class NPCPool implements Listener {
    * Starts the npc tick.
    */
   protected void npcTick() {
-    Bukkit.getScheduler().runTaskTimerAsynchronously(this.plugin, () -> {
+    Bukkit.getScheduler().runTaskTimerAsynchronously(this.getPropertyUnchecked(PLUGIN).getValueUnchecked(), () -> {
       for (Player player : ImmutableList.copyOf(Bukkit.getOnlinePlayers())) {
         for (NPC npc : this.npcMap.values()) {
           if (!npc.getLocation().getWorld().equals(player.getLocation().getWorld())) {
@@ -148,13 +151,13 @@ public class NPCPool implements Listener {
 
           double distance = npc.getLocation().distanceSquared(player.getLocation());
 
-          if ((npc.isExcluded(player) || distance >= this.spawnDistance) && npc.isShownFor(player)) {
+          if ((npc.isExcluded(player) || distance >= this.getPropertyUnchecked(SPAWN_DISTANCE).getValueUnchecked()) && npc.isShownFor(player)) {
             npc.hide(player);
-          } else if ((!npc.isExcluded(player) && distance <= this.spawnDistance) && !npc.isShownFor(player)) {
-            npc.show(player, this.plugin, this.tabListRemoveTicks);
+          } else if ((!npc.isExcluded(player) && distance <= this.getPropertyUnchecked(SPAWN_DISTANCE).getValueUnchecked()) && !npc.isShownFor(player)) {
+            npc.show(player, this.getPropertyUnchecked(PLUGIN).getValueUnchecked(), this.getPropertyUnchecked(TAB_LIST_REMOVE_TICKS).getValueUnchecked());
           }
 
-          if (npc.isShownFor(player) && npc.isLookAtPlayer() && distance <= this.actionDistance) {
+          if (npc.isShownFor(player) && npc.isLookAtPlayer() && distance <= this.getPropertyUnchecked(ACTION_DISTANCE).getValueUnchecked()) {
             npc.rotation().queueLookAt(player.getLocation()).send(player);
           }
         }
@@ -260,7 +263,8 @@ public class NPCPool implements Listener {
 
     this.npcMap.values().stream()
       .filter(npc -> npc.isImitatePlayer() && npc.isShownFor(player))
-      .filter(npc -> npc.getLocation().getWorld().equals(player.getWorld()) && npc.getLocation().distanceSquared(player.getLocation()) <= this.actionDistance)
+      .filter(npc -> npc.getLocation().getWorld().equals(player.getWorld())
+        && npc.getLocation().distanceSquared(player.getLocation()) <= this.getPropertyUnchecked(ACTION_DISTANCE).getValueUnchecked())
       .forEach(npc -> npc.metadata().queue(MetadataModifier.EntityMetadata.SNEAKING, event.isSneaking()).send(player));
   }
 
@@ -271,7 +275,8 @@ public class NPCPool implements Listener {
     if (event.getAction() == Action.LEFT_CLICK_AIR || event.getAction() == Action.LEFT_CLICK_BLOCK) {
       this.npcMap.values().stream()
         .filter(npc -> npc.isImitatePlayer() && npc.isShownFor(player))
-        .filter(npc -> npc.getLocation().getWorld().equals(player.getWorld()) && npc.getLocation().distanceSquared(player.getLocation()) <= this.actionDistance)
+        .filter(npc -> npc.getLocation().getWorld().equals(player.getWorld())
+          && npc.getLocation().distanceSquared(player.getLocation()) <= this.getPropertyUnchecked(ACTION_DISTANCE).getValueUnchecked())
         .forEach(npc -> npc.animation().queue(AnimationModifier.EntityAnimation.SWING_MAIN_ARM).send(player));
     }
   }
@@ -286,6 +291,10 @@ public class NPCPool implements Listener {
      * The instance of the plugin which creates this pool
      */
     private final Plugin plugin;
+    /**
+     * The custom properties for the pool
+     */
+    private final Set<Property<?>> properties = ConcurrentHashMap.newKeySet();
 
     /**
      * The distance in which NPCs are spawned for players
@@ -349,13 +358,28 @@ public class NPCPool implements Listener {
     }
 
     /**
+     * Adds a custom property to the created pool.
+     *
+     * @param property The property to add to the pool.
+     * @return The same instance of this class, for chaining.
+     * @since 2.5-SNAPSHOT
+     */
+    @NotNull
+    public Builder property(@NotNull Property<?> property) {
+      this.properties.add(property);
+      return this;
+    }
+
+    /**
      * Creates a new npc tool by the values passed to the builder.
      *
      * @return The created npc pool.
      */
     @NotNull
     public NPCPool build() {
-      return new NPCPool(this.plugin, this.spawnDistance, this.actionDistance, this.tabListRemoveTicks);
+      NPCPool pool = new NPCPool(this.plugin, this.spawnDistance, this.actionDistance, this.tabListRemoveTicks);
+      this.properties.forEach(pool::setProperty);
+      return pool;
     }
   }
 }

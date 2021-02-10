@@ -9,6 +9,8 @@ import com.github.juliarn.npc.modifier.MetadataModifier;
 import com.github.juliarn.npc.modifier.RotationModifier;
 import com.github.juliarn.npc.modifier.VisibilityModifier;
 import com.github.juliarn.npc.profile.Profile;
+import com.github.juliarn.npc.properties.Property;
+import com.github.juliarn.npc.properties.PropertyMap;
 import com.google.common.base.Preconditions;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -21,9 +23,22 @@ import org.jetbrains.annotations.Unmodifiable;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Random;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArraySet;
 
-public class NPC {
+/**
+ * A non person character which can be spawned to players.
+ */
+public class NPC extends PropertyMap {
+
+  public static final Property<Location> LOCATION = Property.named("location");
+  public static final Property<Profile> PROFILE = Property.named("profile");
+  public static final Property<SpawnCustomizer> SPAWN_CUSTOMIZER = Property.named("spawnCustomizer");
+
+  public static final Property<Boolean> IMITATE_PLAYER = Property.named("imitatePlayer");
+  public static final Property<Boolean> LOOK_AT_PLAYER = Property.named("lookAtPlayer");
+  public static final Property<Boolean> PLAYER_PROPERTIES = Property.named("playerProperties");
 
   private static final Random RANDOM = new Random();
 
@@ -32,13 +47,7 @@ public class NPC {
 
   private final int entityId = RANDOM.nextInt(Short.MAX_VALUE);
 
-  private final Location location;
-  private final Profile profile;
-  private final WrappedGameProfile gameProfile;
-  private final SpawnCustomizer spawnCustomizer;
-
-  private boolean lookAtPlayer;
-  private boolean imitatePlayer;
+  private WrappedGameProfile gameProfile;
 
   /**
    * Creates a new npc instance.
@@ -48,15 +57,20 @@ public class NPC {
    * @param lookAtPlayer    If the npc should always look in the direction of the player.
    * @param imitatePlayer   If the npc should imitate the player.
    * @param spawnCustomizer The spawn customizer of the npc.
+   * @deprecated Just here if anyone uses reflection to create a new instance of this class.
    */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
   private NPC(Profile profile, Location location, boolean lookAtPlayer, boolean imitatePlayer, SpawnCustomizer spawnCustomizer) {
-    this.profile = profile;
-    this.gameProfile = this.convertProfile(profile);
+    this.setProperty(PROFILE.shallowClone().setCurrentValue(profile).unmodifiable());
+    this.setProperty(LOCATION.shallowClone().setCurrentValue(location).unmodifiable());
+    this.setProperty(SPAWN_CUSTOMIZER.shallowClone().setCurrentValue(spawnCustomizer).unmodifiable());
 
-    this.location = location;
-    this.lookAtPlayer = lookAtPlayer;
-    this.imitatePlayer = imitatePlayer;
-    this.spawnCustomizer = spawnCustomizer;
+    this.setProperty(LOOK_AT_PLAYER.shallowClone().setCurrentValue(lookAtPlayer));
+    this.setProperty(IMITATE_PLAYER.shallowClone().setCurrentValue(imitatePlayer));
+  }
+
+  private NPC() {
   }
 
   /**
@@ -82,11 +96,13 @@ public class NPC {
     this.seeingPlayers.add(player);
 
     VisibilityModifier visibilityModifier = new VisibilityModifier(this);
-    visibilityModifier.queuePlayerListChange(EnumWrappers.PlayerInfoAction.ADD_PLAYER).send(player);
+
+    WrappedGameProfile profile = this.isUsePlayerProperties() ? WrappedGameProfile.fromPlayer(player) : this.getGameProfile();
+    visibilityModifier.queuePlayerListChange(EnumWrappers.PlayerInfoAction.ADD_PLAYER, profile).send(player);
 
     Bukkit.getScheduler().runTaskLater(plugin, () -> {
       visibilityModifier.queueSpawn().send(player);
-      this.spawnCustomizer.handleSpawn(this, player);
+      this.getPropertyUnchecked(SPAWN_CUSTOMIZER).getValueUnchecked().handleSpawn(this, player);
 
       if (tabListRemoveTicks >= 0) {
         // keeping the NPC longer in the player list, otherwise the skin might not be shown sometimes.
@@ -259,6 +275,9 @@ public class NPC {
    */
   @NotNull
   public WrappedGameProfile getGameProfile() {
+    if (this.gameProfile == null) {
+      this.gameProfile = this.convertProfile(this.getPropertyUnchecked(PROFILE).getValueUnchecked());
+    }
     return this.gameProfile;
   }
 
@@ -270,7 +289,7 @@ public class NPC {
    */
   @NotNull
   public Profile getProfile() {
-    return this.profile;
+    return this.getPropertyUnchecked(PROFILE).getValueUnchecked();
   }
 
   /**
@@ -289,7 +308,7 @@ public class NPC {
    */
   @NotNull
   public Location getLocation() {
-    return this.location;
+    return this.getPropertyUnchecked(LOCATION).getValueUnchecked();
   }
 
   /**
@@ -298,7 +317,7 @@ public class NPC {
    * @return if this npc should always look to the player.
    */
   public boolean isLookAtPlayer() {
-    return this.lookAtPlayer;
+    return this.getPropertyUnchecked(LOOK_AT_PLAYER).getValueUnchecked();
   }
 
   /**
@@ -307,7 +326,7 @@ public class NPC {
    * @param lookAtPlayer if this npc should always look to the player.
    */
   public void setLookAtPlayer(boolean lookAtPlayer) {
-    this.lookAtPlayer = lookAtPlayer;
+    this.getPropertyUnchecked(LOOK_AT_PLAYER).setCurrentValue(lookAtPlayer);
   }
 
   /**
@@ -316,7 +335,7 @@ public class NPC {
    * @return if this npc should always imitate the player.
    */
   public boolean isImitatePlayer() {
-    return this.imitatePlayer;
+    return this.getPropertyUnchecked(IMITATE_PLAYER).getValueUnchecked();
   }
 
   /**
@@ -325,7 +344,29 @@ public class NPC {
    * @param imitatePlayer if this npc should always imitate the player.
    */
   public void setImitatePlayer(boolean imitatePlayer) {
-    this.imitatePlayer = imitatePlayer;
+    this.getPropertyUnchecked(IMITATE_PLAYER).setCurrentValue(imitatePlayer);
+  }
+
+  /**
+   * Get if a npc should use the properties of the player being spawned to instead
+   * of the properties defined in the specified profile.
+   *
+   * @return if a npc should use the properties of the player being spawned to.
+   * @since 2.5-SNAPSHOT
+   */
+  public boolean isUsePlayerProperties() {
+    return this.getPropertyUnchecked(PLAYER_PROPERTIES).getValueUnchecked();
+  }
+
+  /**
+   * Sets if a npc should use the properties of the player being spawned to instead
+   * of the properties defined in the specified profile.
+   *
+   * @param usePlayerProperties if a npc should use the properties of the player being spawned to.
+   * @since 2.5-SNAPSHOT
+   */
+  public void setUsePlayerProperties(boolean usePlayerProperties) {
+    this.getPropertyUnchecked(PLAYER_PROPERTIES).setCurrentValue(usePlayerProperties);
   }
 
   /**
@@ -333,10 +374,13 @@ public class NPC {
    */
   public static class Builder {
 
+    private final Set<Property<?>> properties = ConcurrentHashMap.newKeySet();
+
     private Profile profile;
 
     private boolean lookAtPlayer = true;
     private boolean imitatePlayer = true;
+    private boolean usePlayerProperties = false;
 
     private Location location = new Location(Bukkit.getWorlds().get(0), 0D, 0D, 0D);
     private SpawnCustomizer spawnCustomizer = (npc, player) -> {
@@ -394,6 +438,33 @@ public class NPC {
     }
 
     /**
+     * Enables/disables if a npc should use the properties of the player being spawned to instead
+     * of the properties defined in the specified npc profile.
+     *
+     * @param usePlayerProperties if a npc should use the properties of the player.
+     * @return this builder instance.
+     * @since 2.5-SNAPSHOT
+     */
+    @NotNull
+    public Builder usePlayerTextures(boolean usePlayerProperties) {
+      this.usePlayerProperties = usePlayerProperties;
+      return this;
+    }
+
+    /**
+     * Sets the property in the created npc.
+     *
+     * @param property The property to set.
+     * @return this builder instance.
+     * @since 2.5-SNAPSHOT
+     */
+    @NotNull
+    public Builder property(@NotNull Property<?> property) {
+      this.properties.add(property);
+      return this;
+    }
+
+    /**
      * Enables/disables imitation of the player, such as sneaking and hitting the player, default is true
      *
      * @param imitatePlayer if the NPC should imitate players
@@ -427,15 +498,19 @@ public class NPC {
       Preconditions.checkNotNull(this.profile, "A profile must be given");
       Preconditions.checkArgument(this.profile.isComplete(), "The provided profile has to be complete!");
 
-      NPC npc = new NPC(
-        this.profile,
-        this.location,
-        this.lookAtPlayer,
-        this.imitatePlayer,
-        this.spawnCustomizer
-      );
-      pool.takeCareOf(npc);
+      NPC npc = new NPC();
+      // unmodifiable properties
+      npc.setProperty(PROFILE.shallowClone().setCurrentValue(this.profile).unmodifiable());
+      npc.setProperty(LOCATION.shallowClone().setCurrentValue(this.location).unmodifiable());
+      npc.setProperty(SPAWN_CUSTOMIZER.shallowClone().setCurrentValue(this.spawnCustomizer).unmodifiable());
+      // modifiable properties
+      npc.setProperty(LOOK_AT_PLAYER.shallowClone().setCurrentValue(this.lookAtPlayer));
+      npc.setProperty(IMITATE_PLAYER.shallowClone().setCurrentValue(this.imitatePlayer));
+      npc.setProperty(PLAYER_PROPERTIES.shallowClone().setCurrentValue(this.usePlayerProperties));
+      // custom properties (after initial properties to prevent override)
+      this.properties.forEach(npc::setProperty);
 
+      pool.takeCareOf(npc);
       return npc;
     }
   }
