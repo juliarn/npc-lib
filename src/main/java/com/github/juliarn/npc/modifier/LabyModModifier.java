@@ -22,8 +22,7 @@ import java.nio.charset.StandardCharsets;
  */
 public class LabyModModifier extends NPCModifier {
 
-  private static final String LMC_CHANNEL_NAME = "LMC";
-  private static final MinecraftKey MODERN_LMC_CHANNEL = new MinecraftKey("labymod", "main");
+  private static final MinecraftKey LABYMOD_PLUGIN_CHANNEL = new MinecraftKey("labymod3", "main");
 
   /**
    * Creates a new modifier.
@@ -46,14 +45,15 @@ public class LabyModModifier extends NPCModifier {
   @NotNull
   public LabyModModifier queue(@NotNull LabyModAction action, int playbackIdentifier) {
     PacketContainer container = super.newContainer(PacketType.Play.Server.CUSTOM_PAYLOAD, false);
-    container.getModifier()
-      .withType(ByteBuf.class)
-      .write(0, MinecraftReflection.getPacketDataSerializer(this.createContent(action, playbackIdentifier)));
+    container.getMinecraftKeys().write(0, LABYMOD_PLUGIN_CHANNEL);
 
-    if (MINECRAFT_VERSION >= 13) {
-      container.getMinecraftKeys().write(0, MODERN_LMC_CHANNEL);
+    ByteBuf content = this.createContent(action, playbackIdentifier);
+
+    if (MinecraftReflection.is(MinecraftReflection.getPacketDataSerializerClass(), content)) {
+      container.getModifier().withType(ByteBuf.class).write(0, content);
     } else {
-      container.getStrings().write(0, LMC_CHANNEL_NAME);
+      Object serializer = MinecraftReflection.getPacketDataSerializer(content);
+      container.getModifier().withType(ByteBuf.class).write(0, serializer);
     }
 
     return this;
