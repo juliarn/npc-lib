@@ -21,6 +21,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * @see MetadataModifier
  * @see RotationModifier
  * @see VisibilityModifier
+ * @see LabyModModifier
  */
 public class NPCModifier {
   /**

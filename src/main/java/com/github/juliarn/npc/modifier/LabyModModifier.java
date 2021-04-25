@@ -45,7 +45,11 @@ public class LabyModModifier extends NPCModifier {
   @NotNull
   public LabyModModifier queue(@NotNull LabyModAction action, int playbackIdentifier) {
     PacketContainer container = super.newContainer(PacketType.Play.Server.CUSTOM_PAYLOAD, false);
-    container.getMinecraftKeys().write(0, LABYMOD_PLUGIN_CHANNEL);
+    if (MINECRAFT_VERSION >= 13) {
+      container.getMinecraftKeys().write(0, LABYMOD_PLUGIN_CHANNEL);
+    } else {
+      container.getStrings().write(0, LABYMOD_PLUGIN_CHANNEL.getFullKey());
+    }
 
     ByteBuf content = this.createContent(action, playbackIdentifier);
 
