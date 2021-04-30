@@ -22,7 +22,7 @@ import java.nio.charset.StandardCharsets;
  */
 public class LabyModModifier extends NPCModifier {
 
-  private static final MinecraftKey LABYMOD_PLUGIN_CHANNEL = new MinecraftKey("labymod3", "main");
+  public static final MinecraftKey LABYMOD_PLUGIN_CHANNEL = new MinecraftKey("labymod3", "main");
 
   /**
    * Creates a new modifier.
