@@ -191,6 +191,7 @@ public class Profile implements Cloneable {
       HttpURLConnection connection = (HttpURLConnection) new URL(apiUrl).openConnection();
       connection.setReadTimeout(5000);
       connection.setConnectTimeout(5000);
+      connection.setUseCaches(true);
       connection.connect();
 
       if (connection.getResponseCode() == 200) {

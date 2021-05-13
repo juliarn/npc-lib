@@ -3,6 +3,8 @@ package com.github.juliarn.npc;
 import com.comphenix.protocol.wrappers.EnumWrappers;
 import com.comphenix.protocol.wrappers.WrappedGameProfile;
 import com.comphenix.protocol.wrappers.WrappedSignedProperty;
+import com.github.juliarn.npc.event.PlayerNPCHideEvent;
+import com.github.juliarn.npc.event.PlayerNPCShowEvent;
 import com.github.juliarn.npc.modifier.AnimationModifier;
 import com.github.juliarn.npc.modifier.EquipmentModifier;
 import com.github.juliarn.npc.modifier.LabyModModifier;
@@ -97,6 +99,8 @@ public class NPC {
           tabListRemoveTicks
         );
       }
+
+      Bukkit.getPluginManager().callEvent(new PlayerNPCShowEvent(player, this));
     }, 10L);
   }
 
@@ -104,14 +108,18 @@ public class NPC {
    * Hides this npc from a player.
    *
    * @param player The player to hide the npc for.
+   * @param plugin The plugin requesting the change.
    */
-  protected void hide(@NotNull Player player) {
+  protected void hide(@NotNull Player player, @NotNull Plugin plugin) {
     new VisibilityModifier(this)
       .queuePlayerListChange(EnumWrappers.PlayerInfoAction.REMOVE_PLAYER)
       .queueDestroy()
       .send(player);
 
     this.removeSeeingPlayer(player);
+
+    Bukkit.getScheduler().runTask(plugin,
+      () -> Bukkit.getPluginManager().callEvent(new PlayerNPCHideEvent(player, this)));
   }
 
   /**

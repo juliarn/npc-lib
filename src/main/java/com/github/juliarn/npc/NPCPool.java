@@ -74,7 +74,8 @@ public class NPCPool implements Listener {
 
     this.plugin = plugin;
 
-    this.spawnDistance = spawnDistance * spawnDistance;
+    // limiting the spawn distance to the Bukkit view distance to avoid NPCs not being shown
+    this.spawnDistance = Math.min(spawnDistance * spawnDistance, Math.pow(Bukkit.getViewDistance() << 4, 2));
     this.actionDistance = actionDistance * actionDistance;
     this.tabListRemoveTicks = tabListRemoveTicks;
 
@@ -154,16 +155,17 @@ public class NPCPool implements Listener {
         for (NPC npc : this.npcMap.values()) {
           if (!npc.getLocation().getWorld().equals(player.getLocation().getWorld())) {
             if (npc.isShownFor(player)) {
-              npc.hide(player);
+              npc.hide(player, this.plugin);
             }
             continue;
           }
 
           double distance = npc.getLocation().distanceSquared(player.getLocation());
+          boolean inRange = distance <= this.spawnDistance;
 
-          if ((npc.isExcluded(player) || distance >= this.spawnDistance) && npc.isShownFor(player)) {
-            npc.hide(player);
-          } else if ((!npc.isExcluded(player) && distance <= this.spawnDistance) && !npc.isShownFor(player)) {
+          if ((npc.isExcluded(player) || !inRange) && npc.isShownFor(player)) {
+            npc.hide(player, this.plugin);
+          } else if ((!npc.isExcluded(player) && inRange) && !npc.isShownFor(player)) {
             npc.show(player, this.plugin, this.tabListRemoveTicks);
           }
 
@@ -231,7 +233,7 @@ public class NPCPool implements Listener {
   public void removeNPC(int entityId) {
     this.getNpc(entityId).ifPresent(npc -> {
       this.npcMap.remove(entityId);
-      npc.getSeeingPlayers().forEach(npc::hide);
+      npc.getSeeingPlayers().forEach(player -> npc.hide(player, this.plugin));
     });
   }
 
@@ -252,7 +254,7 @@ public class NPCPool implements Listener {
 
     this.npcMap.values().stream()
       .filter(npc -> npc.isShownFor(player))
-      .forEach(npc -> npc.hide(player));
+      .forEach(npc -> npc.hide(player, this.plugin));
   }
 
   @EventHandler
