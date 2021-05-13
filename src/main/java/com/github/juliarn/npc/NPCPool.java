@@ -6,6 +6,7 @@ import com.comphenix.protocol.events.PacketAdapter;
 import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.events.PacketEvent;
 import com.comphenix.protocol.wrappers.EnumWrappers;
+import com.github.juliarn.npc.event.PlayerNPCHideEvent;
 import com.github.juliarn.npc.event.PlayerNPCInteractEvent;
 import com.github.juliarn.npc.modifier.AnimationModifier;
 import com.github.juliarn.npc.modifier.LabyModModifier;
@@ -31,10 +32,13 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class NPCPool implements Listener {
+
+  private static final Random RANDOM = new Random();
 
   private final Plugin plugin;
 
@@ -155,7 +159,7 @@ public class NPCPool implements Listener {
         for (NPC npc : this.npcMap.values()) {
           if (!npc.getLocation().getWorld().equals(player.getLocation().getWorld())) {
             if (npc.isShownFor(player)) {
-              npc.hide(player, this.plugin);
+              npc.hide(player, this.plugin, PlayerNPCHideEvent.Reason.SPAWN_DISTANCE);
             }
             continue;
           }
@@ -164,7 +168,7 @@ public class NPCPool implements Listener {
           boolean inRange = distance <= this.spawnDistance;
 
           if ((npc.isExcluded(player) || !inRange) && npc.isShownFor(player)) {
-            npc.hide(player, this.plugin);
+            npc.hide(player, this.plugin, PlayerNPCHideEvent.Reason.SPAWN_DISTANCE);
           } else if ((!npc.isExcluded(player) && inRange) && !npc.isShownFor(player)) {
             npc.show(player, this.plugin, this.tabListRemoveTicks);
           }
@@ -175,6 +179,19 @@ public class NPCPool implements Listener {
         }
       }
     }, 20, 2);
+  }
+
+  /**
+   * @return A free entity id which can be used for NPCs
+   */
+  protected int getFreeEntityId() {
+    int id;
+
+    do {
+      id = RANDOM.nextInt(Integer.MAX_VALUE);
+    } while (this.npcMap.containsKey(id));
+
+    return id;
   }
 
   /**
@@ -233,7 +250,7 @@ public class NPCPool implements Listener {
   public void removeNPC(int entityId) {
     this.getNpc(entityId).ifPresent(npc -> {
       this.npcMap.remove(entityId);
-      npc.getSeeingPlayers().forEach(player -> npc.hide(player, this.plugin));
+      npc.getSeeingPlayers().forEach(player -> npc.hide(player, this.plugin, PlayerNPCHideEvent.Reason.REMOVED));
     });
   }
 
@@ -254,7 +271,7 @@ public class NPCPool implements Listener {
 
     this.npcMap.values().stream()
       .filter(npc -> npc.isShownFor(player))
-      .forEach(npc -> npc.hide(player, this.plugin));
+      .forEach(npc -> npc.hide(player, this.plugin, PlayerNPCHideEvent.Reason.RESPAWNED));
   }
 
   @EventHandler

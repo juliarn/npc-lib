@@ -4,18 +4,19 @@ import com.comphenix.protocol.wrappers.EnumWrappers;
 import com.github.juliarn.npc.NPC;
 import org.bukkit.entity.Player;
 import org.bukkit.event.HandlerList;
-import org.bukkit.event.player.PlayerEvent;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * An event called when a player interacts with a npc.
  */
-public class PlayerNPCInteractEvent extends PlayerEvent {
+public class PlayerNPCInteractEvent extends PlayerNPCEvent {
 
   private static final HandlerList HANDLER_LIST = new HandlerList();
 
-  private final NPC npc;
+  /**
+   * The action type of the interact.
+   */
   private final EntityUseAction action;
 
   /**
@@ -37,8 +38,7 @@ public class PlayerNPCInteractEvent extends PlayerEvent {
    * @param action The action type of the interact.
    */
   public PlayerNPCInteractEvent(@NotNull Player who, @NotNull NPC npc, @NotNull EntityUseAction action) {
-    super(who);
-    this.npc = npc;
+    super(who, npc);
     this.action = action;
   }
 
@@ -50,16 +50,6 @@ public class PlayerNPCInteractEvent extends PlayerEvent {
   @NotNull
   public static HandlerList getHandlerList() {
     return HANDLER_LIST;
-  }
-
-  /**
-   * Get the npc with which the player interacted.
-   *
-   * @return the npc with which the player interacted.
-   */
-  @NotNull
-  public NPC getNPC() {
-    return this.npc;
   }
 
   /**
@@ -87,9 +77,7 @@ public class PlayerNPCInteractEvent extends PlayerEvent {
   }
 
   /**
-   * Get the handlers for this event.
-   *
-   * @return the handlers for this event.
+   * {@inheritDoc}
    */
   @NotNull
   @Override

@@ -23,20 +23,16 @@ import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Random;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 public class NPC {
 
-  private static final Random RANDOM = new Random();
-
   private final Collection<Player> seeingPlayers = new CopyOnWriteArraySet<>();
   private final Collection<Player> excludedPlayers = new CopyOnWriteArraySet<>();
 
-  private final int entityId = RANDOM.nextInt(Short.MAX_VALUE);
-
-  private final Location location;
   private final Profile profile;
+  private final int entityId;
+  private final Location location;
   private final WrappedGameProfile gameProfile;
   private final SpawnCustomizer spawnCustomizer;
 
@@ -47,14 +43,16 @@ public class NPC {
    * Creates a new npc instance.
    *
    * @param profile         The profile of the npc.
+   * @param entityId        The entity id of the npc.
    * @param location        The location of the npc.
    * @param lookAtPlayer    If the npc should always look in the direction of the player.
    * @param imitatePlayer   If the npc should imitate the player.
    * @param spawnCustomizer The spawn customizer of the npc.
    */
-  private NPC(Profile profile, Location location, boolean lookAtPlayer, boolean imitatePlayer, SpawnCustomizer spawnCustomizer) {
+  private NPC(Profile profile, int entityId, Location location, boolean lookAtPlayer, boolean imitatePlayer, SpawnCustomizer spawnCustomizer) {
     this.profile = profile;
     this.gameProfile = this.convertProfile(profile);
+    this.entityId = entityId;
 
     this.location = location;
     this.lookAtPlayer = lookAtPlayer;
@@ -109,8 +107,9 @@ public class NPC {
    *
    * @param player The player to hide the npc for.
    * @param plugin The plugin requesting the change.
+   * @param reason The reason why the npc was hidden for the player.
    */
-  protected void hide(@NotNull Player player, @NotNull Plugin plugin) {
+  protected void hide(@NotNull Player player, @NotNull Plugin plugin, @NotNull PlayerNPCHideEvent.Reason reason) {
     new VisibilityModifier(this)
       .queuePlayerListChange(EnumWrappers.PlayerInfoAction.REMOVE_PLAYER)
       .queueDestroy()
@@ -119,7 +118,7 @@ public class NPC {
     this.removeSeeingPlayer(player);
 
     Bukkit.getScheduler().runTask(plugin,
-      () -> Bukkit.getPluginManager().callEvent(new PlayerNPCHideEvent(player, this)));
+      () -> Bukkit.getPluginManager().callEvent(new PlayerNPCHideEvent(player, this, reason)));
   }
 
   /**
@@ -449,11 +448,11 @@ public class NPC {
 
       NPC npc = new NPC(
         this.profile,
+        pool.getFreeEntityId(),
         this.location,
         this.lookAtPlayer,
         this.imitatePlayer,
-        this.spawnCustomizer
-      );
+        this.spawnCustomizer);
       pool.takeCareOf(npc);
 
       return npc;
