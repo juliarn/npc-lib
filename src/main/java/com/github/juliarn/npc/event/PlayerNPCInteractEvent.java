@@ -26,7 +26,10 @@ public class PlayerNPCInteractEvent extends PlayerNPCEvent {
    * @param npc    The npc with whom the player has interacted.
    * @param action The action type of the interact.
    */
-  public PlayerNPCInteractEvent(@NotNull Player who, @NotNull NPC npc, @NotNull EnumWrappers.EntityUseAction action) {
+  public PlayerNPCInteractEvent(
+      @NotNull Player who,
+      @NotNull NPC npc,
+      @NotNull EnumWrappers.EntityUseAction action) {
     this(who, npc, EntityUseAction.fromHandle(action));
   }
 
@@ -37,7 +40,10 @@ public class PlayerNPCInteractEvent extends PlayerNPCEvent {
    * @param npc    The npc with whom the player has interacted.
    * @param action The action type of the interact.
    */
-  public PlayerNPCInteractEvent(@NotNull Player who, @NotNull NPC npc, @NotNull EntityUseAction action) {
+  public PlayerNPCInteractEvent(
+      @NotNull Player who,
+      @NotNull NPC npc,
+      @NotNull EntityUseAction action) {
     super(who, npc);
     this.action = action;
   }
@@ -53,8 +59,8 @@ public class PlayerNPCInteractEvent extends PlayerNPCEvent {
   }
 
   /**
-   * Gets the interact action as a protocol lib wrapper. This is not recommended to use,
-   * the alternative is {@link #getUseAction()}.
+   * Gets the interact action as a protocol lib wrapper. This is not recommended to use, the
+   * alternative is {@link #getUseAction()}.
    *
    * @return the interact action as a protocol lib wrapper.
    */

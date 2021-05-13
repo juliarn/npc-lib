@@ -49,8 +49,9 @@ public class NPCPool implements Listener {
   private final Map<Integer, NPC> npcMap = new ConcurrentHashMap<>();
 
   /**
-   * Creates a new NPC pool which handles events, spawning and destruction of the NPCs for players. Please use
-   * {@link #createDefault(Plugin)} instead, this constructor will be private in a further release.
+   * Creates a new NPC pool which handles events, spawning and destruction of the NPCs for players.
+   * Please use {@link #createDefault(Plugin)} instead, this constructor will be private in a
+   * further release.
    *
    * @param plugin the instance of the plugin which creates this pool
    * @deprecated Use {@link #createDefault(Plugin)} instead
@@ -62,24 +63,30 @@ public class NPCPool implements Listener {
   }
 
   /**
-   * Creates a new NPC pool which handles events, spawning and destruction of the NPCs for players. Please use
-   * {@link #builder(Plugin)} instead, this constructor will be private in a further release.
+   * Creates a new NPC pool which handles events, spawning and destruction of the NPCs for players.
+   * Please use {@link #builder(Plugin)} instead, this constructor will be private in a further
+   * release.
    *
    * @param plugin             the instance of the plugin which creates this pool
    * @param spawnDistance      the distance in which NPCs are spawned for players
    * @param actionDistance     the distance in which NPC actions are displayed for players
-   * @param tabListRemoveTicks the time in ticks after which the NPC will be removed from the players tab
+   * @param tabListRemoveTicks the time in ticks after which the NPC will be removed from the
+   *                           players tab
    */
   @Deprecated
   @ApiStatus.Internal
-  public NPCPool(@NotNull Plugin plugin, int spawnDistance, int actionDistance, long tabListRemoveTicks) {
+  public NPCPool(@NotNull Plugin plugin, int spawnDistance, int actionDistance,
+      long tabListRemoveTicks) {
     Preconditions.checkArgument(spawnDistance > 0 && actionDistance > 0, "Distance has to be > 0!");
-    Preconditions.checkArgument(actionDistance <= spawnDistance, "Action distance cannot be higher than spawn distance!");
+    Preconditions.checkArgument(actionDistance <= spawnDistance,
+        "Action distance cannot be higher than spawn distance!");
 
     this.plugin = plugin;
 
     // limiting the spawn distance to the Bukkit view distance to avoid NPCs not being shown
-    this.spawnDistance = Math.min(spawnDistance * spawnDistance, Math.pow(Bukkit.getViewDistance() << 4, 2));
+    this.spawnDistance = Math.min(
+        spawnDistance * spawnDistance,
+        Math.pow(Bukkit.getViewDistance() << 4, 2));
     this.actionDistance = actionDistance * actionDistance;
     this.tabListRemoveTicks = tabListRemoveTicks;
 
@@ -90,11 +97,12 @@ public class NPCPool implements Listener {
     // we might send messages on this channel
     Bukkit.getMessenger().registerOutgoingPluginChannel(plugin, labyModPluginChannel);
     if (!Bukkit.getMessenger().isIncomingChannelRegistered(plugin, labyModPluginChannel)) {
-      Bukkit.getMessenger().registerIncomingPluginChannel(plugin, labyModPluginChannel, (channel, player, message) -> {
-        // we don't actually handle LabyMod messages, we just register
-        // incoming messages to make sure minecraft:register is sent to the proxy,
-        // so that it will forward our messages on the LabyMod channel to the player
-      });
+      Bukkit.getMessenger().registerIncomingPluginChannel(plugin, labyModPluginChannel,
+          (channel, player, message) -> {
+            // we don't actually handle LabyMod messages, we just register
+            // incoming messages to make sure minecraft:register is sent to the proxy,
+            // so that it will forward our messages on the LabyMod channel to the player
+          });
     }
 
     this.addInteractListener();
@@ -103,8 +111,8 @@ public class NPCPool implements Listener {
 
   /**
    * Creates a new npc pool with the default values of a npc pool. The default values of a builder
-   * are {@code spawnDistance} to {@code 50}, {@code actionDistance} to {@code 20} and {@code tabListRemoveTicks}
-   * to {@code 30}.
+   * are {@code spawnDistance} to {@code 50}, {@code actionDistance} to {@code 20} and {@code
+   * tabListRemoveTicks} to {@code 30}.
    *
    * @param plugin the instance of the plugin which creates this pool.
    * @return the created npc pool with the default values of a pool.
@@ -131,23 +139,25 @@ public class NPCPool implements Listener {
    * Adds a packet listener for listening to all use entity packets sent by a client.
    */
   protected void addInteractListener() {
-    ProtocolLibrary.getProtocolManager().addPacketListener(new PacketAdapter(this.plugin, PacketType.Play.Client.USE_ENTITY) {
-      @Override
-      public void onPacketReceiving(PacketEvent event) {
-        PacketContainer packetContainer = event.getPacket();
-        int targetId = packetContainer.getIntegers().read(0);
+    ProtocolLibrary.getProtocolManager()
+        .addPacketListener(new PacketAdapter(this.plugin, PacketType.Play.Client.USE_ENTITY) {
+          @Override
+          public void onPacketReceiving(PacketEvent event) {
+            PacketContainer packetContainer = event.getPacket();
+            int targetId = packetContainer.getIntegers().read(0);
 
-        if (NPCPool.this.npcMap.containsKey(targetId)) {
-          NPC npc = NPCPool.this.npcMap.get(targetId);
-          EnumWrappers.EntityUseAction action = packetContainer.getEntityUseActions().read(0);
+            if (NPCPool.this.npcMap.containsKey(targetId)) {
+              NPC npc = NPCPool.this.npcMap.get(targetId);
+              EnumWrappers.EntityUseAction action = packetContainer.getEntityUseActions().read(0);
 
-          Bukkit.getScheduler().runTask(
-            NPCPool.this.plugin,
-            () -> Bukkit.getPluginManager().callEvent(new PlayerNPCInteractEvent(event.getPlayer(), npc, action))
-          );
-        }
-      }
-    });
+              Bukkit.getScheduler().runTask(
+                  NPCPool.this.plugin,
+                  () -> Bukkit.getPluginManager()
+                      .callEvent(new PlayerNPCInteractEvent(event.getPlayer(), npc, action))
+              );
+            }
+          }
+        });
   }
 
   /**
@@ -239,7 +249,8 @@ public class NPCPool implements Listener {
    */
   @NotNull
   public Optional<NPC> getNpc(@NotNull UUID uniqueId) {
-    return this.npcMap.values().stream().filter(npc -> npc.getProfile().getUniqueId().equals(uniqueId)).findFirst();
+    return this.npcMap.values().stream()
+        .filter(npc -> npc.getProfile().getUniqueId().equals(uniqueId)).findFirst();
   }
 
   /**
@@ -250,7 +261,8 @@ public class NPCPool implements Listener {
   public void removeNPC(int entityId) {
     this.getNpc(entityId).ifPresent(npc -> {
       this.npcMap.remove(entityId);
-      npc.getSeeingPlayers().forEach(player -> npc.hide(player, this.plugin, PlayerNPCHideEvent.Reason.REMOVED));
+      npc.getSeeingPlayers()
+          .forEach(player -> npc.hide(player, this.plugin, PlayerNPCHideEvent.Reason.REMOVED));
     });
   }
 
@@ -270,8 +282,8 @@ public class NPCPool implements Listener {
     Player player = event.getPlayer();
 
     this.npcMap.values().stream()
-      .filter(npc -> npc.isShownFor(player))
-      .forEach(npc -> npc.hide(player, this.plugin, PlayerNPCHideEvent.Reason.RESPAWNED));
+        .filter(npc -> npc.isShownFor(player))
+        .forEach(npc -> npc.hide(player, this.plugin, PlayerNPCHideEvent.Reason.RESPAWNED));
   }
 
   @EventHandler
@@ -279,11 +291,11 @@ public class NPCPool implements Listener {
     Player player = event.getPlayer();
 
     this.npcMap.values().stream()
-      .filter(npc -> npc.isShownFor(player) || npc.isExcluded(player))
-      .forEach(npc -> {
-        npc.removeSeeingPlayer(player);
-        npc.removeExcludedPlayer(player);
-      });
+        .filter(npc -> npc.isShownFor(player) || npc.isExcluded(player))
+        .forEach(npc -> {
+          npc.removeSeeingPlayer(player);
+          npc.removeExcludedPlayer(player);
+        });
   }
 
   @EventHandler
@@ -291,20 +303,25 @@ public class NPCPool implements Listener {
     Player player = event.getPlayer();
 
     this.npcMap.values().stream()
-      .filter(npc -> npc.isImitatePlayer() && npc.isShownFor(player))
-      .filter(npc -> npc.getLocation().getWorld().equals(player.getWorld()) && npc.getLocation().distanceSquared(player.getLocation()) <= this.actionDistance)
-      .forEach(npc -> npc.metadata().queue(MetadataModifier.EntityMetadata.SNEAKING, event.isSneaking()).send(player));
+        .filter(npc -> npc.isImitatePlayer() && npc.isShownFor(player))
+        .filter(npc -> npc.getLocation().getWorld().equals(player.getWorld())
+            && npc.getLocation().distanceSquared(player.getLocation()) <= this.actionDistance)
+        .forEach(npc -> npc.metadata()
+            .queue(MetadataModifier.EntityMetadata.SNEAKING, event.isSneaking()).send(player));
   }
 
   @EventHandler
   public void handleClick(PlayerInteractEvent event) {
     Player player = event.getPlayer();
 
-    if (event.getAction() == Action.LEFT_CLICK_AIR || event.getAction() == Action.LEFT_CLICK_BLOCK) {
+    if (event.getAction() == Action.LEFT_CLICK_AIR
+        || event.getAction() == Action.LEFT_CLICK_BLOCK) {
       this.npcMap.values().stream()
-        .filter(npc -> npc.isImitatePlayer() && npc.isShownFor(player))
-        .filter(npc -> npc.getLocation().getWorld().equals(player.getWorld()) && npc.getLocation().distanceSquared(player.getLocation()) <= this.actionDistance)
-        .forEach(npc -> npc.animation().queue(AnimationModifier.EntityAnimation.SWING_MAIN_ARM).send(player));
+          .filter(npc -> npc.isImitatePlayer() && npc.isShownFor(player))
+          .filter(npc -> npc.getLocation().getWorld().equals(player.getWorld())
+              && npc.getLocation().distanceSquared(player.getLocation()) <= this.actionDistance)
+          .forEach(npc -> npc.animation().queue(AnimationModifier.EntityAnimation.SWING_MAIN_ARM)
+              .send(player));
     }
   }
 
@@ -314,6 +331,7 @@ public class NPCPool implements Listener {
    * @since 2.5-SNAPSHOT
    */
   public static class Builder {
+
     /**
      * The instance of the plugin which creates this pool
      */
@@ -342,7 +360,8 @@ public class NPCPool implements Listener {
     }
 
     /**
-     * Sets the spawn distance in which NPCs are spawned for players. Must be higher than {@code 0}.
+     * Sets the spawn distance in which NPCs are spawned for players. Must be higher than {@code
+     * 0}.
      *
      * @param spawnDistance the spawn distance in which NPCs are spawned for players.
      * @return The same instance of this class, for chaining.
@@ -355,7 +374,8 @@ public class NPCPool implements Listener {
     }
 
     /**
-     * Sets the distance in which NPC actions are displayed for players. Must be higher than {@code 0}.
+     * Sets the distance in which NPC actions are displayed for players. Must be higher than {@code
+     * 0}.
      *
      * @param actionDistance the distance in which NPC actions are displayed for players.
      * @return The same instance of this class, for chaining.
@@ -368,8 +388,8 @@ public class NPCPool implements Listener {
     }
 
     /**
-     * Sets the distance in which NPC actions are displayed for players. A negative value indicates that the npc
-     * is never removed from the player list by default.
+     * Sets the distance in which NPC actions are displayed for players. A negative value indicates
+     * that the npc is never removed from the player list by default.
      *
      * @param tabListRemoveTicks the distance in which NPC actions are displayed for players.
      * @return The same instance of this class, for chaining.
@@ -387,7 +407,8 @@ public class NPCPool implements Listener {
      */
     @NotNull
     public NPCPool build() {
-      return new NPCPool(this.plugin, this.spawnDistance, this.actionDistance, this.tabListRemoveTicks);
+      return new NPCPool(this.plugin, this.spawnDistance, this.actionDistance,
+          this.tabListRemoveTicks);
     }
   }
 }

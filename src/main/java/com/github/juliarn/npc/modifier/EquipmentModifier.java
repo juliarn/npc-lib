@@ -15,6 +15,7 @@ import java.util.Collections;
  * A modifier for modifying the equipment of a player.
  */
 public class EquipmentModifier extends NPCModifier {
+
   /**
    * The id of the main hand item slot.
    *
@@ -73,14 +74,17 @@ public class EquipmentModifier extends NPCModifier {
    * @return The same instance of this class, for chaining.
    */
   @NotNull
-  public EquipmentModifier queue(@NotNull EnumWrappers.ItemSlot itemSlot, @NotNull ItemStack equipment) {
+  public EquipmentModifier queue(
+      @NotNull EnumWrappers.ItemSlot itemSlot,
+      @NotNull ItemStack equipment) {
     PacketContainer packetContainer = super.newContainer(PacketType.Play.Server.ENTITY_EQUIPMENT);
 
     if (MINECRAFT_VERSION < 16) {
       packetContainer.getItemSlots().write(MINECRAFT_VERSION < 9 ? 1 : 0, itemSlot);
       packetContainer.getItemModifier().write(0, equipment);
     } else {
-      packetContainer.getSlotStackPairLists().write(0, Collections.singletonList(new Pair<>(itemSlot, equipment)));
+      packetContainer.getSlotStackPairLists()
+          .write(0, Collections.singletonList(new Pair<>(itemSlot, equipment)));
     }
 
     return this;
@@ -103,7 +107,8 @@ public class EquipmentModifier extends NPCModifier {
     } else {
       for (EnumWrappers.ItemSlot slot : EnumWrappers.ItemSlot.values()) {
         if (slot.ordinal() == itemSlot) {
-          packetContainer.getSlotStackPairLists().write(0, Collections.singletonList(new Pair<>(slot, equipment)));
+          packetContainer.getSlotStackPairLists()
+              .write(0, Collections.singletonList(new Pair<>(slot, equipment)));
           break;
         }
       }

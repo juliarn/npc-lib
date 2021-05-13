@@ -7,14 +7,14 @@ import com.github.juliarn.npc.NPC;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
-
 import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
- * An NPCModifier queues packets for NPC modification which can then be send to players via the {@link NPCModifier#send(Player...)} method.
+ * An NPCModifier queues packets for NPC modification which can then be send to players via the
+ * {@link NPCModifier#send(Player...)} method.
  *
  * @see AnimationModifier
  * @see EquipmentModifier
@@ -24,10 +24,12 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * @see LabyModModifier
  */
 public class NPCModifier {
+
   /**
    * The minor version of the servers minecraft version.
    */
-  public static final int MINECRAFT_VERSION = ProtocolLibrary.getProtocolManager().getMinecraftVersion().getMinor();
+  public static final int MINECRAFT_VERSION = ProtocolLibrary.getProtocolManager()
+      .getMinecraftVersion().getMinor();
 
   /**
    * All queued packet containers.
@@ -81,7 +83,8 @@ public class NPCModifier {
    * @return the last container in the packet queue or {@code null} if there is no container.
    */
   protected PacketContainer lastContainer() {
-    return this.packetContainers.isEmpty() ? null : this.packetContainers.get(this.packetContainers.size() - 1);
+    return this.packetContainers.isEmpty() ? null
+        : this.packetContainers.get(this.packetContainers.size() - 1);
   }
 
   /**
@@ -130,7 +133,8 @@ public class NPCModifier {
     players.forEach(player -> {
       try {
         for (PacketContainer packetContainer : this.packetContainers) {
-          ProtocolLibrary.getProtocolManager().sendServerPacket(player, createClone ? packetContainer.shallowClone() : packetContainer);
+          ProtocolLibrary.getProtocolManager().sendServerPacket(player,
+              createClone ? packetContainer.shallowClone() : packetContainer);
         }
       } catch (InvocationTargetException exception) {
         exception.printStackTrace();

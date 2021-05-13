@@ -7,10 +7,9 @@ import com.comphenix.protocol.wrappers.PlayerInfoData;
 import com.comphenix.protocol.wrappers.WrappedChatComponent;
 import com.comphenix.protocol.wrappers.WrappedDataWatcher;
 import com.github.juliarn.npc.NPC;
+import java.util.Collections;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Collections;
 
 /**
  * A modifier for modifying the visibility of a player.
@@ -52,11 +51,10 @@ public class VisibilityModifier extends NPCModifier {
     packetContainer.getPlayerInfoAction().write(0, action);
 
     PlayerInfoData playerInfoData = new PlayerInfoData(
-      super.npc.getGameProfile(),
-      20,
-      EnumWrappers.NativeGameMode.NOT_SET,
-      WrappedChatComponent.fromText("")
-    );
+        super.npc.getGameProfile(),
+        20,
+        EnumWrappers.NativeGameMode.NOT_SET,
+        WrappedChatComponent.fromText(""));
     packetContainer.getPlayerInfoDataLists().write(0, Collections.singletonList(playerInfoData));
 
     return this;
@@ -78,19 +76,19 @@ public class VisibilityModifier extends NPCModifier {
 
     if (MINECRAFT_VERSION < 9) {
       packetContainer.getIntegers()
-        .write(1, (int) Math.floor(x * 32.0D))
-        .write(2, (int) Math.floor(y * 32.0D))
-        .write(3, (int) Math.floor(z * 32.0D));
+          .write(1, (int) Math.floor(x * 32.0D))
+          .write(2, (int) Math.floor(y * 32.0D))
+          .write(3, (int) Math.floor(z * 32.0D));
     } else {
       packetContainer.getDoubles()
-        .write(0, x)
-        .write(1, y)
-        .write(2, z);
+          .write(0, x)
+          .write(1, y)
+          .write(2, z);
     }
 
     packetContainer.getBytes()
-      .write(0, (byte) (super.npc.getLocation().getYaw() * 256F / 360F))
-      .write(1, (byte) (super.npc.getLocation().getPitch() * 256F / 360F));
+        .write(0, (byte) (super.npc.getLocation().getYaw() * 256F / 360F))
+        .write(1, (byte) (super.npc.getLocation().getPitch() * 256F / 360F));
 
     if (MINECRAFT_VERSION < 15) {
       packetContainer.getDataWatcherModifier().write(0, new WrappedDataWatcher());
@@ -106,7 +104,8 @@ public class VisibilityModifier extends NPCModifier {
    */
   @NotNull
   public VisibilityModifier queueDestroy() {
-    PacketContainer packetContainer = super.newContainer(PacketType.Play.Server.ENTITY_DESTROY, false);
+    PacketContainer packetContainer = super
+        .newContainer(PacketType.Play.Server.ENTITY_DESTROY, false);
     packetContainer.getIntegerArrays().write(0, new int[]{super.npc.getEntityId()});
     return this;
   }

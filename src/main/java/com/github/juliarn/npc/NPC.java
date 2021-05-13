@@ -13,6 +13,9 @@ import com.github.juliarn.npc.modifier.RotationModifier;
 import com.github.juliarn.npc.modifier.VisibilityModifier;
 import com.github.juliarn.npc.profile.Profile;
 import com.google.common.base.Preconditions;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.concurrent.CopyOnWriteArraySet;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
@@ -20,10 +23,6 @@ import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
-
-import java.util.Collection;
-import java.util.Collections;
-import java.util.concurrent.CopyOnWriteArraySet;
 
 public class NPC {
 
@@ -49,7 +48,13 @@ public class NPC {
    * @param imitatePlayer   If the npc should imitate the player.
    * @param spawnCustomizer The spawn customizer of the npc.
    */
-  private NPC(Profile profile, int entityId, Location location, boolean lookAtPlayer, boolean imitatePlayer, SpawnCustomizer spawnCustomizer) {
+  private NPC(
+      Profile profile,
+      int entityId,
+      Location location,
+      boolean lookAtPlayer,
+      boolean imitatePlayer,
+      SpawnCustomizer spawnCustomizer) {
     this.profile = profile;
     this.gameProfile = this.convertProfile(profile);
     this.entityId = entityId;
@@ -76,8 +81,9 @@ public class NPC {
    *
    * @param player             The player to show this npc to.
    * @param plugin             The plugin requesting the change.
-   * @param tabListRemoveTicks The ticks before removing the player from the player list after spawning.
-   *                           A negative value indicates that this npc shouldn't get removed from the player list.
+   * @param tabListRemoveTicks The ticks before removing the player from the player list after
+   *                           spawning. A negative value indicates that this npc shouldn't get
+   *                           removed from the player list.
    */
   protected void show(@NotNull Player player, @NotNull Plugin plugin, long tabListRemoveTicks) {
     this.seeingPlayers.add(player);
@@ -92,9 +98,10 @@ public class NPC {
       if (tabListRemoveTicks >= 0) {
         // keeping the NPC longer in the player list, otherwise the skin might not be shown sometimes.
         Bukkit.getScheduler().runTaskLater(
-          plugin,
-          () -> visibilityModifier.queuePlayerListChange(EnumWrappers.PlayerInfoAction.REMOVE_PLAYER).send(player),
-          tabListRemoveTicks
+            plugin,
+            () -> visibilityModifier
+                .queuePlayerListChange(EnumWrappers.PlayerInfoAction.REMOVE_PLAYER).send(player),
+            tabListRemoveTicks
         );
       }
 
@@ -109,16 +116,19 @@ public class NPC {
    * @param plugin The plugin requesting the change.
    * @param reason The reason why the npc was hidden for the player.
    */
-  protected void hide(@NotNull Player player, @NotNull Plugin plugin, @NotNull PlayerNPCHideEvent.Reason reason) {
+  protected void hide(
+      @NotNull Player player,
+      @NotNull Plugin plugin,
+      @NotNull PlayerNPCHideEvent.Reason reason) {
     new VisibilityModifier(this)
-      .queuePlayerListChange(EnumWrappers.PlayerInfoAction.REMOVE_PLAYER)
-      .queueDestroy()
-      .send(player);
+        .queuePlayerListChange(EnumWrappers.PlayerInfoAction.REMOVE_PLAYER)
+        .queueDestroy()
+        .send(player);
 
     this.removeSeeingPlayer(player);
 
     Bukkit.getScheduler().runTask(plugin,
-      () -> Bukkit.getPluginManager().callEvent(new PlayerNPCHideEvent(player, this, reason)));
+        () -> Bukkit.getPluginManager().callEvent(new PlayerNPCHideEvent(player, this, reason)));
   }
 
   /**
@@ -130,10 +140,11 @@ public class NPC {
    */
   @NotNull
   protected WrappedGameProfile convertProfile(@NotNull Profile profile) {
-    WrappedGameProfile gameProfile = new WrappedGameProfile(profile.getUniqueId(), profile.getName());
+    WrappedGameProfile gameProfile = new WrappedGameProfile(profile.getUniqueId(),
+        profile.getName());
     profile.getProperties().forEach(property -> gameProfile.getProperties().put(
-      property.getName(),
-      new WrappedSignedProperty(property.getName(), property.getValue(), property.getSignature())
+        property.getName(),
+        new WrappedSignedProperty(property.getName(), property.getValue(), property.getSignature())
     ));
     return gameProfile;
   }
@@ -188,8 +199,8 @@ public class NPC {
 
   /**
    * A modifiable collection of all players which are not allowed to see this player. Modifications
-   * to the returned collection should be done using {@link #addExcludedPlayer(Player)} and
-   * {@link #removeExcludedPlayer(Player)}.
+   * to the returned collection should be done using {@link #addExcludedPlayer(Player)} and {@link
+   * #removeExcludedPlayer(Player)}.
    *
    * @return a collection of all players which are explicitly excluded from seeing this NPC.
    */
@@ -239,7 +250,8 @@ public class NPC {
   }
 
   /**
-   * Creates a new metadata modifier which serves methods to change an NPCs metadata, including sneaking etc.
+   * Creates a new metadata modifier which serves methods to change an NPCs metadata, including
+   * sneaking etc.
    *
    * @return a metadata modifier modifying this NPC
    */
@@ -271,8 +283,9 @@ public class NPC {
   }
 
   /**
-   * Get the protocol lib profile wrapper for this npc. To use this method {@code ProtocolLib} is needed
-   * as a dependency of your project. If you don't want to do that, use {@link #getProfile()} instead.
+   * Get the protocol lib profile wrapper for this npc. To use this method {@code ProtocolLib} is
+   * needed as a dependency of your project. If you don't want to do that, use {@link #getProfile()}
+   * instead.
    *
    * @return the protocol lib profile wrapper for this npc
    */
@@ -282,7 +295,8 @@ public class NPC {
   }
 
   /**
-   * The profile of this npc. The returned profile is mutable, however this has no effect to this npc.
+   * The profile of this npc. The returned profile is mutable, however this has no effect to this
+   * npc.
    *
    * @return The profile of this npc.
    * @since 2.5-SNAPSHOT
@@ -413,7 +427,8 @@ public class NPC {
     }
 
     /**
-     * Enables/disables imitation of the player, such as sneaking and hitting the player, default is true
+     * Enables/disables imitation of the player, such as sneaking and hitting the player, default is
+     * true
      *
      * @param imitatePlayer if the NPC should imitate players
      * @return this builder instance
@@ -425,7 +440,8 @@ public class NPC {
 
     /**
      * Sets an executor which will be called every time the NPC is spawned for a certain player.
-     * Permanent NPC modifications should be done in this method, otherwise they will be lost at the next respawn of the NPC.
+     * Permanent NPC modifications should be done in this method, otherwise they will be lost at the
+     * next respawn of the NPC.
      *
      * @param spawnCustomizer the spawn customizer which will be called on every spawn
      * @return this builder instance
@@ -436,7 +452,8 @@ public class NPC {
     }
 
     /**
-     * Passes the NPC to a pool which handles events, spawning and destruction of this NPC for players
+     * Passes the NPC to a pool which handles events, spawning and destruction of this NPC for
+     * players
      *
      * @param pool the pool the NPC will be passed to
      * @return this builder instance
@@ -444,15 +461,16 @@ public class NPC {
     @NotNull
     public NPC build(@NotNull NPCPool pool) {
       Preconditions.checkNotNull(this.profile, "A profile must be given");
-      Preconditions.checkArgument(this.profile.isComplete(), "The provided profile has to be complete!");
+      Preconditions
+          .checkArgument(this.profile.isComplete(), "The provided profile has to be complete!");
 
       NPC npc = new NPC(
-        this.profile,
-        pool.getFreeEntityId(),
-        this.location,
-        this.lookAtPlayer,
-        this.imitatePlayer,
-        this.spawnCustomizer);
+          this.profile,
+          pool.getFreeEntityId(),
+          this.location,
+          this.lookAtPlayer,
+          this.imitatePlayer,
+          this.spawnCustomizer);
       pool.takeCareOf(npc);
 
       return npc;

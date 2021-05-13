@@ -35,7 +35,8 @@ public class RotationModifier extends NPCModifier {
     byte yawAngle = (byte) (yaw * 256F / 360F);
     byte pitchAngle = (byte) (pitch * 256F / 360F);
 
-    PacketContainer entityHeadLookContainer = super.newContainer(PacketType.Play.Server.ENTITY_HEAD_ROTATION);
+    PacketContainer entityHeadLookContainer = super
+        .newContainer(PacketType.Play.Server.ENTITY_HEAD_ROTATION);
     entityHeadLookContainer.getBytes().write(0, yawAngle);
 
     PacketContainer bodyRotateContainer;
@@ -44,16 +45,16 @@ public class RotationModifier extends NPCModifier {
 
       Location location = super.npc.getLocation();
       bodyRotateContainer.getIntegers()
-        .write(1, (int) Math.floor(location.getX() * 32.0D))
-        .write(2, (int) Math.floor(location.getY() * 32.0D))
-        .write(3, (int) Math.floor(location.getZ() * 32.0D));
+          .write(1, (int) Math.floor(location.getX() * 32.0D))
+          .write(2, (int) Math.floor(location.getY() * 32.0D))
+          .write(3, (int) Math.floor(location.getZ() * 32.0D));
     } else {
       bodyRotateContainer = super.newContainer(PacketType.Play.Server.ENTITY_LOOK);
     }
 
     bodyRotateContainer.getBytes()
-      .write(0, yawAngle)
-      .write(1, pitchAngle);
+        .write(0, yawAngle)
+        .write(1, pitchAngle);
     bodyRotateContainer.getBooleans().write(0, true);
 
     return this;
@@ -71,7 +72,8 @@ public class RotationModifier extends NPCModifier {
     double yDifference = location.getY() - super.npc.getLocation().getY();
     double zDifference = location.getZ() - super.npc.getLocation().getZ();
 
-    double r = Math.sqrt(Math.pow(xDifference, 2) + Math.pow(yDifference, 2) + Math.pow(zDifference, 2));
+    double r = Math
+        .sqrt(Math.pow(xDifference, 2) + Math.pow(yDifference, 2) + Math.pow(zDifference, 2));
 
     float yaw = (float) (-Math.atan2(xDifference, zDifference) / Math.PI * 180D);
     yaw = yaw < 0 ? yaw + 360 : yaw;

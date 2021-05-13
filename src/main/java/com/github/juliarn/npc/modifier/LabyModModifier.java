@@ -12,7 +12,6 @@ import io.netty.buffer.Unpooled;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-
 import java.nio.charset.StandardCharsets;
 
 /**
@@ -109,7 +108,8 @@ public class LabyModModifier extends NPCModifier {
 
   /**
    * Writes a var int into the specified byte buf as defined by google in
-   * <a href="https://developers.google.com/protocol-buffers/docs/encoding#varints">Base 128 Varints</a>.
+   * <a href="https://developers.google.com/protocol-buffers/docs/encoding#varints">Base 128
+   * Varints</a>.
    *
    * @param byteBuf The byte buf to write the int to.
    * @param value   The int value to write into the byte buf.
@@ -150,7 +150,8 @@ public class LabyModModifier extends NPCModifier {
      * Constructs a new laby mod action.
      *
      * @param messageKey         The message key of the message send to the lmc channel.
-     * @param objectPropertyName The property name of the action identifier in the backing json object.
+     * @param objectPropertyName The property name of the action identifier in the backing json
+     *                           object.
      */
     LabyModAction(String messageKey, String objectPropertyName) {
       this.messageKey = messageKey;

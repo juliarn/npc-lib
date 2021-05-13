@@ -9,10 +9,6 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.reflect.TypeToken;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
@@ -28,19 +24,25 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * A wrapper for a game profile which can be completed.
  */
 public class Profile implements Cloneable {
 
-  private static final ThreadLocal<Gson> GSON = ThreadLocal.withInitial(() -> new GsonBuilder().serializeNulls().create());
+  private static final ThreadLocal<Gson> GSON = ThreadLocal
+      .withInitial(() -> new GsonBuilder().serializeNulls().create());
 
   private static final String UUID_REQUEST_URL = "https://api.mojang.com/users/profiles/minecraft/%s";
   private static final String TEXTURES_REQUEST_URL = "https://sessionserver.mojang.com/session/minecraft/profile/%s?unsigned=%b";
 
-  private static final Pattern UNIQUE_ID_PATTERN = Pattern.compile("(\\w{8})(\\w{4})(\\w{4})(\\w{4})(\\w{12})");
-  private static final Type PROPERTY_LIST_TYPE = TypeToken.getParameterized(Set.class, Property.class).getType();
+  private static final Pattern UNIQUE_ID_PATTERN = Pattern
+      .compile("(\\w{8})(\\w{4})(\\w{4})(\\w{4})(\\w{12})");
+  private static final Type PROPERTY_LIST_TYPE = TypeToken
+      .getParameterized(Set.class, Property.class).getType();
 
   private String name;
   private UUID uniqueId;
@@ -92,7 +94,8 @@ public class Profile implements Cloneable {
    * @param properties The properties of the profile.
    */
   public Profile(UUID uniqueId, String name, Collection<Property> properties) {
-    Preconditions.checkArgument(name != null || uniqueId != null, "Either name or uniqueId must be given!");
+    Preconditions
+        .checkArgument(name != null || uniqueId != null, "Either name or uniqueId must be given!");
 
     this.uniqueId = uniqueId;
     this.name = name;
@@ -109,7 +112,8 @@ public class Profile implements Cloneable {
   }
 
   /**
-   * Checks if this profile has textures. That does not mean, that this profile has a name and unique id.
+   * Checks if this profile has textures. That does not mean, that this profile has a name and
+   * unique id.
    *
    * @return if this profile has textures.
    * @since 2.5-SNAPSHOT
@@ -155,14 +159,17 @@ public class Profile implements Cloneable {
 
       JsonObject jsonObject = identifierElement.getAsJsonObject();
       if (jsonObject.has("id")) {
-        this.uniqueId = UUID.fromString(UNIQUE_ID_PATTERN.matcher(jsonObject.get("id").getAsString()).replaceAll("$1-$2-$3-$4-$5"));
+        this.uniqueId = UUID.fromString(
+            UNIQUE_ID_PATTERN.matcher(jsonObject.get("id").getAsString())
+                .replaceAll("$1-$2-$3-$4-$5"));
       } else {
         return false;
       }
     }
 
     if ((this.name == null || this.properties == null) && propertiesAndName) {
-      JsonElement profileElement = this.makeRequest(String.format(TEXTURES_REQUEST_URL, this.uniqueId.toString().replace("-", ""), false));
+      JsonElement profileElement = this.makeRequest(
+          String.format(TEXTURES_REQUEST_URL, this.uniqueId.toString().replace("-", ""), false));
       if (profileElement == null || !profileElement.isJsonObject()) {
         return false;
       }
@@ -170,7 +177,8 @@ public class Profile implements Cloneable {
       JsonObject object = profileElement.getAsJsonObject();
       if (object.has("name") && object.has("properties")) {
         this.name = this.name == null ? object.get("name").getAsString() : this.name;
-        this.getProperties().addAll(GSON.get().fromJson(object.get("properties"), PROPERTY_LIST_TYPE));
+        this.getProperties()
+            .addAll(GSON.get().fromJson(object.get("properties"), PROPERTY_LIST_TYPE));
       } else {
         return false;
       }
@@ -195,7 +203,8 @@ public class Profile implements Cloneable {
       connection.connect();
 
       if (connection.getResponseCode() == 200) {
-        try (Reader reader = new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8)) {
+        try (Reader reader = new InputStreamReader(connection.getInputStream(),
+            StandardCharsets.UTF_8)) {
           return JsonParser.parseReader(reader);
         }
       }
@@ -217,8 +226,8 @@ public class Profile implements Cloneable {
   }
 
   /**
-   * Get the unique id of this profile. May be null when this profile was created using
-   * a name and is not complete. Is never null when {@link #hasUniqueId()} is {@code true}.
+   * Get the unique id of this profile. May be null when this profile was created using a name and
+   * is not complete. Is never null when {@link #hasUniqueId()} is {@code true}.
    *
    * @return the unique id of this profile.
    */
@@ -250,8 +259,8 @@ public class Profile implements Cloneable {
   }
 
   /**
-   * Get the name of this profile. May be null when this profile was created using
-   * a unique id and is not complete. Is never null when {@link #hasName()} ()} is {@code true}.
+   * Get the name of this profile. May be null when this profile was created using a unique id and
+   * is not complete. Is never null when {@link #hasName()} ()} is {@code true}.
    *
    * @return the name of this profile.
    */
@@ -315,7 +324,8 @@ public class Profile implements Cloneable {
    * @since 2.5-SNAPSHOT
    */
   public @NotNull Optional<Property> getProperty(@NotNull String name) {
-    return this.getProperties().stream().filter(property -> property.getName().equals(name)).findFirst();
+    return this.getProperties().stream().filter(property -> property.getName().equals(name))
+        .findFirst();
   }
 
   /**
@@ -328,9 +338,9 @@ public class Profile implements Cloneable {
   }
 
   /**
-   * Get the properties of this profile as a protocol lib wrapper. This is not recommended to
-   * use as it creates a copy of all properties and requires protocol lib as a dependency. Use
-   * {@link #getProperties()} instead.
+   * Get the properties of this profile as a protocol lib wrapper. This is not recommended to use as
+   * it creates a copy of all properties and requires protocol lib as a dependency. Use {@link
+   * #getProperties()} instead.
    *
    * @return the properties of this profile as a protocol lib wrapper.
    * @deprecated Use {@link #getProperties()} instead.
@@ -371,7 +381,8 @@ public class Profile implements Cloneable {
     WrappedGameProfile profile = new WrappedGameProfile(this.getUniqueId(), this.getName());
 
     if (withProperties) {
-      this.getProperties().forEach(property -> profile.getProperties().put(property.getName(), property.asWrapped()));
+      this.getProperties().forEach(
+          property -> profile.getProperties().put(property.getName(), property.asWrapped()));
     }
 
     return profile;
@@ -387,7 +398,8 @@ public class Profile implements Cloneable {
     try {
       return (Profile) super.clone();
     } catch (CloneNotSupportedException exception) {
-      return new Profile(this.uniqueId, this.name, this.properties == null ? null : new HashSet<>(this.properties));
+      return new Profile(this.uniqueId, this.name,
+          this.properties == null ? null : new HashSet<>(this.properties));
     }
   }
 
@@ -427,8 +439,8 @@ public class Profile implements Cloneable {
     }
 
     /**
-     * Get the signature of this profile. It might be null, but must never be null
-     * when {@link #isSigned()} is {@code true}.
+     * Get the signature of this profile. It might be null, but must never be null when {@link
+     * #isSigned()} is {@code true}.
      *
      * @return the signature of this profile.
      */
@@ -447,9 +459,9 @@ public class Profile implements Cloneable {
     }
 
     /**
-     * Converts this property to a protocol lib wrapper. This method is no longer supported for public
-     * use and will be removed in a further release as its requiring protocol lib as a project dependency
-     * which is not the point of this wrapper class.
+     * Converts this property to a protocol lib wrapper. This method is no longer supported for
+     * public use and will be removed in a further release as its requiring protocol lib as a
+     * project dependency which is not the point of this wrapper class.
      *
      * @return this property to a protocol lib wrapper
      * @deprecated No longer supported for public use, convert it yourself when needed.

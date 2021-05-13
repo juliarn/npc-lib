@@ -27,7 +27,8 @@ public abstract class PlayerNPCEvent extends PlayerEvent {
   }
 
   /**
-   * Sends the queued data in the provided {@link NPCModifier}s to the player involved in this event.
+   * Sends the queued data in the provided {@link NPCModifier}s to the player involved in this
+   * event.
    *
    * @param npcModifiers The {@link NPCModifier}s whose data should be send
    */
