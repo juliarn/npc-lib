@@ -27,7 +27,7 @@ Maven
 <dependency>
     <groupId>com.github.juliarn</groupId>
     <artifactId>npc-lib</artifactId>
-    <version>2.4-RELEASE</version>
+    <version>2.5-RELEASE</version>
 </dependency>
 <!-- latest build -->
 <dependency>
@@ -46,7 +46,7 @@ maven {
 }
 
 // latest stable release
-compile group: 'com.github.juliarn', name: 'npc-lib', version: '2.4-RELEASE'
+compile group: 'com.github.juliarn', name: 'npc-lib', version: '2.5-RELEASE'
 // latest build
 compile group: 'com.github.juliarn', name: 'npc-lib', version: 'development-SNAPSHOT'
 ```
