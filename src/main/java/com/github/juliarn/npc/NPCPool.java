@@ -6,6 +6,7 @@ import com.comphenix.protocol.events.PacketAdapter;
 import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.events.PacketEvent;
 import com.comphenix.protocol.wrappers.EnumWrappers;
+import com.comphenix.protocol.wrappers.EnumWrappers.Hand;
 import com.github.juliarn.npc.event.PlayerNPCHideEvent;
 import com.github.juliarn.npc.event.PlayerNPCInteractEvent;
 import com.github.juliarn.npc.modifier.AnimationModifier;
@@ -13,6 +14,13 @@ import com.github.juliarn.npc.modifier.LabyModModifier;
 import com.github.juliarn.npc.modifier.MetadataModifier;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Random;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -27,14 +35,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
-
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Random;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class NPCPool implements Listener {
 
@@ -150,10 +150,17 @@ public class NPCPool implements Listener {
               NPC npc = NPCPool.this.npcMap.get(targetId);
               EnumWrappers.EntityUseAction action = packetContainer.getEntityUseActions().read(0);
 
+              Hand readHand = packetContainer.getHands().readSafely(0);
+              Hand hand = readHand == null ? Hand.MAIN_HAND : readHand;
+
               Bukkit.getScheduler().runTask(
                   NPCPool.this.plugin,
-                  () -> Bukkit.getPluginManager()
-                      .callEvent(new PlayerNPCInteractEvent(event.getPlayer(), npc, action))
+                  () -> Bukkit.getPluginManager().callEvent(
+                      new PlayerNPCInteractEvent(
+                          event.getPlayer(),
+                          npc,
+                          action,
+                          hand))
               );
             }
           }

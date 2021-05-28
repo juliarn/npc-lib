@@ -20,6 +20,11 @@ public class PlayerNPCInteractEvent extends PlayerNPCEvent {
   private final EntityUseAction action;
 
   /**
+   * The player hand used for the interact.
+   */
+  private final Hand hand;
+
+  /**
    * Constructs a new event instance.
    *
    * @param who    The player who interacted with the npc.
@@ -30,7 +35,23 @@ public class PlayerNPCInteractEvent extends PlayerNPCEvent {
       @NotNull Player who,
       @NotNull NPC npc,
       @NotNull EnumWrappers.EntityUseAction action) {
-    this(who, npc, EntityUseAction.fromHandle(action));
+    this(who, npc, EntityUseAction.fromHandle(action), Hand.MAIN_HAND);
+  }
+
+  /**
+   * Constructs a new event instance.
+   *
+   * @param who    The player who interacted with the npc.
+   * @param npc    The npc with whom the player has interacted.
+   * @param action The action type of the interact.
+   * @param hand   The player hand used for the interact.
+   */
+  public PlayerNPCInteractEvent(
+      @NotNull Player who,
+      @NotNull NPC npc,
+      @NotNull EnumWrappers.EntityUseAction action,
+      @NotNull EnumWrappers.Hand hand) {
+    this(who, npc, EntityUseAction.fromHandle(action), Hand.fromHandle(hand));
   }
 
   /**
@@ -44,8 +65,25 @@ public class PlayerNPCInteractEvent extends PlayerNPCEvent {
       @NotNull Player who,
       @NotNull NPC npc,
       @NotNull EntityUseAction action) {
+    this(who, npc, action, Hand.MAIN_HAND);
+  }
+
+  /**
+   * Constructs a new event instance.
+   *
+   * @param who    The player who interacted with the npc.
+   * @param npc    The npc with whom the player has interacted.
+   * @param action The action type of the interact.
+   * @param hand   The player hand used for the interact.
+   */
+  public PlayerNPCInteractEvent(
+      @NotNull Player who,
+      @NotNull NPC npc,
+      @NotNull EntityUseAction action,
+      @NotNull Hand hand) {
     super(who, npc);
     this.action = action;
+    this.hand = hand;
   }
 
   /**
@@ -80,6 +118,16 @@ public class PlayerNPCInteractEvent extends PlayerNPCEvent {
   @NotNull
   public EntityUseAction getUseAction() {
     return this.action;
+  }
+
+  /**
+   * Gets the hand which the player used to interact with the associated npc.
+   *
+   * @return The hand the player used to interact
+   */
+  @NotNull
+  public Hand getHand() {
+    return this.hand;
   }
 
   /**
@@ -143,6 +191,54 @@ public class PlayerNPCInteractEvent extends PlayerNPCEvent {
         }
       }
       throw new IllegalArgumentException("No use action for handle: " + action);
+    }
+  }
+
+  /**
+   * A wrapper for the hand used for interacts.
+   */
+  public enum Hand {
+    /**
+     * Main hand of the player.
+     */
+    MAIN_HAND(EnumWrappers.Hand.MAIN_HAND),
+    /**
+     * Off hand of the player.
+     */
+    OFF_HAND(EnumWrappers.Hand.OFF_HAND);
+
+    /**
+     * All hand enum values, to prevent a copy.
+     */
+    private static final Hand[] VALUES = values();
+
+    /**
+     * The hand as the protocol lib wrapper.
+     */
+    private final EnumWrappers.Hand handle;
+
+    /**
+     * @param handle The hand as the protocol lib wrapper.
+     */
+    Hand(EnumWrappers.Hand handle) {
+      this.handle = handle;
+    }
+
+    /**
+     * Converts the protocol lib wrapper to the associated hand.
+     *
+     * @param hand The protocol lib wrapper of the association.
+     * @return The association with the protocol lib wrapper hand.
+     * @throws IllegalArgumentException When no association was found.
+     */
+    @NotNull
+    private static Hand fromHandle(@NotNull EnumWrappers.Hand hand) {
+      for (Hand value : VALUES) {
+        if (value.handle == hand) {
+          return value;
+        }
+      }
+      throw new IllegalArgumentException("No hand for handle: " + hand);
     }
   }
 }
