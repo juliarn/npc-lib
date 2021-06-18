@@ -8,6 +8,7 @@ import com.comphenix.protocol.events.PacketEvent;
 import com.comphenix.protocol.wrappers.EnumWrappers;
 import com.comphenix.protocol.wrappers.EnumWrappers.EntityUseAction;
 import com.comphenix.protocol.wrappers.EnumWrappers.Hand;
+import com.comphenix.protocol.wrappers.WrappedEnumEntityUseAction;
 import com.github.juliarn.npc.event.PlayerNPCHideEvent;
 import com.github.juliarn.npc.event.PlayerNPCInteractEvent;
 import com.github.juliarn.npc.modifier.AnimationModifier;
@@ -149,11 +150,13 @@ public class NPCPool implements Listener {
 
             if (NPCPool.this.npcMap.containsKey(targetId)) {
               NPC npc = NPCPool.this.npcMap.get(targetId);
-              EnumWrappers.EntityUseAction action = packetContainer.getEntityUseActions().read(0);
 
-              Hand hand = action == EntityUseAction.ATTACK
-                  ? Hand.MAIN_HAND
-                  : packetContainer.getHands().optionRead(0).orElse(Hand.MAIN_HAND);
+              WrappedEnumEntityUseAction wrappedUseAction =
+                  packetContainer.getEnumEntityUseActions().read(0);
+
+              EnumWrappers.EntityUseAction action = wrappedUseAction.getAction();
+              Hand hand =
+                  action == EntityUseAction.ATTACK ? Hand.MAIN_HAND : wrappedUseAction.getHand();
 
               Bukkit.getScheduler().runTask(
                   NPCPool.this.plugin,

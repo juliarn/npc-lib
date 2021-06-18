@@ -3,6 +3,7 @@ package com.github.juliarn.npc.modifier;
 import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.wrappers.EnumWrappers;
+import com.comphenix.protocol.wrappers.EnumWrappers.NativeGameMode;
 import com.comphenix.protocol.wrappers.PlayerInfoData;
 import com.comphenix.protocol.wrappers.WrappedChatComponent;
 import com.comphenix.protocol.wrappers.WrappedDataWatcher;
@@ -53,7 +54,7 @@ public class VisibilityModifier extends NPCModifier {
     PlayerInfoData playerInfoData = new PlayerInfoData(
         super.npc.getGameProfile(),
         20,
-        EnumWrappers.NativeGameMode.NOT_SET,
+        NativeGameMode.CREATIVE,
         WrappedChatComponent.fromText(""));
     packetContainer.getPlayerInfoDataLists().write(0, Collections.singletonList(playerInfoData));
 
@@ -106,7 +107,12 @@ public class VisibilityModifier extends NPCModifier {
   public VisibilityModifier queueDestroy() {
     PacketContainer packetContainer = super
         .newContainer(PacketType.Play.Server.ENTITY_DESTROY, false);
-    packetContainer.getIntegerArrays().write(0, new int[]{super.npc.getEntityId()});
+
+    if (MINECRAFT_VERSION >= 17) {
+      packetContainer.getIntegers().write(0, super.npc.getEntityId());
+    } else {
+      packetContainer.getIntegerArrays().write(0, new int[]{super.npc.getEntityId()});
+    }
     return this;
   }
 
