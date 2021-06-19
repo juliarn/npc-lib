@@ -5,9 +5,8 @@ import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.events.PacketAdapter;
 import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.events.PacketEvent;
+import com.comphenix.protocol.utility.MinecraftVersion;
 import com.comphenix.protocol.wrappers.EnumWrappers;
-import com.comphenix.protocol.wrappers.EnumWrappers.EntityUseAction;
-import com.comphenix.protocol.wrappers.EnumWrappers.Hand;
 import com.comphenix.protocol.wrappers.WrappedEnumEntityUseAction;
 import com.github.juliarn.npc.event.PlayerNPCHideEvent;
 import com.github.juliarn.npc.event.PlayerNPCInteractEvent;
@@ -145,18 +144,29 @@ public class NPCPool implements Listener {
         .addPacketListener(new PacketAdapter(this.plugin, PacketType.Play.Client.USE_ENTITY) {
           @Override
           public void onPacketReceiving(PacketEvent event) {
-            PacketContainer packetContainer = event.getPacket();
-            int targetId = packetContainer.getIntegers().read(0);
+            PacketContainer container = event.getPacket();
+            int targetId = container.getIntegers().read(0);
 
             if (NPCPool.this.npcMap.containsKey(targetId)) {
               NPC npc = NPCPool.this.npcMap.get(targetId);
 
-              WrappedEnumEntityUseAction wrappedUseAction =
-                  packetContainer.getEnumEntityUseActions().read(0);
+              EnumWrappers.Hand usedHand;
+              EnumWrappers.EntityUseAction action;
 
-              EnumWrappers.EntityUseAction action = wrappedUseAction.getAction();
-              Hand hand =
-                  action == EntityUseAction.ATTACK ? Hand.MAIN_HAND : wrappedUseAction.getHand();
+              if (MinecraftVersion.CAVES_CLIFFS_1.atOrAbove()) {
+                WrappedEnumEntityUseAction useAction = container.getEnumEntityUseActions().read(0);
+                // the hand is only available when not attacking
+                action = useAction.getAction();
+                usedHand = action == EnumWrappers.EntityUseAction.ATTACK
+                    ? EnumWrappers.Hand.MAIN_HAND
+                    : useAction.getHand();
+              } else {
+                // the hand is only available when not attacking
+                action = container.getEntityUseActions().read(0);
+                usedHand = action == EnumWrappers.EntityUseAction.ATTACK
+                    ? EnumWrappers.Hand.MAIN_HAND
+                    : container.getHands().optionRead(0).orElse(EnumWrappers.Hand.MAIN_HAND);
+              }
 
               Bukkit.getScheduler().runTask(
                   NPCPool.this.plugin,
@@ -165,7 +175,7 @@ public class NPCPool implements Listener {
                           event.getPlayer(),
                           npc,
                           action,
-                          hand))
+                          usedHand))
               );
             }
           }
