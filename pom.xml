@@ -39,9 +39,9 @@
       <scope>provided</scope>
     </dependency>
     <dependency>
-      <groupId>com.comphenix.protocol</groupId>
+      <groupId>com.github.dmulloy2</groupId>
       <artifactId>ProtocolLib</artifactId>
-      <version>4.7.0-SNAPSHOT</version>
+      <version>master-SNAPSHOT</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
