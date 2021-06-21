@@ -1,9 +1,9 @@
 # NPC-Lib
 
-Asynchronous, high-performance Minecraft NPC library for 1.8-1.16 servers.
+Asynchronous, high-performance Minecraft NPC library for 1.8-1.17 servers.
 
-This Library does only support the latest patch release of a supported version (for example 1.13.2). Issues with older
-patch versions (for example 1.13.1) won't be fixed.
+This Library does only support the latest patch release of a supported version (for example 1.13.2).
+Issues with older patch versions (for example 1.13.1) won't be fixed.
 
 ## Requirements
 
@@ -27,7 +27,7 @@ Maven
 <dependency>
     <groupId>com.github.juliarn</groupId>
     <artifactId>npc-lib</artifactId>
-    <version>2.5-RELEASE</version>
+    <version>2.6-RELEASE</version>
 </dependency>
 <!-- latest build -->
 <dependency>
