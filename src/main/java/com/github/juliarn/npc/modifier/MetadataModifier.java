@@ -71,6 +71,7 @@ public class MetadataModifier extends NPCModifier {
    * @param index The index of the metadata to change.
    * @param value The new value of the metadata.
    * @param clazz The class of the output type.
+   * @param <T>   The type of the value.
    * @return The same instance of this class, for chaining.
    */
   @NotNull

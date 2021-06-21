@@ -412,6 +412,13 @@ public class Profile implements Cloneable {
     private final String value;
     private final String signature;
 
+    /**
+     * Creates a new profile property object.
+     *
+     * @param name      The name of the profile property.
+     * @param value     The value of the property.
+     * @param signature The signature of the property or null if the property is not signed.
+     */
     public Property(@NotNull String name, @NotNull String value, @Nullable String signature) {
       this.name = name;
       this.value = value;

@@ -37,6 +37,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
+/**
+ * Represents the main management point for {@link NPC}s.
+ */
 public class NPCPool implements Listener {
 
   private static final Random RANDOM = new Random();
