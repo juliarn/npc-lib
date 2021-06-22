@@ -71,6 +71,7 @@ public class MetadataModifier extends NPCModifier {
    * @param index The index of the metadata to change.
    * @param value The new value of the metadata.
    * @param clazz The class of the output type.
+   * @param <T>   The type of the value.
    * @return The same instance of this class, for chaining.
    */
   @NotNull
@@ -144,7 +145,7 @@ public class MetadataModifier extends NPCModifier {
     public static final EntityMetadata<Boolean, Byte> SKIN_LAYERS = new EntityMetadata<>(
         10,
         Byte.class,
-        Arrays.asList(9, 9, 10, 14, 14, 15),
+        Arrays.asList(9, 9, 10, 14, 14, 15, 17),
         input -> (byte) (input ? 0xff : 0));
     /**
      * An entity metadata for modifying the pose.

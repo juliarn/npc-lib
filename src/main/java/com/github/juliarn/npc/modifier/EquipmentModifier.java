@@ -53,6 +53,8 @@ public class EquipmentModifier extends NPCModifier {
    */
   public static final int HEAD = 5;
 
+  private static final EnumWrappers.ItemSlot[] ITEM_SLOTS = EnumWrappers.ItemSlot.values();
+
   /**
    * Creates a new modifier.
    *
@@ -80,7 +82,11 @@ public class EquipmentModifier extends NPCModifier {
     PacketContainer packetContainer = super.newContainer(PacketType.Play.Server.ENTITY_EQUIPMENT);
 
     if (MINECRAFT_VERSION < 16) {
-      packetContainer.getItemSlots().write(MINECRAFT_VERSION < 9 ? 1 : 0, itemSlot);
+      if (MINECRAFT_VERSION < 9) {
+        packetContainer.getIntegers().write(1, itemSlot.ordinal());
+      } else {
+        packetContainer.getItemSlots().write(0, itemSlot);
+      }
       packetContainer.getItemModifier().write(0, equipment);
     } else {
       packetContainer.getSlotStackPairLists()
@@ -99,21 +105,12 @@ public class EquipmentModifier extends NPCModifier {
    */
   @NotNull
   public EquipmentModifier queue(int itemSlot, @NotNull ItemStack equipment) {
-    PacketContainer packetContainer = super.newContainer(PacketType.Play.Server.ENTITY_EQUIPMENT);
-
-    if (MINECRAFT_VERSION < 16) {
-      packetContainer.getIntegers().write(MINECRAFT_VERSION < 9 ? 1 : 0, itemSlot);
-      packetContainer.getItemModifier().write(0, equipment);
-    } else {
-      for (EnumWrappers.ItemSlot slot : EnumWrappers.ItemSlot.values()) {
-        if (slot.ordinal() == itemSlot) {
-          packetContainer.getSlotStackPairLists()
-              .write(0, Collections.singletonList(new Pair<>(slot, equipment)));
-          break;
-        }
+    for (EnumWrappers.ItemSlot slot : ITEM_SLOTS) {
+      if (slot.ordinal() == itemSlot) {
+        return queue(slot, equipment);
       }
     }
 
-    return this;
+    throw new IllegalArgumentException("Provided itemSlot is invalid");
   }
 }

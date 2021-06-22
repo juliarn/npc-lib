@@ -24,6 +24,9 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 
+/**
+ * Represents a non-person player which can be spawned and is managed by a {@link NPCPool}.
+ */
 public class NPC {
 
   private final Collection<Player> seeingPlayers = new CopyOnWriteArraySet<>();

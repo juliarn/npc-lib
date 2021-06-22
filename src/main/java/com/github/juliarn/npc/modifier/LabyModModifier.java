@@ -20,7 +20,9 @@ import java.nio.charset.StandardCharsets;
  * @since 2.5-SNAPSHOT
  */
 public class LabyModModifier extends NPCModifier {
-
+  /**
+   * Represents the main channel to which the LabyMod client is listening for plugin messages.
+   */
   public static final MinecraftKey LABYMOD_PLUGIN_CHANNEL = new MinecraftKey("labymod3", "main");
 
   /**
