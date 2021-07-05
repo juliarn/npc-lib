@@ -5,7 +5,6 @@ import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.events.PacketAdapter;
 import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.events.PacketEvent;
-import com.comphenix.protocol.utility.MinecraftVersion;
 import com.comphenix.protocol.wrappers.EnumWrappers;
 import com.comphenix.protocol.wrappers.WrappedEnumEntityUseAction;
 import com.github.juliarn.npc.event.PlayerNPCHideEvent;
@@ -13,15 +12,9 @@ import com.github.juliarn.npc.event.PlayerNPCInteractEvent;
 import com.github.juliarn.npc.modifier.AnimationModifier;
 import com.github.juliarn.npc.modifier.LabyModModifier;
 import com.github.juliarn.npc.modifier.MetadataModifier;
+import com.github.juliarn.npc.modifier.NPCModifier;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Random;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -36,6 +29,13 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Random;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Represents the main management point for {@link NPC}s.
@@ -156,7 +156,7 @@ public class NPCPool implements Listener {
               EnumWrappers.Hand usedHand;
               EnumWrappers.EntityUseAction action;
 
-              if (MinecraftVersion.CAVES_CLIFFS_1.atOrAbove()) {
+              if (NPCModifier.MINECRAFT_VERSION >= 17) {
                 WrappedEnumEntityUseAction useAction = container.getEnumEntityUseActions().read(0);
                 // the hand is only available when not attacking
                 action = useAction.getAction();
