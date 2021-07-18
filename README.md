@@ -46,7 +46,7 @@ maven {
 }
 
 // latest stable release
-compile group: 'com.github.juliarn', name: 'npc-lib', version: '2.5-RELEASE'
+compile group: 'com.github.juliarn', name: 'npc-lib', version: '2.6-RELEASE'
 // latest build
 compile group: 'com.github.juliarn', name: 'npc-lib', version: 'development-SNAPSHOT'
 ```
