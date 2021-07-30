@@ -28,6 +28,7 @@ public class NPC {
 
   private final Collection<Player> seeingPlayers = new CopyOnWriteArraySet<>();
   private final Collection<Player> excludedPlayers = new CopyOnWriteArraySet<>();
+  private final Collection<Player> includedPlayers = new CopyOnWriteArraySet<>();
 
   private final Profile profile;
   private final int entityId;
@@ -37,6 +38,7 @@ public class NPC {
 
   private boolean lookAtPlayer;
   private boolean imitatePlayer;
+  private final boolean exclusive;
 
   /**
    * Creates a new npc instance.
@@ -54,6 +56,7 @@ public class NPC {
       Location location,
       boolean lookAtPlayer,
       boolean imitatePlayer,
+      boolean exclusive,
       SpawnCustomizer spawnCustomizer) {
     this.profile = profile;
     this.gameProfile = this.convertProfile(profile);
@@ -62,6 +65,7 @@ public class NPC {
     this.location = location;
     this.lookAtPlayer = lookAtPlayer;
     this.imitatePlayer = imitatePlayer;
+    this.exclusive = exclusive;
     this.spawnCustomizer = spawnCustomizer;
   }
 
@@ -170,6 +174,34 @@ public class NPC {
   }
 
   /**
+   * Adds a player that can see this NPC
+   *
+   * @param player the player to see the NPC
+   */
+  public void addIncludedPlayer(Player player) {
+    Preconditions.checkArgument(exclusive, "Don't use addIncludedPlayer when NPC is not in exclusive mode");
+    this.includedPlayers.add(player);
+  }
+
+  /**
+   * Removes a player from seeing this NPC
+   *
+   * @param player the player to stop seeing the NPC
+   */
+  public void removeIncludedPlayer(Player player) {
+    Preconditions.checkArgument(exclusive, "Don't use removeIncludedPlayer when NPC is not in exclusive mode");
+    this.includedPlayers.remove(player);
+  }
+
+  /**
+   * @return a modifiable collection of all players that can see this NPC
+   */
+  public Collection<Player> getIncludedPlayers() {
+    Preconditions.checkArgument(exclusive, "Don't use getIncludedPlayers when NPC is not in exclusive mode");
+    return this.includedPlayers;
+  }
+
+  /**
    * Get if this npc is shown for the given {@code player}.
    *
    * @param player The player to check.
@@ -185,6 +217,7 @@ public class NPC {
    * @param player the player to be excluded
    */
   public void addExcludedPlayer(@NotNull Player player) {
+    Preconditions.checkArgument(!exclusive, "Don't use addExcludedPlayer when NPC is in exclusive mode");
     this.excludedPlayers.add(player);
   }
 
@@ -194,6 +227,7 @@ public class NPC {
    * @param player the player to be included again
    */
   public void removeExcludedPlayer(@NotNull Player player) {
+    Preconditions.checkArgument(!exclusive, "Don't use removeExcludedPlayer when NPC is in exclusive mode");
     this.excludedPlayers.remove(player);
   }
 
@@ -206,6 +240,7 @@ public class NPC {
    */
   @NotNull
   public Collection<Player> getExcludedPlayers() {
+    Preconditions.checkArgument(!exclusive, "Don't use getExcludedPlayers when NPC is in exclusive mode");
     return this.excludedPlayers;
   }
 
@@ -216,7 +251,11 @@ public class NPC {
    * @return if the specified {@code player} is explicitly not allowed to see this npc.
    */
   public boolean isExcluded(@NotNull Player player) {
-    return this.excludedPlayers.contains(player);
+    if (exclusive) {
+      return !this.includedPlayers.contains(player);
+    } else {
+      return this.excludedPlayers.contains(player);
+    }
   }
 
   /**
@@ -370,6 +409,7 @@ public class NPC {
 
     private boolean lookAtPlayer = true;
     private boolean imitatePlayer = true;
+    private boolean exclusive = false;
 
     private Location location = new Location(Bukkit.getWorlds().get(0), 0D, 0D, 0D);
     private SpawnCustomizer spawnCustomizer = (npc, player) -> {
@@ -439,6 +479,18 @@ public class NPC {
     }
 
     /**
+     * Sets an NPC as hidden by default. Players will need to be explicitly shown this NPC and it will not be
+     * visible to any Player by default.
+     *
+     * @param exclusive whether the NPC is exclusive and hidden to players by default
+     * @return this builder instance
+     */
+    public Builder exclusive(boolean exclusive) {
+      this.exclusive = exclusive;
+      return this;
+    }
+
+    /**
      * Sets an executor which will be called every time the NPC is spawned for a certain player.
      * Permanent NPC modifications should be done in this method, otherwise they will be lost at the
      * next respawn of the NPC.
@@ -470,6 +522,7 @@ public class NPC {
           this.location,
           this.lookAtPlayer,
           this.imitatePlayer,
+          this.exclusive,
           this.spawnCustomizer);
       pool.takeCareOf(npc);
 
