@@ -6,22 +6,15 @@ import com.comphenix.protocol.events.PacketAdapter;
 import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.events.PacketEvent;
 import com.comphenix.protocol.wrappers.EnumWrappers;
-import com.comphenix.protocol.wrappers.EnumWrappers.EntityUseAction;
-import com.comphenix.protocol.wrappers.EnumWrappers.Hand;
+import com.comphenix.protocol.wrappers.WrappedEnumEntityUseAction;
 import com.github.juliarn.npc.event.PlayerNPCHideEvent;
 import com.github.juliarn.npc.event.PlayerNPCInteractEvent;
 import com.github.juliarn.npc.modifier.AnimationModifier;
 import com.github.juliarn.npc.modifier.LabyModModifier;
 import com.github.juliarn.npc.modifier.MetadataModifier;
+import com.github.juliarn.npc.modifier.NPCModifier;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Random;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -36,7 +29,17 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Random;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * Represents the main management point for {@link NPC}s.
+ */
 public class NPCPool implements Listener {
 
   private static final Random RANDOM = new Random();
@@ -144,16 +147,29 @@ public class NPCPool implements Listener {
         .addPacketListener(new PacketAdapter(this.plugin, PacketType.Play.Client.USE_ENTITY) {
           @Override
           public void onPacketReceiving(PacketEvent event) {
-            PacketContainer packetContainer = event.getPacket();
-            int targetId = packetContainer.getIntegers().read(0);
+            PacketContainer container = event.getPacket();
+            int targetId = container.getIntegers().read(0);
 
             if (NPCPool.this.npcMap.containsKey(targetId)) {
               NPC npc = NPCPool.this.npcMap.get(targetId);
-              EnumWrappers.EntityUseAction action = packetContainer.getEntityUseActions().read(0);
 
-              Hand hand = action == EntityUseAction.ATTACK
-                  ? Hand.MAIN_HAND
-                  : packetContainer.getHands().optionRead(0).orElse(Hand.MAIN_HAND);
+              EnumWrappers.Hand usedHand;
+              EnumWrappers.EntityUseAction action;
+
+              if (NPCModifier.MINECRAFT_VERSION >= 17) {
+                WrappedEnumEntityUseAction useAction = container.getEnumEntityUseActions().read(0);
+                // the hand is only available when not attacking
+                action = useAction.getAction();
+                usedHand = action == EnumWrappers.EntityUseAction.ATTACK
+                    ? EnumWrappers.Hand.MAIN_HAND
+                    : useAction.getHand();
+              } else {
+                // the hand is only available when not attacking
+                action = container.getEntityUseActions().read(0);
+                usedHand = action == EnumWrappers.EntityUseAction.ATTACK
+                    ? EnumWrappers.Hand.MAIN_HAND
+                    : container.getHands().optionRead(0).orElse(EnumWrappers.Hand.MAIN_HAND);
+              }
 
               Bukkit.getScheduler().runTask(
                   NPCPool.this.plugin,
@@ -162,7 +178,7 @@ public class NPCPool implements Listener {
                           event.getPlayer(),
                           npc,
                           action,
-                          hand))
+                          usedHand))
               );
             }
           }
