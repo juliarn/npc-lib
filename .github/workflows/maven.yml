@@ -1,6 +1,6 @@
 name: Build with Maven
 
-on: [create, push, pull_request]
+on: [ create, push, pull_request ]
 
 jobs:
   build:
