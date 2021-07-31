@@ -56,7 +56,7 @@ public class VisibilityModifier extends NPCModifier {
         20,
         NativeGameMode.CREATIVE,
         WrappedChatComponent.fromText(""));
-    packetContainer.getPlayerInfoDataLists().write(0, Collections.singletonList(playerInfoData));
+    packetContainer.getPlayerInfoDataLists().write(0, new ArrayList<>(Arrays.asList(playerInfoData)));
 
     return this;
   }
