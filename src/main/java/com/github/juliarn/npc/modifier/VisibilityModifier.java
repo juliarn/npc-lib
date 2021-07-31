@@ -110,7 +110,7 @@ public class VisibilityModifier extends NPCModifier {
         .newContainer(PacketType.Play.Server.ENTITY_DESTROY, false);
 
     if (MINECRAFT_VERSION >= 17) {
-      packetContainer.getIntLists().write(0, Collections.singletonList(super.npc.getEntityId()));
+      packetContainer.getIntLists().write(0, new ArrayList<>(Arrays.asList(super.npc.getEntityId())));
     } else {
       packetContainer.getIntegerArrays().write(0, new int[]{super.npc.getEntityId()});
     }
