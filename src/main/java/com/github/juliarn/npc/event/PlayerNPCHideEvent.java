@@ -69,6 +69,10 @@ public class PlayerNPCHideEvent extends PlayerNPCEvent {
      */
     SPAWN_DISTANCE,
     /**
+     * NPC was in an unloaded chunk.
+     */
+    UNLOADED_CHUNK,
+    /**
      * The npc was removed from the pool.
      */
     REMOVED,
