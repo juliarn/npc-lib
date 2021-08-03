@@ -258,7 +258,7 @@ public class NPC {
     }
   }
 
-`  /**
+  /**
    * @return whether this NPC is exclusive, and thus hidden by default to players.
    */
   public boolean isExclusive() {
