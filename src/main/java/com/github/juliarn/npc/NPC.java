@@ -258,6 +258,13 @@ public class NPC {
     }
   }
 
+`  /**
+   * @return whether this NPC is exclusive, and thus hidden by default to players.
+   */
+  public boolean isExclusive() {
+    return exclusive;
+  }
+
   /**
    * Creates a new animation modifier which serves methods to play animations on an NPC
    *
