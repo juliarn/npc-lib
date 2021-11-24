@@ -1,15 +1,16 @@
 package com.github.juliarn.npc.modifier;
 
-import com.comphenix.protocol.PacketType;
+import com.comphenix.protocol.PacketType.Play.Server;
 import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.wrappers.EnumWrappers;
 import com.comphenix.protocol.wrappers.EnumWrappers.NativeGameMode;
 import com.comphenix.protocol.wrappers.PlayerInfoData;
 import com.comphenix.protocol.wrappers.WrappedChatComponent;
 import com.comphenix.protocol.wrappers.WrappedDataWatcher;
+import com.comphenix.protocol.wrappers.WrappedGameProfile;
 import com.github.juliarn.npc.NPC;
-import java.util.Arrays;
 import java.util.ArrayList;
+import java.util.Collections;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -49,15 +50,27 @@ public class VisibilityModifier extends NPCModifier {
    */
   @NotNull
   public VisibilityModifier queuePlayerListChange(@NotNull EnumWrappers.PlayerInfoAction action) {
-    PacketContainer packetContainer = super.newContainer(PacketType.Play.Server.PLAYER_INFO, false);
-    packetContainer.getPlayerInfoAction().write(0, action);
-
-    PlayerInfoData playerInfoData = new PlayerInfoData(
-        super.npc.getGameProfile(),
-        20,
-        NativeGameMode.CREATIVE,
-        WrappedChatComponent.fromText(""));
-    packetContainer.getPlayerInfoDataLists().write(0, new ArrayList<>(Arrays.asList(playerInfoData)));
+    super.queuePacket((targetNpc, target) -> {
+      PacketContainer container = new PacketContainer(Server.PLAYER_INFO);
+      container.getPlayerInfoAction().write(0, action);
+      // get the correct profile
+      WrappedGameProfile profile = targetNpc.getGameProfile();
+      // we only need to re-create the profile when the player gets added
+      if (action == EnumWrappers.PlayerInfoAction.ADD_PLAYER && targetNpc.isUsePlayerProfiles()) {
+        WrappedGameProfile playerProfile = WrappedGameProfile.fromPlayer(target);
+        // copy the properties
+        profile = new WrappedGameProfile(profile.getUUID(), profile.getName());
+        profile.getProperties().putAll(playerProfile.getProperties());
+      }
+      // create tge player info data
+      PlayerInfoData data = new PlayerInfoData(
+          profile,
+          20,
+          NativeGameMode.CREATIVE,
+          WrappedChatComponent.fromText(""));
+      container.getPlayerInfoDataLists().write(0, new ArrayList<>(Collections.singletonList(data)));
+      return container;
+    });
 
     return this;
   }
@@ -69,32 +82,36 @@ public class VisibilityModifier extends NPCModifier {
    */
   @NotNull
   public VisibilityModifier queueSpawn() {
-    PacketContainer packetContainer = super.newContainer(PacketType.Play.Server.NAMED_ENTITY_SPAWN);
-    packetContainer.getUUIDs().write(0, super.npc.getProfile().getUniqueId());
+    super.queueInstantly((targetNpc, target) -> {
+      PacketContainer container = new PacketContainer(Server.NAMED_ENTITY_SPAWN);
+      container.getIntegers().write(0, targetNpc.getEntityId());
+      container.getUUIDs().write(0, targetNpc.getProfile().getUniqueId());
 
-    double x = super.npc.getLocation().getX();
-    double y = super.npc.getLocation().getY();
-    double z = super.npc.getLocation().getZ();
+      double x = targetNpc.getLocation().getX();
+      double y = targetNpc.getLocation().getY();
+      double z = targetNpc.getLocation().getZ();
 
-    if (MINECRAFT_VERSION < 9) {
-      packetContainer.getIntegers()
-          .write(1, (int) Math.floor(x * 32.0D))
-          .write(2, (int) Math.floor(y * 32.0D))
-          .write(3, (int) Math.floor(z * 32.0D));
-    } else {
-      packetContainer.getDoubles()
-          .write(0, x)
-          .write(1, y)
-          .write(2, z);
-    }
+      if (MINECRAFT_VERSION < 9) {
+        container.getIntegers()
+            .write(1, (int) Math.floor(x * 32.0D))
+            .write(2, (int) Math.floor(y * 32.0D))
+            .write(3, (int) Math.floor(z * 32.0D));
+      } else {
+        container.getDoubles()
+            .write(0, x)
+            .write(1, y)
+            .write(2, z);
+      }
 
-    packetContainer.getBytes()
-        .write(0, (byte) (super.npc.getLocation().getYaw() * 256F / 360F))
-        .write(1, (byte) (super.npc.getLocation().getPitch() * 256F / 360F));
+      container.getBytes()
+          .write(0, (byte) (super.npc.getLocation().getYaw() * 256F / 360F))
+          .write(1, (byte) (super.npc.getLocation().getPitch() * 256F / 360F));
+      if (MINECRAFT_VERSION < 15) {
+        container.getDataWatcherModifier().write(0, new WrappedDataWatcher());
+      }
 
-    if (MINECRAFT_VERSION < 15) {
-      packetContainer.getDataWatcherModifier().write(0, new WrappedDataWatcher());
-    }
+      return container;
+    });
 
     return this;
   }
@@ -106,14 +123,17 @@ public class VisibilityModifier extends NPCModifier {
    */
   @NotNull
   public VisibilityModifier queueDestroy() {
-    PacketContainer packetContainer = super
-        .newContainer(PacketType.Play.Server.ENTITY_DESTROY, false);
+    super.queueInstantly((targetNpc, target) -> {
+      PacketContainer container = new PacketContainer(Server.ENTITY_DESTROY);
+      if (MINECRAFT_VERSION >= 17) {
+        container.getIntLists()
+            .write(0, new ArrayList<>(Collections.singletonList(targetNpc.getEntityId())));
+      } else {
+        container.getIntegerArrays().write(0, new int[]{super.npc.getEntityId()});
+      }
+      return container;
+    });
 
-    if (MINECRAFT_VERSION >= 17) {
-      packetContainer.getIntLists().write(0, new ArrayList<>(Arrays.asList(super.npc.getEntityId())));
-    } else {
-      packetContainer.getIntegerArrays().write(0, new int[]{super.npc.getEntityId()});
-    }
     return this;
   }
 
