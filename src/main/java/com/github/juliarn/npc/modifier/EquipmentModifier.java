@@ -5,11 +5,10 @@ import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.wrappers.EnumWrappers;
 import com.comphenix.protocol.wrappers.Pair;
 import com.github.juliarn.npc.NPC;
+import java.util.Collections;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Collections;
 
 /**
  * A modifier for modifying the equipment of a player.
@@ -83,7 +82,16 @@ public class EquipmentModifier extends NPCModifier {
 
     if (MINECRAFT_VERSION < 16) {
       if (MINECRAFT_VERSION < 9) {
-        packetContainer.getIntegers().write(1, itemSlot.ordinal());
+        // fix the item slot association for minecraft 1.8
+        int slotId = itemSlot.ordinal();
+        if (slotId > 0) {
+          // the main hand representation is 0, that didn't change - 1 was added as the representation
+          // of the off-hand so everything != 0 needs to be shifted one down to skip the unknown
+          // off-hand slot
+          slotId--;
+        }
+
+        packetContainer.getIntegers().write(1, slotId);
       } else {
         packetContainer.getItemSlots().write(0, itemSlot);
       }
