@@ -1,16 +1,17 @@
 package com.github.juliarn.npc.modifier;
 
-import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.events.PacketContainer;
+import com.comphenix.protocol.utility.MinecraftVersion;
 import com.github.juliarn.npc.NPC;
-import org.bukkit.Bukkit;
-import org.bukkit.entity.Player;
-import org.jetbrains.annotations.NotNull;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.UnknownNullability;
 
 /**
  * An NPCModifier queues packets for NPC modification which can then be send to players via the
@@ -28,13 +29,12 @@ public class NPCModifier {
   /**
    * The minor version of the servers minecraft version.
    */
-  public static final int MINECRAFT_VERSION = ProtocolLibrary.getProtocolManager()
-      .getMinecraftVersion().getMinor();
+  public static final int MINECRAFT_VERSION = MinecraftVersion.getCurrentVersion().getMinor();
 
   /**
    * All queued packet containers.
    */
-  private final List<PacketContainer> packetContainers = new CopyOnWriteArrayList<>();
+  private final List<LazyPacket> packetContainers = new CopyOnWriteArrayList<>();
   /**
    * The target npc.
    */
@@ -50,52 +50,27 @@ public class NPCModifier {
   }
 
   /**
-   * Creates and adds a new packet container to the packet queue.
+   * Queues the packet for sending.
    *
-   * @param packetType The type of the packet.
-   * @return The created packet container.
+   * @param packet the packet to queue.
+   * @since 2.7-SNAPSHOT
    */
-  @NotNull
-  protected PacketContainer newContainer(@NotNull PacketType packetType) {
-    return this.newContainer(packetType, true);
+  protected void queuePacket(@NotNull LazyPacket packet) {
+    this.packetContainers.add(packet);
   }
 
   /**
-   * Creates and adds a new packet container to the packet queue.
+   * Queues the packet instantly meaning that the packet will be build and the memorized instance of
+   * the container will be sent to the target player(s). When using this method the target player
+   * normally supplied to {@code provide} will be {@code null} as the packet will be sent in the
+   * same form to all players.
    *
-   * @param packetType   The type of the packet.
-   * @param withEntityId If the first integer if the packet is the entity id.
-   * @return The created packet container.
+   * @param packet the packet to queue.
+   * @since 2.7-SNAPSHOT
    */
-  protected PacketContainer newContainer(@NotNull PacketType packetType, boolean withEntityId) {
-    PacketContainer packetContainer = new PacketContainer(packetType);
-    if (withEntityId) {
-      packetContainer.getIntegers().write(0, this.npc.getEntityId());
-    }
-
-    this.packetContainers.add(packetContainer);
-    return packetContainer;
-  }
-
-  /**
-   * Get the last container in the packet queue or null if there is no container.
-   *
-   * @return the last container in the packet queue or {@code null} if there is no container.
-   */
-  protected PacketContainer lastContainer() {
-    return this.packetContainers.isEmpty() ? null
-        : this.packetContainers.get(this.packetContainers.size() - 1);
-  }
-
-  /**
-   * Get the last container in the packet queue or {@code def} if there is no container.
-   *
-   * @param def The container to return if there is no last container in the queue.
-   * @return the last container in the packet queue or {@code def} if there is no container.
-   */
-  protected PacketContainer lastContainer(PacketContainer def) {
-    final PacketContainer container = this.lastContainer();
-    return container == null ? def : container;
+  protected void queueInstantly(@NotNull LazyPacket packet) {
+    PacketContainer container = packet.provide(this.npc, null);
+    this.packetContainers.add(($, $1) -> container);
   }
 
   /**
@@ -106,35 +81,17 @@ public class NPCModifier {
   }
 
   /**
-   * Sends the queued modifications to all players
-   *
-   * @param createClone If a copy of each packet container should be done before sending.
-   */
-  public void send(boolean createClone) {
-    this.send(Bukkit.getOnlinePlayers(), createClone);
-  }
-
-  /**
    * Sends the queued modifications to all given {@code players}.
    *
    * @param players The receivers of the packet.
    */
   public void send(@NotNull Iterable<? extends Player> players) {
-    this.send(players, false);
-  }
-
-  /**
-   * Sends the queued modifications to all given {@code players}.
-   *
-   * @param players     The receivers of the packet.
-   * @param createClone If a copy of each packet container should be done before sending.
-   */
-  public void send(@NotNull Iterable<? extends Player> players, boolean createClone) {
     players.forEach(player -> {
       try {
-        for (PacketContainer packetContainer : this.packetContainers) {
-          ProtocolLibrary.getProtocolManager().sendServerPacket(player,
-              createClone ? packetContainer.shallowClone() : packetContainer);
+        for (LazyPacket packetContainer : this.packetContainers) {
+          ProtocolLibrary.getProtocolManager().sendServerPacket(
+              player,
+              packetContainer.provide(this.npc, player));
         }
       } catch (InvocationTargetException exception) {
         exception.printStackTrace();
@@ -153,12 +110,20 @@ public class NPCModifier {
   }
 
   /**
-   * Sends the queued modifications to certain players
+   * Represents a packet which gets build lazily, normally before sending to a player.
    *
-   * @param targetPlayers the players which should see the modification
-   * @param createClone   If a copy of each packet container should be done before sending.
+   * @since 2.7-SNAPSHOT
    */
-  public void send(boolean createClone, @NotNull Player... targetPlayers) {
-    this.send(Arrays.asList(targetPlayers), createClone);
+  @FunctionalInterface
+  public interface LazyPacket {
+
+    /**
+     * Builds the packet container which gets send to the player.
+     *
+     * @param targetNpc the npc of the modifier context the packet is build for.
+     * @param target    the target player to whom the packet will be sent.
+     * @return the constructed packet to send.
+     */
+    @NotNull PacketContainer provide(@NotNull NPC targetNpc, @UnknownNullability Player target);
   }
 }

@@ -1,6 +1,6 @@
 package com.github.juliarn.npc.modifier;
 
-import com.comphenix.protocol.PacketType;
+import com.comphenix.protocol.PacketType.Play.Server;
 import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.wrappers.EnumWrappers;
 import com.comphenix.protocol.wrappers.WrappedDataWatcher;
@@ -93,14 +93,12 @@ public class MetadataModifier extends NPCModifier {
   public <T> MetadataModifier queue(
       int index,
       @NotNull T value,
-      @Nullable WrappedDataWatcher.Serializer serializer) {
-    this.metadata.add(serializer == null ? new WrappedWatchableObject(
-        index,
-        value
-    ) : new WrappedWatchableObject(
-        new WrappedDataWatcher.WrappedDataWatcherObject(index, serializer),
-        value
-    ));
+      @Nullable WrappedDataWatcher.Serializer serializer
+  ) {
+    this.metadata.add(serializer == null
+        ? new WrappedWatchableObject(index, value)
+        : new WrappedWatchableObject(
+            new WrappedDataWatcher.WrappedDataWatcherObject(index, serializer), value));
     return this;
   }
 
@@ -108,10 +106,14 @@ public class MetadataModifier extends NPCModifier {
    * {@inheritDoc}
    */
   @Override
-  public void send(@NotNull Iterable<? extends Player> players, boolean createClone) {
-    PacketContainer packetContainer = super.newContainer(PacketType.Play.Server.ENTITY_METADATA);
-    packetContainer.getWatchableCollectionModifier().write(0, this.metadata);
-    super.send(players, createClone);
+  public void send(@NotNull Iterable<? extends Player> players) {
+    super.queueInstantly((targetNpc, target) -> {
+      PacketContainer container = new PacketContainer(Server.ENTITY_METADATA);
+      container.getIntegers().write(0, targetNpc.getEntityId());
+      container.getWatchableCollectionModifier().write(0, this.metadata);
+      return container;
+    });
+    super.send(players);
   }
 
   /**

@@ -1,6 +1,7 @@
 package com.github.juliarn.npc.modifier;
 
-import com.comphenix.protocol.PacketType;
+import com.comphenix.protocol.PacketType.Play.Server;
+import com.comphenix.protocol.events.PacketContainer;
 import com.github.juliarn.npc.NPC;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -40,7 +41,13 @@ public class AnimationModifier extends NPCModifier {
    */
   @NotNull
   public AnimationModifier queue(int animationId) {
-    super.newContainer(PacketType.Play.Server.ANIMATION).getIntegers().write(1, animationId);
+    super.queueInstantly((targetNpc, target) -> {
+      PacketContainer container = new PacketContainer(Server.ANIMATION);
+      container.getIntegers()
+          .write(0, targetNpc.getEntityId())
+          .write(1, animationId);
+      return container;
+    });
     return this;
   }
 

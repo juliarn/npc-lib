@@ -1,6 +1,6 @@
 package com.github.juliarn.npc.modifier;
 
-import com.comphenix.protocol.PacketType;
+import com.comphenix.protocol.PacketType.Play.Server;
 import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.utility.MinecraftReflection;
 import com.comphenix.protocol.wrappers.MinecraftKey;
@@ -9,10 +9,9 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import org.bukkit.entity.Player;
+import java.nio.charset.StandardCharsets;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import java.nio.charset.StandardCharsets;
 
 /**
  * A modifier for modifying playing labymod emotes and stickers.
@@ -20,6 +19,7 @@ import java.nio.charset.StandardCharsets;
  * @since 2.5-SNAPSHOT
  */
 public class LabyModModifier extends NPCModifier {
+
   /**
    * Represents the main channel to which the LabyMod client is listening for plugin messages.
    */
@@ -45,31 +45,25 @@ public class LabyModModifier extends NPCModifier {
    */
   @NotNull
   public LabyModModifier queue(@NotNull LabyModAction action, int playbackIdentifier) {
-    PacketContainer container = super.newContainer(PacketType.Play.Server.CUSTOM_PAYLOAD, false);
-    if (MINECRAFT_VERSION >= 13) {
-      container.getMinecraftKeys().write(0, LABYMOD_PLUGIN_CHANNEL);
-    } else {
-      container.getStrings().write(0, LABYMOD_PLUGIN_CHANNEL.getFullKey());
-    }
-
-    ByteBuf content = this.createContent(action, playbackIdentifier);
-
-    if (MinecraftReflection.is(MinecraftReflection.getPacketDataSerializerClass(), content)) {
-      container.getModifier().withType(ByteBuf.class).write(0, content);
-    } else {
-      Object serializer = MinecraftReflection.getPacketDataSerializer(content);
-      container.getModifier().withType(ByteBuf.class).write(0, serializer);
-    }
-
+    super.queueInstantly((targetNpc, target) -> {
+      PacketContainer container = new PacketContainer(Server.CUSTOM_PAYLOAD);
+      // channel id
+      if (MINECRAFT_VERSION >= 13) {
+        container.getMinecraftKeys().write(0, LABYMOD_PLUGIN_CHANNEL);
+      } else {
+        container.getStrings().write(0, LABYMOD_PLUGIN_CHANNEL.getFullKey());
+      }
+      // channel content
+      ByteBuf content = this.createContent(action, playbackIdentifier);
+      if (MinecraftReflection.is(MinecraftReflection.getPacketDataSerializerClass(), content)) {
+        container.getModifier().withType(ByteBuf.class).write(0, content);
+      } else {
+        Object serializer = MinecraftReflection.getPacketDataSerializer(content);
+        container.getModifier().withType(ByteBuf.class).write(0, serializer);
+      }
+      return container;
+    });
     return this;
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public void send(@NotNull Iterable<? extends Player> players) {
-    super.send(players, true);
   }
 
   /**

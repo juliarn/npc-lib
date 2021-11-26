@@ -1,8 +1,7 @@
 package com.github.juliarn.npc;
 
-import com.comphenix.protocol.wrappers.EnumWrappers;
+import com.comphenix.protocol.wrappers.EnumWrappers.PlayerInfoAction;
 import com.comphenix.protocol.wrappers.WrappedGameProfile;
-import com.comphenix.protocol.wrappers.WrappedSignedProperty;
 import com.github.juliarn.npc.event.PlayerNPCHideEvent;
 import com.github.juliarn.npc.event.PlayerNPCShowEvent;
 import com.github.juliarn.npc.modifier.AnimationModifier;
@@ -12,9 +11,11 @@ import com.github.juliarn.npc.modifier.MetadataModifier;
 import com.github.juliarn.npc.modifier.RotationModifier;
 import com.github.juliarn.npc.modifier.VisibilityModifier;
 import com.github.juliarn.npc.profile.Profile;
+import com.github.juliarn.npc.profile.ProfileUtils;
 import com.google.common.base.Preconditions;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArraySet;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -22,6 +23,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 /**
@@ -32,8 +34,10 @@ public class NPC {
   private final Collection<Player> seeingPlayers = new CopyOnWriteArraySet<>();
   private final Collection<Player> excludedPlayers = new CopyOnWriteArraySet<>();
 
-  private final Profile profile;
   private final int entityId;
+  private final boolean usePlayerProfiles;
+
+  private final Profile profile;
   private final Location location;
   private final WrappedGameProfile gameProfile;
   private final SpawnCustomizer spawnCustomizer;
@@ -44,28 +48,48 @@ public class NPC {
   /**
    * Creates a new npc instance.
    *
-   * @param profile         The profile of the npc.
-   * @param entityId        The entity id of the npc.
-   * @param location        The location of the npc.
-   * @param lookAtPlayer    If the npc should always look in the direction of the player.
-   * @param imitatePlayer   If the npc should imitate the player.
-   * @param spawnCustomizer The spawn customizer of the npc.
+   * @param profile           The profile of the npc.
+   * @param spawnCustomizer   The spawn customizer of the npc.
+   * @param location          The location of the npc.
+   * @param entityId          The entity id of the npc.
+   * @param lookAtPlayer      If the npc should always look in the direction of the player.
+   * @param imitatePlayer     If the npc should imitate the player.
+   * @param usePlayerProfiles If the npc should use the profile of the player being spawned to.
    */
   private NPC(
-      Profile profile,
+      @Nullable Profile profile,
+      @NotNull Location location,
+      @NotNull SpawnCustomizer spawnCustomizer,
       int entityId,
-      Location location,
       boolean lookAtPlayer,
       boolean imitatePlayer,
-      SpawnCustomizer spawnCustomizer) {
-    this.profile = profile;
-    this.gameProfile = this.convertProfile(profile);
+      boolean usePlayerProfiles
+  ) {
     this.entityId = entityId;
 
     this.location = location;
+    this.spawnCustomizer = spawnCustomizer;
+
     this.lookAtPlayer = lookAtPlayer;
     this.imitatePlayer = imitatePlayer;
-    this.spawnCustomizer = spawnCustomizer;
+    this.usePlayerProfiles = usePlayerProfiles;
+
+    // no profile -> create a random one
+    if (profile == null) {
+      this.profile = new Profile(
+          UUID.randomUUID(),
+          ProfileUtils.randomName(),
+          Collections.emptyList());
+    } else if (profile.getName() == null || profile.getUniqueId() == null) {
+      this.profile = new Profile(
+          profile.getUniqueId() == null ? UUID.randomUUID() : profile.getUniqueId(),
+          profile.getName() == null ? ProfileUtils.randomName() : profile.getName(),
+          Collections.emptyList());
+    } else {
+      this.profile = profile;
+    }
+    // wrap the profile to into a ProtocolLib wrapper
+    this.gameProfile = ProfileUtils.profileToWrapper(this.profile);
   }
 
   /**
@@ -91,21 +115,19 @@ public class NPC {
   protected void show(@NotNull Player player, @NotNull Plugin plugin, long tabListRemoveTicks) {
     this.seeingPlayers.add(player);
 
-    VisibilityModifier visibilityModifier = new VisibilityModifier(this);
-    visibilityModifier.queuePlayerListChange(EnumWrappers.PlayerInfoAction.ADD_PLAYER).send(player);
+    VisibilityModifier modifier = new VisibilityModifier(this);
+    modifier.queuePlayerListChange(PlayerInfoAction.ADD_PLAYER).send(player);
 
     Bukkit.getScheduler().runTaskLater(plugin, () -> {
-      visibilityModifier.queueSpawn().send(player);
+      modifier.queueSpawn().send(player);
       this.spawnCustomizer.handleSpawn(this, player);
 
       if (tabListRemoveTicks >= 0) {
         // keeping the NPC longer in the player list, otherwise the skin might not be shown sometimes.
         Bukkit.getScheduler().runTaskLater(
             plugin,
-            () -> visibilityModifier
-                .queuePlayerListChange(EnumWrappers.PlayerInfoAction.REMOVE_PLAYER).send(player),
-            tabListRemoveTicks
-        );
+            () -> modifier.queuePlayerListChange(PlayerInfoAction.REMOVE_PLAYER).send(player),
+            tabListRemoveTicks);
       }
 
       Bukkit.getPluginManager().callEvent(new PlayerNPCShowEvent(player, this));
@@ -122,34 +144,17 @@ public class NPC {
   protected void hide(
       @NotNull Player player,
       @NotNull Plugin plugin,
-      @NotNull PlayerNPCHideEvent.Reason reason) {
-    new VisibilityModifier(this)
-        .queuePlayerListChange(EnumWrappers.PlayerInfoAction.REMOVE_PLAYER)
+      @NotNull PlayerNPCHideEvent.Reason reason
+  ) {
+    this.visibility()
+        .queuePlayerListChange(PlayerInfoAction.REMOVE_PLAYER)
         .queueDestroy()
         .send(player);
-
     this.removeSeeingPlayer(player);
 
-    Bukkit.getScheduler().runTask(plugin,
+    Bukkit.getScheduler().runTask(
+        plugin,
         () -> Bukkit.getPluginManager().callEvent(new PlayerNPCHideEvent(player, this, reason)));
-  }
-
-  /**
-   * Converts a profile to a protocol lib profile wrapper.
-   *
-   * @param profile The profile to convert.
-   * @return The protocol lib wrapper.
-   * @since 2.5-SNAPSHOT
-   */
-  @NotNull
-  protected WrappedGameProfile convertProfile(@NotNull Profile profile) {
-    WrappedGameProfile gameProfile = new WrappedGameProfile(profile.getUniqueId(),
-        profile.getName());
-    profile.getProperties().forEach(property -> gameProfile.getProperties().put(
-        property.getName(),
-        new WrappedSignedProperty(property.getName(), property.getValue(), property.getSignature())
-    ));
-    return gameProfile;
   }
 
   /**
@@ -365,6 +370,16 @@ public class NPC {
   }
 
   /**
+   * Gets if this npc should always use the profile of the player being spawned to when spawning.
+   *
+   * @return if this npc uses the profile of the player being spawned to.
+   * @since 2.7-SNAPSHOT
+   */
+  public boolean isUsePlayerProfiles() {
+    return this.usePlayerProfiles;
+  }
+
+  /**
    * A builder for a npc.
    */
   public static class Builder {
@@ -373,6 +388,7 @@ public class NPC {
 
     private boolean lookAtPlayer = true;
     private boolean imitatePlayer = true;
+    private boolean usePlayerProfiles = false;
 
     private Location location = new Location(Bukkit.getWorlds().get(0), 0D, 0D, 0D);
     private SpawnCustomizer spawnCustomizer = (npc, player) -> {
@@ -397,13 +413,19 @@ public class NPC {
     }
 
     /**
-     * Sets the profile of the npc, cannot be changed afterwards
+     * Sets the profile of the npc, cannot be changed afterwards.
+     * <p>
+     * If {@link #usePlayerProfiles(boolean)} gets set to {@code true} and a profile gets supplied
+     * the unique id and name of the profile will be used. If no profile is given a random unique id
+     * and name will be used for the npc when spawning. Profile properties of the given {@code
+     * profile} will get ignored.
+     * </p>
      *
-     * @param profile the profile
+     * @param profile the profile of this npc.
      * @return this builder instance
      */
-    public Builder profile(@NotNull Profile profile) {
-      this.profile = Preconditions.checkNotNull(profile, "profile");
+    public Builder profile(@Nullable Profile profile) {
+      this.profile = profile;
       return this;
     }
 
@@ -455,6 +477,21 @@ public class NPC {
     }
 
     /**
+     * Sets that the npc always uses the skin of the player being spawned to rather than a fixed
+     * supplied skin during the build process. In other words, if this option is set to {@code true}
+     * no skin must be supplied to {@link #profile(Profile)}.
+     *
+     * @param usePlayerProfiles if the npc should always use the profile properties of the player
+     *                          being spawned to.
+     * @return this builder instance.
+     * @since 2.7-SNAPSHOT
+     */
+    public Builder usePlayerProfiles(boolean usePlayerProfiles) {
+      this.usePlayerProfiles = usePlayerProfiles;
+      return this;
+    }
+
+    /**
      * Passes the NPC to a pool which handles events, spawning and destruction of this NPC for
      * players
      *
@@ -463,17 +500,18 @@ public class NPC {
      */
     @NotNull
     public NPC build(@NotNull NPCPool pool) {
-      Preconditions.checkNotNull(this.profile, "A profile must be given");
-      Preconditions
-          .checkArgument(this.profile.isComplete(), "The provided profile has to be complete!");
+      if (!this.usePlayerProfiles && (this.profile == null || !this.profile.isComplete())) {
+        throw new IllegalArgumentException("No profile given or not completed");
+      }
 
       NPC npc = new NPC(
           this.profile,
-          pool.getFreeEntityId(),
           this.location,
-          this.lookAtPlayer,
+          this.spawnCustomizer,
+          pool.getFreeEntityId(),
           this.imitatePlayer,
-          this.spawnCustomizer);
+          this.lookAtPlayer,
+          this.usePlayerProfiles);
       pool.takeCareOf(npc);
 
       return npc;
