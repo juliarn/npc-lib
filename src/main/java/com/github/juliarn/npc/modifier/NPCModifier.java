@@ -49,10 +49,25 @@ public class NPCModifier {
     this.npc = npc;
   }
 
+  /**
+   * Queues the packet for sending.
+   *
+   * @param packet the packet to queue.
+   * @since 2.7-SNAPSHOT
+   */
   protected void queuePacket(@NotNull LazyPacket packet) {
     this.packetContainers.add(packet);
   }
 
+  /**
+   * Queues the packet instantly meaning that the packet will be build and the memorized instance of
+   * the container will be sent to the target player(s). When using this method the target player
+   * normally supplied to {@code provide} will be {@code null} as the packet will be sent in the
+   * same form to all players.
+   *
+   * @param packet the packet to queue.
+   * @since 2.7-SNAPSHOT
+   */
   protected void queueInstantly(@NotNull LazyPacket packet) {
     PacketContainer container = packet.provide(this.npc, null);
     this.packetContainers.add(($, $1) -> container);
@@ -94,9 +109,21 @@ public class NPCModifier {
     this.send(Arrays.asList(targetPlayers));
   }
 
+  /**
+   * Represents a packet which gets build lazily, normally before sending to a player.
+   *
+   * @since 2.7-SNAPSHOT
+   */
   @FunctionalInterface
   public interface LazyPacket {
 
+    /**
+     * Builds the packet container which gets send to the player.
+     *
+     * @param targetNpc the npc of the modifier context the packet is build for.
+     * @param target    the target player to whom the packet will be sent.
+     * @return the constructed packet to send.
+     */
     @NotNull PacketContainer provide(@NotNull NPC targetNpc, @UnknownNullability Player target);
   }
 }
