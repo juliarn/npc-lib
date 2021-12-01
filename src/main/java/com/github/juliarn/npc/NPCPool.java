@@ -336,12 +336,15 @@ public class NPCPool implements Listener {
   public void handleSneak(PlayerToggleSneakEvent event) {
     Player player = event.getPlayer();
 
-    this.npcMap.values().stream()
-        .filter(npc -> npc.isImitatePlayer() && npc.isShownFor(player))
-        .filter(npc -> npc.getLocation().getWorld().equals(player.getWorld())
-            && npc.getLocation().distanceSquared(player.getLocation()) <= this.actionDistance)
-        .forEach(npc -> npc.metadata()
-            .queue(MetadataModifier.EntityMetadata.SNEAKING, event.isSneaking()).send(player));
+    for (NPC npc : this.npcMap.values()) {
+      if (npc.isImitatePlayer()
+          && npc.getLocation().getWorld().equals(player.getWorld())
+          && npc.isShownFor(player)
+          && npc.getLocation().distanceSquared(player.getLocation()) <= this.actionDistance) {
+        npc.metadata()
+            .queue(MetadataModifier.EntityMetadata.SNEAKING, event.isSneaking()).send(player);
+      }
+    }
   }
 
   @EventHandler
@@ -350,12 +353,15 @@ public class NPCPool implements Listener {
 
     if (event.getAction() == Action.LEFT_CLICK_AIR
         || event.getAction() == Action.LEFT_CLICK_BLOCK) {
-      this.npcMap.values().stream()
-          .filter(npc -> npc.isImitatePlayer() && npc.isShownFor(player))
-          .filter(npc -> npc.getLocation().getWorld().equals(player.getWorld())
-              && npc.getLocation().distanceSquared(player.getLocation()) <= this.actionDistance)
-          .forEach(npc -> npc.animation().queue(AnimationModifier.EntityAnimation.SWING_MAIN_ARM)
-              .send(player));
+      for (NPC npc : this.npcMap.values()) {
+        if (npc.isImitatePlayer()
+            && npc.getLocation().getWorld().equals(player.getWorld())
+            && npc.isShownFor(player)
+            && npc.getLocation().distanceSquared(player.getLocation()) <= this.actionDistance) {
+          npc.animation().queue(AnimationModifier.EntityAnimation.SWING_MAIN_ARM)
+              .send(player);
+        }
+      }
     }
   }
 
