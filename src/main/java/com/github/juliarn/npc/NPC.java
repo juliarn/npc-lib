@@ -509,8 +509,8 @@ public class NPC {
           this.location,
           this.spawnCustomizer,
           pool.getFreeEntityId(),
-          this.imitatePlayer,
           this.lookAtPlayer,
+          this.imitatePlayer,
           this.usePlayerProfiles);
       pool.takeCareOf(npc);
 
