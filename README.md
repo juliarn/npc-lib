@@ -1,6 +1,6 @@
 # NPC-Lib
 
-Asynchronous, high-performance Minecraft NPC library for 1.8-1.17 servers.
+Asynchronous, high-performance Minecraft NPC library for 1.8-1.18 servers.
 
 This Library does only support the latest patch release of a supported version (for example 1.13.2).
 Issues with older patch versions (for example 1.13.1) won't be fixed.
