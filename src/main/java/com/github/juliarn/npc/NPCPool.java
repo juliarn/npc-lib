@@ -45,7 +45,7 @@ public class NPCPool implements Listener {
 
   private static final Random RANDOM = new Random();
 
-  private final Plugin plugin;
+  protected final Plugin plugin;
 
   private final double spawnDistance;
   private final double actionDistance;
