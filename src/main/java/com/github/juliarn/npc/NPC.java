@@ -12,7 +12,6 @@ import com.github.juliarn.npc.modifier.RotationModifier;
 import com.github.juliarn.npc.modifier.VisibilityModifier;
 import com.github.juliarn.npc.profile.Profile;
 import com.github.juliarn.npc.profile.ProfileUtils;
-import com.github.unldenis.hologram.Hologram;
 import com.github.unldenis.hologram.placeholder.Placeholders;
 import com.google.common.base.Preconditions;
 import java.util.Collection;
@@ -27,6 +26,8 @@ import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
+import org.bukkit.scoreboard.NameTagVisibility;
+import org.bukkit.scoreboard.Team;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -103,7 +104,7 @@ public class NPC {
     this.gameProfile = ProfileUtils.profileToWrapper(this.profile);
 
     // create hologram
-    this.hologram = new NPCHologram(plugin, location, placeholders, this.seeingPlayers, lines);
+    this.hologram = new NPCHologram(plugin, location.clone().add(0, 0.5D, 0), placeholders, this.seeingPlayers, lines);
   }
 
   /**
@@ -132,12 +133,27 @@ public class NPC {
     VisibilityModifier modifier = new VisibilityModifier(this);
     modifier.queuePlayerListChange(PlayerInfoAction.ADD_PLAYER).send(player);
 
-    // show text above npc
+    // show text above npc;
     this.hologram.show(player);
 
     Bukkit.getScheduler().runTaskLater(plugin, () -> {
       modifier.queueSpawn().send(player);
       this.spawnCustomizer.handleSpawn(this, player);
+
+      // hide nametag to player
+      org.bukkit.scoreboard.Scoreboard scoreboard = player.getScoreboard();
+      Team npcs = null;
+      for(Team team : scoreboard.getTeams()) {
+        if(team.getName().equals("npcs-lib")) {
+          npcs = team;
+          break;
+        }
+      }
+      if(npcs == null) {
+        npcs = scoreboard.registerNewTeam("npcs-lib");
+      }
+      npcs.setNameTagVisibility(NameTagVisibility.NEVER);
+      npcs.addEntry(profile.getName());
 
       if (tabListRemoveTicks >= 0) {
         // keeping the NPC longer in the player list, otherwise the skin might not be shown sometimes.
@@ -170,6 +186,12 @@ public class NPC {
 
     // hide text above npc
     this.hologram.hide(player);
+
+    // show nametag to player
+    player.getScoreboard().getTeams()
+        .stream()
+        .filter(team -> team.getName().equals("npcs-lib"))
+        .forEach(team -> team.removeEntry(profile.getName()));
 
     this.removeSeeingPlayer(player);
 
@@ -552,7 +574,6 @@ public class NPC {
       if (!this.usePlayerProfiles && (this.profile == null || !this.profile.isComplete())) {
         throw new IllegalArgumentException("No profile given or not completed");
       }
-
       NPC npc = new NPC(
           pool.plugin,
           this.profile,
