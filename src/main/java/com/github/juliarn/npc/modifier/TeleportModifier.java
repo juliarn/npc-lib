@@ -57,6 +57,8 @@ public class TeleportModifier extends NPCModifier {
           .write(1, pitchAngle);
       container.getBooleans()
           .write(0, onGround);
+
+      super.npc.setLocation(location);
       return container;
     }));
     return this;
