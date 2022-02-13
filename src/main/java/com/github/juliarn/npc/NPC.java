@@ -291,6 +291,12 @@ public class NPC {
     return new LabyModModifier(this);
   }
 
+  /**
+   * Creates a new teleport modifier which serves methods to teleport an NPC.
+   *
+   * @return a teleport modifier modifying this NPC
+   * @since 2.7-SNAPSHOT
+   */
   @NotNull
   public TeleportModifier teleport() {
     return new TeleportModifier(this);
