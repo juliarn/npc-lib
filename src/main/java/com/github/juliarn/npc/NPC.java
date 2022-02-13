@@ -8,6 +8,7 @@ import com.github.juliarn.npc.modifier.AnimationModifier;
 import com.github.juliarn.npc.modifier.EquipmentModifier;
 import com.github.juliarn.npc.modifier.LabyModModifier;
 import com.github.juliarn.npc.modifier.MetadataModifier;
+import com.github.juliarn.npc.modifier.MovementModifier;
 import com.github.juliarn.npc.modifier.RotationModifier;
 import com.github.juliarn.npc.modifier.VisibilityModifier;
 import com.github.juliarn.npc.profile.Profile;
@@ -288,6 +289,11 @@ public class NPC {
   @NotNull
   public LabyModModifier labymod() {
     return new LabyModModifier(this);
+  }
+
+  @NotNull
+  public MovementModifier movement() {
+    return new MovementModifier(this);
   }
 
   /**
