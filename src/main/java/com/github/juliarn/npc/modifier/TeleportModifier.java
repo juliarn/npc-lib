@@ -7,7 +7,7 @@ import org.bukkit.Location;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-public class MovementModifier extends NPCModifier {
+public class TeleportModifier extends NPCModifier {
 
   /**
    * Creates a new npc modifier.
@@ -15,14 +15,14 @@ public class MovementModifier extends NPCModifier {
    * @param npc The npc this modifier is for.
    */
   @ApiStatus.Internal
-  public MovementModifier(@NotNull NPC npc) {
+  public TeleportModifier(@NotNull NPC npc) {
     super(npc);
   }
 
   @NotNull
-  public MovementModifier queueTeleport(@NotNull Location to, boolean onGround) {
-    byte yawAngle = getCompressAngle(to.getYaw());
-    byte pitchAngle = getCompressAngle(to.getPitch());
+  public TeleportModifier queueTeleport(@NotNull Location to, boolean onGround) {
+    byte yawAngle = getCompressedAngle(to.getYaw());
+    byte pitchAngle = getCompressedAngle(to.getPitch());
     super.queueInstantly(((targetNpc, target) -> {
       PacketContainer container = new PacketContainer(Server.ENTITY_TELEPORT);
       container.getIntegers()
@@ -48,7 +48,12 @@ public class MovementModifier extends NPCModifier {
     return this;
   }
 
-  private byte getCompressAngle(double angle) {
+  @NotNull
+  public TeleportModifier queueTeleport(@NotNull Location to) {
+    return this.queueTeleport(to, false);
+  }
+
+  private byte getCompressedAngle(double angle) {
     return (byte) (angle * 256F / 360F);
   }
 }

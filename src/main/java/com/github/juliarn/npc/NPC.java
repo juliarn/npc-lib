@@ -8,8 +8,8 @@ import com.github.juliarn.npc.modifier.AnimationModifier;
 import com.github.juliarn.npc.modifier.EquipmentModifier;
 import com.github.juliarn.npc.modifier.LabyModModifier;
 import com.github.juliarn.npc.modifier.MetadataModifier;
-import com.github.juliarn.npc.modifier.MovementModifier;
 import com.github.juliarn.npc.modifier.RotationModifier;
+import com.github.juliarn.npc.modifier.TeleportModifier;
 import com.github.juliarn.npc.modifier.VisibilityModifier;
 import com.github.juliarn.npc.profile.Profile;
 import com.github.juliarn.npc.profile.ProfileUtils;
@@ -292,8 +292,8 @@ public class NPC {
   }
 
   @NotNull
-  public MovementModifier movement() {
-    return new MovementModifier(this);
+  public TeleportModifier teleport() {
+    return new TeleportModifier(this);
   }
 
   /**
