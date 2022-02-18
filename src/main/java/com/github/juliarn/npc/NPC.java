@@ -39,7 +39,9 @@ public class NPC {
   private final boolean usePlayerProfiles;
 
   private final Profile profile;
+
   private Location location;
+
   private final WrappedGameProfile gameProfile;
   private final SpawnCustomizer spawnCustomizer;
 
@@ -304,14 +306,13 @@ public class NPC {
 
   /**
    * Method used to update only the variable of the position.
+   * No supported for public use, changing the location of the npc would only lead to problems.
+   * If you want to teleport the NPC instead you can use {@link #teleport()}.
    *
    * @param location new location of npc.
-   * @deprecated No supported for public use, changing the location of the npc would only lead to problems.
-   * If you want to teleport the NPC instead you can use {@link #teleport()}.
    * @since 2.7-SNAPSHOT
    */
   @ApiStatus.Internal
-  @Deprecated
   public void setLocation(@NotNull Location location) {
     this.location = location;
   }
@@ -404,6 +405,7 @@ public class NPC {
   public boolean isUsePlayerProfiles() {
     return this.usePlayerProfiles;
   }
+
   /**
    * A builder for a npc.
    */
