@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
  * A teleport modifier for a player
  *
  * @since 2.7-SNAPSHOT
- * @author unldenis <https://github.com/unldenis>
+ * @author <a href="https://github.com/unldenis">unldenis</a>
  */
 public class TeleportModifier extends NPCModifier {
 
@@ -35,7 +35,7 @@ public class TeleportModifier extends NPCModifier {
    */
   @NotNull
   public TeleportModifier queueTeleport(@NotNull Location location, boolean onGround) {
-    byte yawAngle = getCompressedAngle(location.getYaw());
+    byte yawAngle = this.getCompressedAngle(location.getYaw());
     byte pitchAngle = this.getCompressedAngle(location.getPitch());
     super.queueInstantly((targetNpc, target) -> {
       PacketContainer container = new PacketContainer(Server.ENTITY_TELEPORT);
