@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
  * A teleport modifier for a player
  *
  * @since 2.7-SNAPSHOT
- * @author <a href="https://github.com/unldenis">unldenis</a>
+ * @author unldenis
  */
 public class TeleportModifier extends NPCModifier {
 
