@@ -9,6 +9,7 @@ import com.github.juliarn.npc.modifier.EquipmentModifier;
 import com.github.juliarn.npc.modifier.LabyModModifier;
 import com.github.juliarn.npc.modifier.MetadataModifier;
 import com.github.juliarn.npc.modifier.RotationModifier;
+import com.github.juliarn.npc.modifier.TeleportModifier;
 import com.github.juliarn.npc.modifier.VisibilityModifier;
 import com.github.juliarn.npc.profile.Profile;
 import com.github.juliarn.npc.profile.ProfileUtils;
@@ -38,7 +39,9 @@ public class NPC {
   private final boolean usePlayerProfiles;
 
   private final Profile profile;
-  private final Location location;
+
+  private Location location;
+
   private final WrappedGameProfile gameProfile;
   private final SpawnCustomizer spawnCustomizer;
 
@@ -288,6 +291,30 @@ public class NPC {
   @NotNull
   public LabyModModifier labymod() {
     return new LabyModModifier(this);
+  }
+
+  /**
+   * Creates a new teleport modifier which serves methods to teleport an NPC.
+   *
+   * @return a teleport modifier modifying this NPC
+   * @since 2.7-SNAPSHOT
+   */
+  @NotNull
+  public TeleportModifier teleport() {
+    return new TeleportModifier(this);
+  }
+
+  /**
+   * Method used to update only the variable of the position.
+   * No supported for public use, changing the location of the npc would only lead to problems.
+   * If you want to teleport the NPC instead you can use {@link #teleport()}.
+   *
+   * @param location new location of npc.
+   * @since 2.7-SNAPSHOT
+   */
+  @ApiStatus.Internal
+  public void setLocation(@NotNull Location location) {
+    this.location = location;
   }
 
   /**
