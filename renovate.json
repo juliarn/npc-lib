@@ -1,0 +1,35 @@
+{
+  "extends": [
+    "config:base",
+    ":rebaseStalePrs"
+  ],
+  "labels": [
+    "t: dependencies"
+  ],
+  "packageRules": [
+    {
+      "description": "Version is based on the latest push to a git repo and never needs updates",
+      "matchPackagePrefixes": [
+        "com.github.dmulloy2:",
+        "com.github.Minestom:"
+      ],
+      "enabled": false
+    }
+  ],
+  "vulnerabilityAlerts": {
+    "addLabels": [
+      "t: security"
+    ],
+    "assignees": [
+      "@derklaro"
+    ]
+  },
+  "timezone": "Europe/Berlin",
+  "schedule": [
+    "before 6:00am"
+  ],
+  "prHourlyLimit": 10,
+  "rebaseLabel": "s: rebase",
+  "stopUpdatingLabel": "s: stop updates",
+  "commitMessagePrefix": "chore(deps): "
+}
