@@ -22,14 +22,30 @@
  * THE SOFTWARE.
  */
 
-import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+package com.github.juliarn.npclib.api.flag;
 
-dependencies {
-  implementation(libs.gson)
-  implementation(libs.event)
-}
+import java.util.Objects;
+import java.util.function.Predicate;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-tasks.withType<ShadowJar> {
-  minimize()
-  relocate("com.google.gson", "com.github.juliarn.npclib.relocate.gson")
+public interface NpcFlag<T> {
+
+  static @NotNull <T> NpcFlag<T> flag(@NotNull String key, @NotNull T defaultValue) {
+    return flag(key, defaultValue, value -> true);
+  }
+
+  static @NotNull <T> NpcFlag<T> flag(@NotNull String key, @NotNull T defaultValue, @NotNull Predicate<T> valueTester) {
+    Objects.requireNonNull(key, "key");
+    Objects.requireNonNull(defaultValue, "defaultValue");
+    Objects.requireNonNull(valueTester, "valueTester");
+
+    return new DefaultNpcFlag<>(key, defaultValue, valueTester);
+  }
+
+  @NotNull String key();
+
+  @NotNull T defaultValue();
+
+  boolean accepts(@Nullable T value);
 }

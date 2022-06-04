@@ -22,14 +22,26 @@
  * THE SOFTWARE.
  */
 
-import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+package com.github.juliarn.npclib.api.settings;
 
-dependencies {
-  implementation(libs.gson)
-  implementation(libs.event)
-}
+import com.github.juliarn.npclib.api.Npc;
+import org.jetbrains.annotations.NotNull;
 
-tasks.withType<ShadowJar> {
-  minimize()
-  relocate("com.google.gson", "com.github.juliarn.npclib.relocate.gson")
+@FunctionalInterface
+public interface NpcTrackingRule<P> {
+
+  static @NotNull <P> NpcTrackingRule<P> allPlayers() {
+    return (npc, player) -> true;
+  }
+
+  // TODO: come up with a better name for this
+  static @NotNull <P> NpcTrackingRule<P> onlyUnspecifiedPlayers() {
+    return (npc, player) -> !npc.includedPlayers().contains(player);
+  }
+
+  static @NotNull <P> NpcTrackingRule<P> onlyExplicitlyIncludedPlayers() {
+    return (npc, player) -> npc.includedPlayers().contains(player);
+  }
+
+  boolean shouldTrack(@NotNull Npc<?, P, ?> npc, @NotNull P player);
 }

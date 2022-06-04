@@ -22,14 +22,19 @@
  * THE SOFTWARE.
  */
 
-import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+package com.github.juliarn.npclib.api.settings;
 
-dependencies {
-  implementation(libs.gson)
-  implementation(libs.event)
-}
+import com.github.juliarn.npclib.api.Npc;
+import com.github.juliarn.npclib.api.profile.Profile;
+import java.util.concurrent.CompletableFuture;
+import org.jetbrains.annotations.NotNull;
 
-tasks.withType<ShadowJar> {
-  minimize()
-  relocate("com.google.gson", "com.github.juliarn.npclib.relocate.gson")
+@FunctionalInterface
+public interface NpcProfileResolver<P> {
+
+  static @NotNull <P> NpcProfileResolver<P> ofSpawnedNpc() {
+    return (player, npc) -> CompletableFuture.completedFuture(npc.profile());
+  }
+
+  @NotNull CompletableFuture<Profile.Resolved> resolveNpcProfile(@NotNull P player, @NotNull Npc<?, P, ?> npc);
 }

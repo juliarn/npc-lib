@@ -22,14 +22,10 @@
  * THE SOFTWARE.
  */
 
-import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+package com.github.juliarn.npclib.api.event;
 
-dependencies {
-  implementation(libs.gson)
-  implementation(libs.event)
-}
+import net.kyori.event.Cancellable;
 
-tasks.withType<ShadowJar> {
-  minimize()
-  relocate("com.google.gson", "com.github.juliarn.npclib.relocate.gson")
+public interface ShowNpcEvent<W, P, I> extends PlayerNpcEvent<W, P, I>, Cancellable {
+
 }

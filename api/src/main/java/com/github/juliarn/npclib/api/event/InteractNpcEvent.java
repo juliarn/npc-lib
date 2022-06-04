@@ -22,14 +22,18 @@
  * THE SOFTWARE.
  */
 
-import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+package com.github.juliarn.npclib.api.event;
 
-dependencies {
-  implementation(libs.gson)
-  implementation(libs.event)
-}
+import net.kyori.event.Cancellable;
+import org.jetbrains.annotations.NotNull;
 
-tasks.withType<ShadowJar> {
-  minimize()
-  relocate("com.google.gson", "com.github.juliarn.npclib.relocate.gson")
+public interface InteractNpcEvent<W, P, I> extends PlayerNpcEvent<W, P, I>, Cancellable {
+
+  @NotNull Hand hand();
+
+  enum Hand {
+
+    MAIN_HAND,
+    OFF_HAND
+  }
 }

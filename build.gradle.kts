@@ -37,6 +37,7 @@ allprojects {
     mavenCentral()
     maven("https://jitpack.io")
     maven("https://papermc.io/repo/repository/maven-public/")
+    maven("https://s01.oss.sonatype.org/content/repositories/snapshots/")
   }
 }
 

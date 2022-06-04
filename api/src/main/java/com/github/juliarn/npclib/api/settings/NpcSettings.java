@@ -22,14 +22,24 @@
  * THE SOFTWARE.
  */
 
-import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+package com.github.juliarn.npclib.api.settings;
 
-dependencies {
-  implementation(libs.gson)
-  implementation(libs.event)
-}
+import com.github.juliarn.npclib.api.flag.NpcFlaggedBuilder;
+import com.github.juliarn.npclib.api.flag.NpcFlaggedObject;
+import org.jetbrains.annotations.NotNull;
 
-tasks.withType<ShadowJar> {
-  minimize()
-  relocate("com.google.gson", "com.github.juliarn.npclib.relocate.gson")
+public interface NpcSettings<P> extends NpcFlaggedObject {
+
+  @NotNull NpcTrackingRule<P> trackingRule();
+
+  @NotNull NpcProfileResolver<P> profileResolver();
+
+  interface Builder<P> extends NpcFlaggedBuilder<Builder<P>> {
+
+    @NotNull Builder<P> trackingRule(@NotNull NpcTrackingRule<P> trackingRule);
+
+    @NotNull Builder<P> profileResolver(@NotNull NpcProfileResolver<P> profileResolver);
+
+    @NotNull NpcSettings<P> build();
+  }
 }

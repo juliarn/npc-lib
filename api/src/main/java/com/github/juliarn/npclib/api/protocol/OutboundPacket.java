@@ -22,14 +22,19 @@
  * THE SOFTWARE.
  */
 
-import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+package com.github.juliarn.npclib.api.protocol;
 
-dependencies {
-  implementation(libs.gson)
-  implementation(libs.event)
-}
+import com.github.juliarn.npclib.api.Npc;
+import java.util.Collection;
+import org.jetbrains.annotations.NotNull;
 
-tasks.withType<ShadowJar> {
-  minimize()
-  relocate("com.google.gson", "com.github.juliarn.npclib.relocate.gson")
+@FunctionalInterface
+public interface OutboundPacket<P> {
+
+  @NotNull OutboundPacket<P> schedule(@NotNull P player, @NotNull Npc npc);
+
+  default @NotNull OutboundPacket<P> schedule(@NotNull Collection<P> players, @NotNull Npc npc) {
+    players.forEach(player -> this.schedule(player, npc));
+    return this;
+  }
 }

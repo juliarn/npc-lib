@@ -22,14 +22,12 @@
  * THE SOFTWARE.
  */
 
-import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+package com.github.juliarn.npclib.api.flag;
 
-dependencies {
-  implementation(libs.gson)
-  implementation(libs.event)
-}
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-tasks.withType<ShadowJar> {
-  minimize()
-  relocate("com.google.gson", "com.github.juliarn.npclib.relocate.gson")
+public interface NpcFlaggedBuilder<B> {
+
+  @NotNull <T> B flag(@NotNull NpcFlag<T> flag, @Nullable T value);
 }

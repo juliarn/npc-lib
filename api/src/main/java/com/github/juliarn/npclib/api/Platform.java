@@ -24,14 +24,44 @@
 
 package com.github.juliarn.npclib.api;
 
+import com.github.juliarn.npclib.api.event.NpcEvent;
 import com.github.juliarn.npclib.api.profile.ProfileResolver;
+import com.github.juliarn.npclib.api.protocol.PlatformPacketAdapter;
+import java.util.Optional;
+import java.util.function.Consumer;
+import net.kyori.event.EventBus;
 import org.jetbrains.annotations.NotNull;
 
-public interface Platform<W> {
+public interface Platform<W, P, I> {
+
+  @NotNull NpcManager<W, P, I> npcManager();
 
   @NotNull ProfileResolver profileResolver();
 
-  @NotNull PlatformPacketAdapter packetAdapter();
+  @NotNull Npc.Builder<W, P, I> newNpcBuilder();
+
+  @NotNull EventBus<NpcEvent<W, P, I>> eventBus();
 
   @NotNull PlatformWorldAccessor<W> worldAccessor();
+
+  @NotNull PlatformPacketAdapter<P, I> packetFactory();
+
+  @NotNull Optional<NpcActionController> actionController();
+
+  interface Builder<W, P, I> {
+
+    @NotNull Builder<W, P, I> npcManager(@NotNull NpcManager<W, P, I> npcManager);
+
+    @NotNull Builder<W, P, I> eventBus(@NotNull EventBus<NpcEvent<W, P, I>> eventBus);
+
+    @NotNull Builder<W, P, I> profileResolver(@NotNull ProfileResolver profileResolver);
+
+    @NotNull Builder<W, P, I> worldAccessor(@NotNull PlatformWorldAccessor<W> worldAccessor);
+
+    @NotNull Builder<W, P, I> packetFactory(@NotNull PlatformPacketAdapter<P, I> packetFactory);
+
+    @NotNull Builder<W, P, I> actionController(@NotNull Consumer<NpcActionController.Builder> decorator);
+
+    @NotNull Platform<W, P, I> build();
+  }
 }

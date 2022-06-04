@@ -22,14 +22,10 @@
  * THE SOFTWARE.
  */
 
-import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+package com.github.juliarn.npclib.api.protocol;
 
-dependencies {
-  implementation(libs.gson)
-  implementation(libs.event)
-}
+public enum PlayerInfoAction {
 
-tasks.withType<ShadowJar> {
-  minimize()
-  relocate("com.google.gson", "com.github.juliarn.npclib.relocate.gson")
+  ADD_PLAYER,
+  REMOVE_PLAYER
 }

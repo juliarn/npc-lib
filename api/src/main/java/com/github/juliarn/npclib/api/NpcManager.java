@@ -22,14 +22,18 @@
  * THE SOFTWARE.
  */
 
-import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+package com.github.juliarn.npclib.api;
 
-dependencies {
-  implementation(libs.gson)
-  implementation(libs.event)
-}
+import java.util.Collection;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.UnmodifiableView;
 
-tasks.withType<ShadowJar> {
-  minimize()
-  relocate("com.google.gson", "com.github.juliarn.npclib.relocate.gson")
+public interface NpcManager<W, P, I> {
+
+  void trackNpc(@NotNull Npc<W, P, I> npc);
+
+  void stopTrackingNpc(@NotNull Npc<W, P, I> npc);
+
+  @UnmodifiableView
+  @NotNull Collection<Npc<W, P, I>> trackedNpcs();
 }

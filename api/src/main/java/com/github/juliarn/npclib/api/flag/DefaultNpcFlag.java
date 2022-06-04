@@ -22,14 +22,57 @@
  * THE SOFTWARE.
  */
 
-import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+package com.github.juliarn.npclib.api.flag;
 
-dependencies {
-  implementation(libs.gson)
-  implementation(libs.event)
-}
+import java.util.function.Predicate;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-tasks.withType<ShadowJar> {
-  minimize()
-  relocate("com.google.gson", "com.github.juliarn.npclib.relocate.gson")
+final class DefaultNpcFlag<T> implements NpcFlag<T> {
+
+  private final String key;
+  private final T defaultValue;
+  private final Predicate<T> valueTester;
+
+  public DefaultNpcFlag(@NotNull String key, @NotNull T defaultValue, @NotNull Predicate<T> valueTester) {
+    this.key = key;
+    this.defaultValue = defaultValue;
+    this.valueTester = valueTester;
+  }
+
+  @Override
+  public @NotNull String key() {
+    return this.key;
+  }
+
+  @Override
+  public @NotNull T defaultValue() {
+    return this.defaultValue;
+  }
+
+  @Override
+  public boolean accepts(@Nullable T value) {
+    return this.valueTester.test(value);
+  }
+
+  @Override
+  public int hashCode() {
+    return this.key.hashCode();
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    // fast path for same object
+    if (obj == this) {
+      return true;
+    }
+
+    // check if it's the same type
+    if (obj instanceof NpcFlag) {
+      NpcFlag<?> other = (NpcFlag<?>) obj;
+      return other.key().equals(this.key);
+    }
+
+    return false;
+  }
 }

@@ -22,14 +22,21 @@
  * THE SOFTWARE.
  */
 
-import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+package com.github.juliarn.npclib.api;
 
-dependencies {
-  implementation(libs.gson)
-  implementation(libs.event)
-}
+import com.github.juliarn.npclib.api.flag.NpcFlag;
+import com.github.juliarn.npclib.api.flag.NpcFlaggedBuilder;
+import com.github.juliarn.npclib.api.flag.NpcFlaggedObject;
+import org.jetbrains.annotations.NotNull;
 
-tasks.withType<ShadowJar> {
-  minimize()
-  relocate("com.google.gson", "com.github.juliarn.npclib.relocate.gson")
+public interface NpcActionController extends NpcFlaggedObject {
+
+  NpcFlag<Integer> SPAWN_DISTANCE = NpcFlag.flag("action_spawn_distance", 50, value -> value >= 0);
+  NpcFlag<Integer> TAB_REMOVAL_TICKS = NpcFlag.flag("action_tab_removal", 30, value -> value >= 0);
+  NpcFlag<Integer> IMITATE_DISTANCE = NpcFlag.flag("action_imitate_distance", 20, value -> value >= 0);
+
+  interface Builder extends NpcFlaggedBuilder<Builder> {
+
+    @NotNull NpcActionController build();
+  }
 }

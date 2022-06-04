@@ -10,6 +10,7 @@ licenser = "0.6.1"
 # general
 gson = "2.9.0"
 annotations = "23.0.0"
+event = "5.0.0-SNAPSHOT"
 
 # platform api versions
 sponge = "9.0.0"
@@ -25,6 +26,7 @@ protocolLib = "master-SNAPSHOT"
 [libraries]
 
 # general
+event = { group = "net.kyori", name = "event-api", version.ref = "event" }
 gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
 annotations = { group = "org.jetbrains", name = "annotations", version.ref = "annotations" }
 

@@ -22,14 +22,19 @@
  * THE SOFTWARE.
  */
 
-import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+package com.github.juliarn.npclib.api.protocol;
 
-dependencies {
-  implementation(libs.gson)
-  implementation(libs.event)
-}
+import org.jetbrains.annotations.NotNull;
 
-tasks.withType<ShadowJar> {
-  minimize()
-  relocate("com.google.gson", "com.github.juliarn.npclib.relocate.gson")
+public interface PlatformPacketAdapter<P, I> {
+
+  @NotNull OutboundPacket<P> createEntitySpawnPacket();
+
+  @NotNull OutboundPacket<P> createEntityRemovePacket();
+
+  @NotNull OutboundPacket<P> createPlayerInfoPacket(@NotNull PlayerInfoAction action);
+
+  @NotNull OutboundPacket<P> createRotationPacket(float yaw, float pitch);
+
+  @NotNull OutboundPacket<P> createAnimationPacket(@NotNull EntityAnimation animation);
 }
