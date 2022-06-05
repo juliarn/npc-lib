@@ -26,7 +26,7 @@ package com.github.juliarn.npclib.api.event;
 
 import org.jetbrains.annotations.NotNull;
 
-public interface PlayerNpcEvent<W, P, I> extends NpcEvent<W, P, I> {
+public interface PlayerNpcEvent extends NpcEvent {
 
-  @NotNull P player();
+  @NotNull <P> P player();
 }

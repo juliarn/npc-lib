@@ -29,11 +29,11 @@ import java.util.Collection;
 import org.jetbrains.annotations.NotNull;
 
 @FunctionalInterface
-public interface OutboundPacket<P> {
+public interface OutboundPacket<W, P, I> {
 
-  @NotNull OutboundPacket<P> schedule(@NotNull P player, @NotNull Npc npc);
+  @NotNull OutboundPacket<W, P, I> schedule(@NotNull P player, @NotNull Npc<W, P, I> npc);
 
-  default @NotNull OutboundPacket<P> schedule(@NotNull Collection<P> players, @NotNull Npc npc) {
+  default @NotNull OutboundPacket<W, P, I> schedule(@NotNull Collection<P> players, @NotNull Npc<W, P, I> npc) {
     players.forEach(player -> this.schedule(player, npc));
     return this;
   }

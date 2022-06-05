@@ -22,19 +22,36 @@
  * THE SOFTWARE.
  */
 
-package com.github.juliarn.npclib.api.protocol;
+package com.github.juliarn.npclib.common.settings;
 
+import com.github.juliarn.npclib.api.settings.NpcProfileResolver;
+import com.github.juliarn.npclib.api.settings.NpcSettings;
+import com.github.juliarn.npclib.api.settings.NpcTrackingRule;
+import com.github.juliarn.npclib.common.flag.CommonNpcFlaggedBuilder;
+import java.util.Objects;
 import org.jetbrains.annotations.NotNull;
 
-public interface PlatformPacketAdapter<W, P, I> {
+public class CommonNpcSettingsBuilder<P>
+  extends CommonNpcFlaggedBuilder<NpcSettings.Builder<P>>
+  implements NpcSettings.Builder<P> {
 
-  @NotNull OutboundPacket<W, P, I> createEntitySpawnPacket();
+  protected NpcTrackingRule<P> trackingRule = NpcTrackingRule.allPlayers();
+  protected NpcProfileResolver<P> profileResolver = NpcProfileResolver.ofSpawnedNpc();
 
-  @NotNull OutboundPacket<W, P, I> createEntityRemovePacket();
+  @Override
+  public NpcSettings.@NotNull Builder<P> trackingRule(@NotNull NpcTrackingRule<P> trackingRule) {
+    this.trackingRule = Objects.requireNonNull(trackingRule, "trackingRule");
+    return this;
+  }
 
-  @NotNull OutboundPacket<W, P, I> createPlayerInfoPacket(@NotNull PlayerInfoAction action);
+  @Override
+  public NpcSettings.@NotNull Builder<P> profileResolver(@NotNull NpcProfileResolver<P> profileResolver) {
+    this.profileResolver = Objects.requireNonNull(profileResolver, "profileResolver");
+    return this;
+  }
 
-  @NotNull OutboundPacket<W, P, I> createRotationPacket(float yaw, float pitch);
-
-  @NotNull OutboundPacket<W, P, I> createAnimationPacket(@NotNull EntityAnimation animation);
+  @Override
+  public @NotNull NpcSettings<P> build() {
+    return new CommonNpcSettings<>(this.flags, this.trackingRule, this.profileResolver);
+  }
 }

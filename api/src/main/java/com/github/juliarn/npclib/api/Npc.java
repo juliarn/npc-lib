@@ -30,7 +30,7 @@ import com.github.juliarn.npclib.api.flag.NpcFlaggedObject;
 import com.github.juliarn.npclib.api.profile.Profile;
 import com.github.juliarn.npclib.api.profile.ProfileResolver;
 import com.github.juliarn.npclib.api.settings.NpcSettings;
-import java.util.Set;
+import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import org.jetbrains.annotations.NotNull;
@@ -55,19 +55,19 @@ public interface Npc<W, P, I> extends NpcFlaggedObject {
 
   @NotNull Platform<W, P, I> platform();
 
-  @NotNull NpcManager<W, P, I> npcManager();
+  @NotNull NpcTracker<W, P, I> npcTracker();
 
   boolean shouldIncludePlayer(@NotNull P player);
 
   @UnmodifiableView
-  @NotNull Set<P> includedPlayers();
+  @NotNull Collection<P> includedPlayers();
 
   @NotNull Npc<W, P, I> addIncludedPlayer(@NotNull P player);
 
   @NotNull Npc<W, P, I> removeIncludedPlayer(@NotNull P player);
 
   @UnmodifiableView
-  @NotNull Set<P> trackedPlayers();
+  @NotNull Collection<P> trackedPlayers();
 
   @NotNull Npc<W, P, I> trackPlayer(@NotNull P player);
 

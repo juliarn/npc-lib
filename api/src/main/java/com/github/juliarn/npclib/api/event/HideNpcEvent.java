@@ -26,6 +26,13 @@ package com.github.juliarn.npclib.api.event;
 
 import net.kyori.event.Cancellable;
 
-public interface HideNpcEvent<W, P, I> extends PlayerNpcEvent<W, P, I>, Cancellable {
+public interface HideNpcEvent extends PlayerNpcEvent {
 
+  interface Pre extends HideNpcEvent, Cancellable {
+
+  }
+
+  interface Post extends HideNpcEvent {
+
+  }
 }

@@ -22,19 +22,47 @@
  * THE SOFTWARE.
  */
 
-package com.github.juliarn.npclib.api.protocol;
+package com.github.juliarn.npclib.common.event;
 
+import com.github.juliarn.npclib.api.Npc;
+import com.github.juliarn.npclib.api.event.InteractNpcEvent;
+import java.util.Objects;
 import org.jetbrains.annotations.NotNull;
 
-public interface PlatformPacketAdapter<W, P, I> {
+public final class DefaultInteractNpcEvent extends CommonPlayerNpcEvent implements InteractNpcEvent {
 
-  @NotNull OutboundPacket<W, P, I> createEntitySpawnPacket();
+  private final Hand hand;
+  private boolean cancelled = false;
 
-  @NotNull OutboundPacket<W, P, I> createEntityRemovePacket();
+  private DefaultInteractNpcEvent(@NotNull Npc<?, ?, ?> npc, @NotNull Object player, @NotNull Hand hand) {
+    super(npc, player);
+    this.hand = hand;
+  }
 
-  @NotNull OutboundPacket<W, P, I> createPlayerInfoPacket(@NotNull PlayerInfoAction action);
+  public static @NotNull InteractNpcEvent interactNpc(
+    @NotNull Npc<?, ?, ?> npc,
+    @NotNull Object player,
+    @NotNull Hand hand
+  ) {
+    Objects.requireNonNull(npc, "npc");
+    Objects.requireNonNull(player, "player");
+    Objects.requireNonNull(hand, "hand");
 
-  @NotNull OutboundPacket<W, P, I> createRotationPacket(float yaw, float pitch);
+    return new DefaultInteractNpcEvent(npc, player, hand);
+  }
 
-  @NotNull OutboundPacket<W, P, I> createAnimationPacket(@NotNull EntityAnimation animation);
+  @Override
+  public boolean cancelled() {
+    return this.cancelled;
+  }
+
+  @Override
+  public void cancelled(boolean cancelled) {
+    this.cancelled = cancelled;
+  }
+
+  @Override
+  public @NotNull Hand hand() {
+    return this.hand;
+  }
 }

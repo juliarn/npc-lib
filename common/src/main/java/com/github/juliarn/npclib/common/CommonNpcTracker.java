@@ -22,18 +22,57 @@
  * THE SOFTWARE.
  */
 
-package com.github.juliarn.npclib.api;
+package com.github.juliarn.npclib.common;
 
+import com.github.juliarn.npclib.api.Npc;
+import com.github.juliarn.npclib.api.NpcTracker;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnmodifiableView;
 
-public interface NpcManager<W, P, I> {
+public abstract class CommonNpcTracker<W, P, I> implements NpcTracker<W, P, I> {
 
-  void trackNpc(@NotNull Npc<W, P, I> npc);
+  protected final Set<Npc<W, P, I>> trackedNpcs = Collections.synchronizedSet(new HashSet<>());
 
-  void stopTrackingNpc(@NotNull Npc<W, P, I> npc);
+  @Override
+  public @Nullable Npc<W, P, I> npcById(int entityId) {
+    for (Npc<W, P, I> trackedNpc : this.trackedNpcs) {
+      if (trackedNpc.entityId() == entityId) {
+        return trackedNpc;
+      }
+    }
 
-  @UnmodifiableView
-  @NotNull Collection<Npc<W, P, I>> trackedNpcs();
+    return null;
+  }
+
+  @Override
+  public @Nullable Npc<W, P, I> npcByUniqueId(@NotNull UUID uniqueId) {
+    for (Npc<W, P, I> trackedNpc : this.trackedNpcs) {
+      if (trackedNpc.profile().uniqueId().equals(uniqueId)) {
+        return trackedNpc;
+      }
+    }
+
+    return null;
+  }
+
+  @Override
+  public void trackNpc(@NotNull Npc<W, P, I> npc) {
+    this.trackedNpcs.add(npc);
+  }
+
+  @Override
+  public void stopTrackingNpc(@NotNull Npc<W, P, I> npc) {
+    this.trackedNpcs.remove(npc);
+  }
+
+  @Override
+  public @UnmodifiableView @NotNull Collection<Npc<W, P, I>> trackedNpcs() {
+    return Collections.unmodifiableCollection(this.trackedNpcs);
+  }
 }

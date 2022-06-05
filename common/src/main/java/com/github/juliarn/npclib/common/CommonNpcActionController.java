@@ -22,19 +22,18 @@
  * THE SOFTWARE.
  */
 
-package com.github.juliarn.npclib.api.protocol;
+package com.github.juliarn.npclib.common;
 
+import com.github.juliarn.npclib.api.NpcActionController;
+import com.github.juliarn.npclib.api.flag.NpcFlag;
+import com.github.juliarn.npclib.common.flag.CommonNpcFlaggedObject;
+import java.util.Map;
+import java.util.Optional;
 import org.jetbrains.annotations.NotNull;
 
-public interface PlatformPacketAdapter<W, P, I> {
+public abstract class CommonNpcActionController extends CommonNpcFlaggedObject implements NpcActionController {
 
-  @NotNull OutboundPacket<W, P, I> createEntitySpawnPacket();
-
-  @NotNull OutboundPacket<W, P, I> createEntityRemovePacket();
-
-  @NotNull OutboundPacket<W, P, I> createPlayerInfoPacket(@NotNull PlayerInfoAction action);
-
-  @NotNull OutboundPacket<W, P, I> createRotationPacket(float yaw, float pitch);
-
-  @NotNull OutboundPacket<W, P, I> createAnimationPacket(@NotNull EntityAnimation animation);
+  public CommonNpcActionController(@NotNull Map<NpcFlag<?>, Optional<?>> flags) {
+    super(flags);
+  }
 }

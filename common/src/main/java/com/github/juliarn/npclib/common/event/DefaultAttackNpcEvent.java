@@ -22,19 +22,35 @@
  * THE SOFTWARE.
  */
 
-package com.github.juliarn.npclib.api.protocol;
+package com.github.juliarn.npclib.common.event;
 
+import com.github.juliarn.npclib.api.Npc;
+import com.github.juliarn.npclib.api.event.AttackNpcEvent;
+import java.util.Objects;
 import org.jetbrains.annotations.NotNull;
 
-public interface PlatformPacketAdapter<W, P, I> {
+public final class DefaultAttackNpcEvent extends CommonPlayerNpcEvent implements AttackNpcEvent {
 
-  @NotNull OutboundPacket<W, P, I> createEntitySpawnPacket();
+  private boolean cancelled = false;
 
-  @NotNull OutboundPacket<W, P, I> createEntityRemovePacket();
+  private DefaultAttackNpcEvent(@NotNull Npc<?, ?, ?> npc, @NotNull Object player) {
+    super(npc, player);
+  }
 
-  @NotNull OutboundPacket<W, P, I> createPlayerInfoPacket(@NotNull PlayerInfoAction action);
+  public static @NotNull AttackNpcEvent attackNpc(@NotNull Npc<?, ?, ?> npc, @NotNull Object player) {
+    Objects.requireNonNull(npc, "npc");
+    Objects.requireNonNull(player, "player");
 
-  @NotNull OutboundPacket<W, P, I> createRotationPacket(float yaw, float pitch);
+    return new DefaultAttackNpcEvent(npc, player);
+  }
 
-  @NotNull OutboundPacket<W, P, I> createAnimationPacket(@NotNull EntityAnimation animation);
+  @Override
+  public boolean cancelled() {
+    return this.cancelled;
+  }
+
+  @Override
+  public void cancelled(boolean cancelled) {
+    this.cancelled = cancelled;
+  }
 }

@@ -22,19 +22,29 @@
  * THE SOFTWARE.
  */
 
-package com.github.juliarn.npclib.api.protocol;
+package com.github.juliarn.npclib.common.flag;
 
+import com.github.juliarn.npclib.api.flag.NpcFlag;
+import com.github.juliarn.npclib.api.flag.NpcFlaggedBuilder;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public interface PlatformPacketAdapter<W, P, I> {
+public abstract class CommonNpcFlaggedBuilder<B> implements NpcFlaggedBuilder<B> {
 
-  @NotNull OutboundPacket<W, P, I> createEntitySpawnPacket();
+  protected final Map<NpcFlag<?>, Optional<?>> flags = new HashMap<>();
 
-  @NotNull OutboundPacket<W, P, I> createEntityRemovePacket();
+  @Override
+  @SuppressWarnings("unchecked")
+  public <T> @NotNull B flag(@NotNull NpcFlag<T> flag, @Nullable T value) {
+    // check if the flag value is acceptable
+    if (flag.accepts(value)) {
+      this.flags.put(flag, Optional.ofNullable(value));
+      return (B) this;
+    }
 
-  @NotNull OutboundPacket<W, P, I> createPlayerInfoPacket(@NotNull PlayerInfoAction action);
-
-  @NotNull OutboundPacket<W, P, I> createRotationPacket(float yaw, float pitch);
-
-  @NotNull OutboundPacket<W, P, I> createAnimationPacket(@NotNull EntityAnimation animation);
+    throw new IllegalArgumentException("Flag " + flag.key() + " does not accept " + value + " as it's value!");
+  }
 }

@@ -22,19 +22,44 @@
  * THE SOFTWARE.
  */
 
-package com.github.juliarn.npclib.api.protocol;
+package com.github.juliarn.npclib.common.util;
 
+import com.github.juliarn.npclib.api.Platform;
+import com.github.juliarn.npclib.api.event.NpcEvent;
+import java.io.PrintStream;
+import java.util.Map;
+import net.kyori.event.EventSubscriber;
+import net.kyori.event.PostResult;
 import org.jetbrains.annotations.NotNull;
 
-public interface PlatformPacketAdapter<W, P, I> {
+public final class EventDispatcher {
 
-  @NotNull OutboundPacket<W, P, I> createEntitySpawnPacket();
+  private EventDispatcher() {
+    throw new UnsupportedOperationException();
+  }
 
-  @NotNull OutboundPacket<W, P, I> createEntityRemovePacket();
+  public static @NotNull <W, P, I, E extends NpcEvent<W, P, I>> E dispatch(
+    @NotNull Platform<W, P, I> platform,
+    @NotNull E event
+  ) {
+    // post the event
+    PostResult result = platform.eventBus().post(event);
 
-  @NotNull OutboundPacket<W, P, I> createPlayerInfoPacket(@NotNull PlayerInfoAction action);
+    // check if we need to print out if something failed during execution
+    Map<EventSubscriber<?>, Throwable> exceptions = result.exceptions();
+    if (platform.debug() && !exceptions.isEmpty()) {
+      // print all exceptions
+      PrintStream err = System.err;
+      for (Map.Entry<EventSubscriber<?>, Throwable> entry : exceptions.entrySet()) {
+        err.printf(
+          "Subscriber %s was unable to handle %s:%n",
+          entry.getKey().getClass().getName(),
+          event.getClass().getSimpleName());
+        entry.getValue().printStackTrace(err);
+      }
+    }
 
-  @NotNull OutboundPacket<W, P, I> createRotationPacket(float yaw, float pitch);
-
-  @NotNull OutboundPacket<W, P, I> createAnimationPacket(@NotNull EntityAnimation animation);
+    // the same event instance, for chaining
+    return event;
+  }
 }

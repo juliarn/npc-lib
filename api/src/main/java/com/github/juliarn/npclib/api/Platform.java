@@ -34,31 +34,39 @@ import org.jetbrains.annotations.NotNull;
 
 public interface Platform<W, P, I> {
 
-  @NotNull NpcManager<W, P, I> npcManager();
+  boolean debug();
+
+  @NotNull EventBus<NpcEvent> eventBus();
+
+  @NotNull NpcTracker<W, P, I> npcTracker();
 
   @NotNull ProfileResolver profileResolver();
 
-  @NotNull Npc.Builder<W, P, I> newNpcBuilder();
+  @NotNull PlatformTaskManager taskManager();
 
-  @NotNull EventBus<NpcEvent<W, P, I>> eventBus();
+  @NotNull Npc.Builder<W, P, I> newNpcBuilder();
 
   @NotNull PlatformWorldAccessor<W> worldAccessor();
 
-  @NotNull PlatformPacketAdapter<P, I> packetFactory();
+  @NotNull PlatformPacketAdapter<W, P, I> packetFactory();
 
   @NotNull Optional<NpcActionController> actionController();
 
   interface Builder<W, P, I> {
 
-    @NotNull Builder<W, P, I> npcManager(@NotNull NpcManager<W, P, I> npcManager);
+    @NotNull Builder<W, P, I> debug(boolean debug);
 
-    @NotNull Builder<W, P, I> eventBus(@NotNull EventBus<NpcEvent<W, P, I>> eventBus);
+    @NotNull Builder<W, P, I> eventBus(@NotNull EventBus<NpcEvent> eventBus);
+
+    @NotNull Builder<W, P, I> npcTracker(@NotNull NpcTracker<W, P, I> npcTracker);
+
+    @NotNull Builder<W, P, I> taskManager(@NotNull PlatformTaskManager taskManager);
 
     @NotNull Builder<W, P, I> profileResolver(@NotNull ProfileResolver profileResolver);
 
     @NotNull Builder<W, P, I> worldAccessor(@NotNull PlatformWorldAccessor<W> worldAccessor);
 
-    @NotNull Builder<W, P, I> packetFactory(@NotNull PlatformPacketAdapter<P, I> packetFactory);
+    @NotNull Builder<W, P, I> packetFactory(@NotNull PlatformPacketAdapter<W, P, I> packetFactory);
 
     @NotNull Builder<W, P, I> actionController(@NotNull Consumer<NpcActionController.Builder> decorator);
 

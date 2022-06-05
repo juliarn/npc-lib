@@ -27,7 +27,7 @@ package com.github.juliarn.npclib.api.event;
 import net.kyori.event.Cancellable;
 import org.jetbrains.annotations.NotNull;
 
-public interface InteractNpcEvent<W, P, I> extends PlayerNpcEvent<W, P, I>, Cancellable {
+public interface InteractNpcEvent extends PlayerNpcEvent, Cancellable {
 
   @NotNull Hand hand();
 

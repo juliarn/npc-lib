@@ -22,19 +22,24 @@
  * THE SOFTWARE.
  */
 
-package com.github.juliarn.npclib.api.protocol;
+package com.github.juliarn.npclib.api;
 
+import java.util.Collection;
+import java.util.UUID;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.UnmodifiableView;
 
-public interface PlatformPacketAdapter<W, P, I> {
+public interface NpcTracker<W, P, I> {
 
-  @NotNull OutboundPacket<W, P, I> createEntitySpawnPacket();
+  @Nullable Npc<W, P, I> npcById(int entityId);
 
-  @NotNull OutboundPacket<W, P, I> createEntityRemovePacket();
+  @Nullable Npc<W, P, I> npcByUniqueId(@NotNull UUID uniqueId);
 
-  @NotNull OutboundPacket<W, P, I> createPlayerInfoPacket(@NotNull PlayerInfoAction action);
+  void trackNpc(@NotNull Npc<W, P, I> npc);
 
-  @NotNull OutboundPacket<W, P, I> createRotationPacket(float yaw, float pitch);
+  void stopTrackingNpc(@NotNull Npc<W, P, I> npc);
 
-  @NotNull OutboundPacket<W, P, I> createAnimationPacket(@NotNull EntityAnimation animation);
+  @UnmodifiableView
+  @NotNull Collection<Npc<W, P, I>> trackedNpcs();
 }

@@ -27,7 +27,7 @@ package com.github.juliarn.npclib.api.event;
 import com.github.juliarn.npclib.api.Npc;
 import org.jetbrains.annotations.NotNull;
 
-public interface NpcEvent<W, P, I> {
+public interface NpcEvent {
 
-  @NotNull Npc<W, P, I> npc();
+  @NotNull <W, P, I> Npc<W, P, I> npc();
 }

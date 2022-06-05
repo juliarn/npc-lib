@@ -22,19 +22,26 @@
  * THE SOFTWARE.
  */
 
-package com.github.juliarn.npclib.api.protocol;
+package com.github.juliarn.npclib.common.flag;
 
+import com.github.juliarn.npclib.api.flag.NpcFlag;
+import com.github.juliarn.npclib.api.flag.NpcFlaggedObject;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 import org.jetbrains.annotations.NotNull;
 
-public interface PlatformPacketAdapter<W, P, I> {
+public abstract class CommonNpcFlaggedObject implements NpcFlaggedObject {
 
-  @NotNull OutboundPacket<W, P, I> createEntitySpawnPacket();
+  protected final Map<NpcFlag<?>, Optional<?>> flags;
 
-  @NotNull OutboundPacket<W, P, I> createEntityRemovePacket();
+  public CommonNpcFlaggedObject(@NotNull Map<NpcFlag<?>, Optional<?>> flags) {
+    this.flags = new HashMap<>(flags);
+  }
 
-  @NotNull OutboundPacket<W, P, I> createPlayerInfoPacket(@NotNull PlayerInfoAction action);
-
-  @NotNull OutboundPacket<W, P, I> createRotationPacket(float yaw, float pitch);
-
-  @NotNull OutboundPacket<W, P, I> createAnimationPacket(@NotNull EntityAnimation animation);
+  @Override
+  @SuppressWarnings("unchecked")
+  public @NotNull <T> Optional<T> flagValue(@NotNull NpcFlag<T> flag) {
+    return (Optional<T>) this.flags.get(flag);
+  }
 }

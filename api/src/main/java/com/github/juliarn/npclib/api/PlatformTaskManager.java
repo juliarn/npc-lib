@@ -22,19 +22,17 @@
  * THE SOFTWARE.
  */
 
-package com.github.juliarn.npclib.api.protocol;
+package com.github.juliarn.npclib.api;
 
 import org.jetbrains.annotations.NotNull;
 
-public interface PlatformPacketAdapter<W, P, I> {
+public interface PlatformTaskManager {
 
-  @NotNull OutboundPacket<W, P, I> createEntitySpawnPacket();
+  void scheduleSync(@NotNull Runnable task);
 
-  @NotNull OutboundPacket<W, P, I> createEntityRemovePacket();
+  void scheduleDelayedSync(@NotNull Runnable task, int delayTicks);
 
-  @NotNull OutboundPacket<W, P, I> createPlayerInfoPacket(@NotNull PlayerInfoAction action);
+  void scheduleAsync(@NotNull Runnable task);
 
-  @NotNull OutboundPacket<W, P, I> createRotationPacket(float yaw, float pitch);
-
-  @NotNull OutboundPacket<W, P, I> createAnimationPacket(@NotNull EntityAnimation animation);
+  void scheduleDelayedAsync(@NotNull Runnable task, int delayTicks);
 }

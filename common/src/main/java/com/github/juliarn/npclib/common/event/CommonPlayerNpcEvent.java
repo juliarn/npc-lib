@@ -22,19 +22,24 @@
  * THE SOFTWARE.
  */
 
-package com.github.juliarn.npclib.api.protocol;
+package com.github.juliarn.npclib.common.event;
 
+import com.github.juliarn.npclib.api.Npc;
+import com.github.juliarn.npclib.api.event.PlayerNpcEvent;
 import org.jetbrains.annotations.NotNull;
 
-public interface PlatformPacketAdapter<W, P, I> {
+public abstract class CommonPlayerNpcEvent extends CommonNpcEvent implements PlayerNpcEvent {
 
-  @NotNull OutboundPacket<W, P, I> createEntitySpawnPacket();
+  protected final Object player;
 
-  @NotNull OutboundPacket<W, P, I> createEntityRemovePacket();
+  public CommonPlayerNpcEvent(@NotNull Npc<?, ?, ?> npc, @NotNull Object player) {
+    super(npc);
+    this.player = player;
+  }
 
-  @NotNull OutboundPacket<W, P, I> createPlayerInfoPacket(@NotNull PlayerInfoAction action);
-
-  @NotNull OutboundPacket<W, P, I> createRotationPacket(float yaw, float pitch);
-
-  @NotNull OutboundPacket<W, P, I> createAnimationPacket(@NotNull EntityAnimation animation);
+  @Override
+  @SuppressWarnings("unchecked")
+  public @NotNull <P> P player() {
+    return (P) this.player;
+  }
 }

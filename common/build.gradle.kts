@@ -22,19 +22,6 @@
  * THE SOFTWARE.
  */
 
-package com.github.juliarn.npclib.api.protocol;
-
-import org.jetbrains.annotations.NotNull;
-
-public interface PlatformPacketAdapter<W, P, I> {
-
-  @NotNull OutboundPacket<W, P, I> createEntitySpawnPacket();
-
-  @NotNull OutboundPacket<W, P, I> createEntityRemovePacket();
-
-  @NotNull OutboundPacket<W, P, I> createPlayerInfoPacket(@NotNull PlayerInfoAction action);
-
-  @NotNull OutboundPacket<W, P, I> createRotationPacket(float yaw, float pitch);
-
-  @NotNull OutboundPacket<W, P, I> createAnimationPacket(@NotNull EntityAnimation animation);
+dependencies {
+  api(projects.api)
 }
