@@ -38,7 +38,7 @@ public final class EventDispatcher {
     throw new UnsupportedOperationException();
   }
 
-  public static @NotNull <W, P, I, E extends NpcEvent<W, P, I>> E dispatch(
+  public static @NotNull <W, P, I, E extends NpcEvent> E dispatch(
     @NotNull Platform<W, P, I> platform,
     @NotNull E event
   ) {
