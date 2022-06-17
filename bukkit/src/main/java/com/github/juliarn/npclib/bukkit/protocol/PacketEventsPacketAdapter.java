@@ -41,6 +41,7 @@ import com.github.juliarn.npclib.api.protocol.meta.EntityMetadataFactory;
 import com.github.juliarn.npclib.common.event.DefaultAttackNpcEvent;
 import com.github.juliarn.npclib.common.event.DefaultInteractNpcEvent;
 import com.github.juliarn.npclib.common.util.EventDispatcher;
+import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.PacketEventsAPI;
 import com.github.retrooper.packetevents.event.PacketListenerPriority;
 import com.github.retrooper.packetevents.event.SimplePacketListenerAbstract;
@@ -384,6 +385,12 @@ final class PacketEventsPacketAdapter implements PlatformPacketAdapter<World, Pl
       platform.extension(),
       PACKET_EVENTS_SETTINGS);
     packetEventsApi.init();
+
+    // while I am not the biggest fan of that, it looks like
+    // that packet events is using the instance internally everywhere
+    // instead of passing the created instance around, which leaves us
+    // no choice than setting it as well :/
+    PacketEvents.setAPI(packetEventsApi);
 
     // store the packet player manager & server version
     this.packetPlayerManager = packetEventsApi.getPlayerManager();
