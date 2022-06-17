@@ -29,13 +29,11 @@ import com.github.juliarn.npclib.api.profile.Profile;
 import com.github.juliarn.npclib.api.profile.ProfileProperty;
 import com.github.juliarn.npclib.api.profile.ProfileResolver;
 import io.papermc.lib.PaperLib;
-import java.nio.charset.StandardCharsets;
-import java.util.Base64;
-import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.bukkit.Bukkit;
 import org.jetbrains.annotations.NotNull;
@@ -88,32 +86,35 @@ public final class BukkitProfileResolver {
   private static final class SpigotProfileResolver implements ProfileResolver {
 
     private static final ProfileResolver INSTANCE = new SpigotProfileResolver();
-    private static final Pattern DATA_EXTRACT_PATTERN = Pattern.compile("^CraftPlayerTextures \\[data=(.*)]$");
 
     @Override
     @SuppressWarnings("deprecation") // deprecated by paper, but we only use this on spigot
     public @NotNull CompletableFuture<Profile.Resolved> resolveProfile(@NotNull Profile profile) {
       // create the profile and fill in the empty values
       org.bukkit.profile.PlayerProfile playerProfile = Bukkit.createPlayerProfile(profile.uniqueId(), profile.name());
-      return playerProfile.update().thenApply(resolvedProfile -> {
-        // hack to get the data from the profile
-        Matcher matcher = DATA_EXTRACT_PATTERN.matcher(resolvedProfile.getTextures().toString());
-        if (matcher.matches()) {
-          // encode the raw texture data
-          byte[] rawTextureData = matcher.group(1).getBytes(StandardCharsets.UTF_8);
-          String encodedTextureData = Base64.getEncoder().encodeToString(rawTextureData);
-
-          // create the profile from the spigot one
-          ProfileProperty textureProperty = ProfileProperty.property("textures", encodedTextureData);
-          Set<ProfileProperty> properties = Collections.singleton(textureProperty);
-
-          // create the resolved profile
+      return playerProfile.update().thenApplyAsync(resolvedProfile -> {
+        // hack to get the data from the profile as it's not exposed directly
+        //noinspection unchecked
+        List<Map<String, Object>> props = (List<Map<String, Object>>) resolvedProfile.serialize().get("properties");
+        if (props == null) {
+          // only present if the profile has any properties, in this case there are no properties
           //noinspection ConstantConditions
-          return Profile.resolved(playerProfile.getName(), playerProfile.getUniqueId(), properties);
+          return Profile.resolved(resolvedProfile.getName(), resolvedProfile.getUniqueId());
         }
 
-        // unable to complete the profile
-        throw new IllegalArgumentException("Profile texture input: " + resolvedProfile.getTextures() + " is invalid");
+        // extract all properties of the profile
+        Set<ProfileProperty> properties = new HashSet<>();
+        for (Map<String, Object> entry : props) {
+          ProfileProperty prop = ProfileProperty.property(
+            (String) entry.get("name"),
+            (String) entry.get("value"),
+            (String) entry.get("signature"));
+          properties.add(prop);
+        }
+
+        // build the profile from the given data
+        //noinspection ConstantConditions
+        return Profile.resolved(resolvedProfile.getName(), resolvedProfile.getUniqueId(), properties);
       });
     }
   }
