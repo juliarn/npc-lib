@@ -22,56 +22,33 @@
  * THE SOFTWARE.
  */
 
-package com.github.juliarn.npclib.common.event;
+package com.github.juliarn.npclib.api.protocol;
 
 import com.github.juliarn.npclib.api.Npc;
-import com.github.juliarn.npclib.api.event.HideNpcEvent;
+import java.util.Collection;
 import java.util.Objects;
+import java.util.function.Function;
 import org.jetbrains.annotations.NotNull;
 
-public class DefaultHideNpcEvent extends CommonPlayerNpcEvent implements HideNpcEvent {
+public interface NpcSpecificOutboundPacket<W, P, I, E> {
 
-  private DefaultHideNpcEvent(@NotNull Npc<?, ?, ?, ?> npc, @NotNull Object player) {
-    super(npc, player);
-  }
-
-  public static @NotNull Pre pre(@NotNull Npc<?, ?, ?, ?> npc, @NotNull Object player) {
+  static @NotNull <W, P, I, E> NpcSpecificOutboundPacket<W, P, I, E> fromOutboundPacket(
+    @NotNull Npc<W, P, I, E> npc,
+    @NotNull OutboundPacket<W, P, I, E> packet
+  ) {
     Objects.requireNonNull(npc, "npc");
-    Objects.requireNonNull(player, "player");
+    Objects.requireNonNull(packet, "packet");
 
-    return new DefaultPre(npc, player);
+    return new DefaultNpcSpecificOutboundPacket<>(npc, packet);
   }
 
-  public static @NotNull Post post(@NotNull Npc<?, ?, ?, ?> npc, @NotNull Object player) {
-    Objects.requireNonNull(npc, "npc");
-    Objects.requireNonNull(player, "player");
+  @NotNull Npc<W, P, I, E> npc();
 
-    return new DefaultPost(npc, player);
-  }
+  void scheduleForTracked();
 
-  private static final class DefaultPre extends DefaultHideNpcEvent implements HideNpcEvent.Pre {
+  void schedule(@NotNull P player);
 
-    private boolean cancelled = false;
+  void schedule(@NotNull Collection<P> players);
 
-    private DefaultPre(@NotNull Npc<?, ?, ?, ?> npc, @NotNull Object player) {
-      super(npc, player);
-    }
-
-    @Override
-    public boolean cancelled() {
-      return this.cancelled;
-    }
-
-    @Override
-    public void cancelled(boolean cancelled) {
-      this.cancelled = cancelled;
-    }
-  }
-
-  private static final class DefaultPost extends DefaultHideNpcEvent implements HideNpcEvent.Post {
-
-    private DefaultPost(@NotNull Npc<?, ?, ?, ?> npc, @NotNull Object player) {
-      super(npc, player);
-    }
-  }
+  void schedule(@NotNull Function<Npc<W, P, I, E>, Collection<P>> extractor);
 }

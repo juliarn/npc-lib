@@ -22,19 +22,33 @@
  * THE SOFTWARE.
  */
 
-package com.github.juliarn.npclib.api.settings;
+package com.github.juliarn.npclib.bukkit.util;
+
+import static org.bukkit.util.NumberConversions.square;
 
 import com.github.juliarn.npclib.api.Npc;
-import com.github.juliarn.npclib.api.profile.Profile;
-import java.util.concurrent.CompletableFuture;
+import com.github.juliarn.npclib.api.Position;
+import org.bukkit.Location;
 import org.jetbrains.annotations.NotNull;
 
-@FunctionalInterface
-public interface NpcProfileResolver<P> {
+public final class BukkitPlatformUtil {
 
-  static @NotNull <P> NpcProfileResolver<P> ofSpawnedNpc() {
-    return (player, npc) -> CompletableFuture.completedFuture(npc.profile());
+  private BukkitPlatformUtil() {
+    throw new UnsupportedOperationException();
   }
 
-  @NotNull CompletableFuture<Profile.Resolved> resolveNpcProfile(@NotNull P player, @NotNull Npc<?, P, ?, ?> npc);
+  public static double distance(@NotNull Npc<?, ?, ?, ?> npc, @NotNull Location location) {
+    Position pos = npc.position();
+    return square(location.getX() - pos.x()) + square(location.getY() - pos.y()) + square(location.getZ() - pos.z());
+  }
+
+  public static @NotNull Position positionFromBukkit(@NotNull Location loc) {
+    return Position.position(
+      loc.getX(),
+      loc.getY(),
+      loc.getZ(),
+      loc.getYaw(),
+      loc.getPitch(),
+      loc.getWorld().getName());
+  }
 }

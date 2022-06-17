@@ -54,6 +54,3 @@ atlassian-ide-plugin.xml
 
 # delombok
 */src/main/lombok
-
-# CloudNet
-.launchermeta/

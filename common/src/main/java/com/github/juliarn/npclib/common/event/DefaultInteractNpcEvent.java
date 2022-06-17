@@ -34,13 +34,13 @@ public final class DefaultInteractNpcEvent extends CommonPlayerNpcEvent implemen
   private final Hand hand;
   private boolean cancelled = false;
 
-  private DefaultInteractNpcEvent(@NotNull Npc<?, ?, ?> npc, @NotNull Object player, @NotNull Hand hand) {
+  private DefaultInteractNpcEvent(@NotNull Npc<?, ?, ?, ?> npc, @NotNull Object player, @NotNull Hand hand) {
     super(npc, player);
     this.hand = hand;
   }
 
   public static @NotNull InteractNpcEvent interactNpc(
-    @NotNull Npc<?, ?, ?> npc,
+    @NotNull Npc<?, ?, ?, ?> npc,
     @NotNull Object player,
     @NotNull Hand hand
   ) {

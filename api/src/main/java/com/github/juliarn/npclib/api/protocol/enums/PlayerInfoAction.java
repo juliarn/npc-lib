@@ -22,24 +22,10 @@
  * THE SOFTWARE.
  */
 
-package com.github.juliarn.npclib.api.protocol;
+package com.github.juliarn.npclib.api.protocol.enums;
 
-public enum EntityAnimation {
+public enum PlayerInfoAction {
 
-  SWING_MAIN_ARM(0),
-  TAKE_DAMAGE(1),
-  LEAVE_BED(2),
-  SWING_OFF_HAND(3),
-  CRITICAL_EFFECT(4),
-  MAGIC_CRITICAL_EFFECT(5);
-
-  private final int id;
-
-  EntityAnimation(int id) {
-    this.id = id;
-  }
-
-  public int id() {
-    return this.id;
-  }
+  ADD_PLAYER,
+  REMOVE_PLAYER
 }

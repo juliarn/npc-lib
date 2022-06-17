@@ -28,72 +28,103 @@ import com.github.juliarn.npclib.api.NpcActionController;
 import com.github.juliarn.npclib.api.NpcTracker;
 import com.github.juliarn.npclib.api.Platform;
 import com.github.juliarn.npclib.api.PlatformTaskManager;
+import com.github.juliarn.npclib.api.PlatformVersionAccessor;
 import com.github.juliarn.npclib.api.PlatformWorldAccessor;
 import com.github.juliarn.npclib.api.event.NpcEvent;
 import com.github.juliarn.npclib.api.profile.ProfileResolver;
 import com.github.juliarn.npclib.api.protocol.PlatformPacketAdapter;
+import com.github.juliarn.npclib.common.CommonNpcTracker;
 import java.util.Objects;
+import java.util.function.Consumer;
 import net.kyori.event.EventBus;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class CommonPlatformBuilder<W, P, I> implements Platform.Builder<W, P, I> {
+public abstract class CommonPlatformBuilder<W, P, I, E> implements Platform.Builder<W, P, I, E> {
 
   protected static final boolean DEFAULT_DEBUG = Boolean.getBoolean("npc.lib.debug");
   protected static final ProfileResolver DEFAULT_PROFILE_RESOLVER = ProfileResolver.caching(ProfileResolver.mojang());
 
+  protected E extension;
   protected boolean debug = DEFAULT_DEBUG;
   protected EventBus<NpcEvent> eventBus;
-  protected NpcTracker<W, P, I> npcTracker;
+  protected NpcTracker<W, P, I, E> npcTracker;
   protected ProfileResolver profileResolver;
   protected PlatformTaskManager taskManager;
-  protected NpcActionController actionController;
+  protected PlatformVersionAccessor versionAccessor;
   protected PlatformWorldAccessor<W> worldAccessor;
-  protected PlatformPacketAdapter<W, P, I> packetAdapter;
+  protected PlatformPacketAdapter<W, P, I, E> packetAdapter;
+  protected Consumer<NpcActionController.Builder> actionControllerDecorator;
 
   @Override
-  public Platform.@NotNull Builder<W, P, I> debug(boolean debug) {
+  public @NotNull Platform.Builder<W, P, I, E> debug(boolean debug) {
     this.debug = debug;
     return this;
   }
 
   @Override
-  public @NotNull Platform.Builder<W, P, I> eventBus(@NotNull EventBus<NpcEvent> eventBus) {
+  public @NotNull Platform.Builder<W, P, I, E> extension(@NotNull E extension) {
+    this.extension = Objects.requireNonNull(extension, "extension");
+    return this;
+  }
+
+  @Override
+  public @NotNull Platform.Builder<W, P, I, E> eventBus(@NotNull EventBus<NpcEvent> eventBus) {
     this.eventBus = Objects.requireNonNull(eventBus, "eventBus");
     return this;
   }
 
   @Override
-  public @NotNull Platform.Builder<W, P, I> npcTracker(@NotNull NpcTracker<W, P, I> npcTracker) {
+  public @NotNull Platform.Builder<W, P, I, E> npcTracker(@NotNull NpcTracker<W, P, I, E> npcTracker) {
     this.npcTracker = Objects.requireNonNull(npcTracker, "npcTracker");
     return this;
   }
 
   @Override
-  public Platform.@NotNull Builder<W, P, I> taskManager(@NotNull PlatformTaskManager taskManager) {
+  public @NotNull Platform.Builder<W, P, I, E> taskManager(@NotNull PlatformTaskManager taskManager) {
     this.taskManager = Objects.requireNonNull(taskManager, "taskManager");
     return this;
   }
 
   @Override
-  public @NotNull Platform.Builder<W, P, I> profileResolver(@NotNull ProfileResolver profileResolver) {
+  public @NotNull Platform.Builder<W, P, I, E> profileResolver(@NotNull ProfileResolver profileResolver) {
     this.profileResolver = Objects.requireNonNull(profileResolver, "profileResolver");
     return this;
   }
 
   @Override
-  public @NotNull Platform.Builder<W, P, I> worldAccessor(@NotNull PlatformWorldAccessor<W> worldAccessor) {
+  public @NotNull Platform.Builder<W, P, I, E> worldAccessor(@NotNull PlatformWorldAccessor<W> worldAccessor) {
     this.worldAccessor = Objects.requireNonNull(worldAccessor, "worldAccessor");
     return this;
   }
 
   @Override
-  public @NotNull Platform.Builder<W, P, I> packetFactory(@NotNull PlatformPacketAdapter<W, P, I> packetFactory) {
+  public @NotNull Platform.Builder<W, P, I, E> versionAccessor(@NotNull PlatformVersionAccessor versionAccessor) {
+    this.versionAccessor = Objects.requireNonNull(versionAccessor, "versionAccessor");
+    return this;
+  }
+
+  @Override
+  public @NotNull Platform.Builder<W, P, I, E> packetFactory(@NotNull PlatformPacketAdapter<W, P, I, E> packetFactory) {
     this.packetAdapter = Objects.requireNonNull(packetFactory, "packetFactory");
     return this;
   }
 
   @Override
-  public @NotNull Platform<W, P, I> build() {
+  public @NotNull CommonPlatformBuilder<W, P, I, E> actionController(
+    @NotNull Consumer<NpcActionController.Builder> decorator
+  ) {
+    this.actionControllerDecorator = Objects.requireNonNull(decorator, "decorator");
+    return this;
+  }
+
+  @Override
+  public @NotNull Platform<W, P, I, E> build() {
+    // validate that the required values are present
+    Objects.requireNonNull(this.extension, "extension");
+
+    // let the downstream builder set all default values if required
+    this.prepareBuild();
+
     // use the default profile resolver if no specific one was specified
     if (this.profileResolver == null) {
       this.profileResolver = DEFAULT_PROFILE_RESOLVER;
@@ -104,14 +135,15 @@ public abstract class CommonPlatformBuilder<W, P, I> implements Platform.Builder
       this.eventBus = EventBus.create(NpcEvent.class);
     }
 
-    return new CommonPlatform<>(
-      this.debug,
-      Objects.requireNonNull(this.npcTracker, "npcTracker"),
-      Objects.requireNonNull(this.profileResolver, "profileResolver"),
-      Objects.requireNonNull(this.taskManager, "taskManager"),
-      Objects.requireNonNull(this.actionController, "actionController"),
-      Objects.requireNonNull(this.eventBus, "eventBus"),
-      Objects.requireNonNull(this.worldAccessor, "worldAccessor"),
-      Objects.requireNonNull(this.packetAdapter, "packetAdapter"));
+    // use a new npc tracker if none is given
+    if (this.npcTracker == null) {
+      this.npcTracker = CommonNpcTracker.newNpcTracker();
+    }
+
+    return this.doBuild();
   }
+
+  protected abstract void prepareBuild();
+
+  protected abstract @NotNull Platform<W, P, I, E> doBuild();
 }

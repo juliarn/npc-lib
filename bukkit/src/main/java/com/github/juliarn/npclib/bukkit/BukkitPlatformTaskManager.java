@@ -22,19 +22,43 @@
  * THE SOFTWARE.
  */
 
-package com.github.juliarn.npclib.api.settings;
+package com.github.juliarn.npclib.bukkit;
 
-import com.github.juliarn.npclib.api.Npc;
-import com.github.juliarn.npclib.api.profile.Profile;
-import java.util.concurrent.CompletableFuture;
+import com.github.juliarn.npclib.api.PlatformTaskManager;
+import java.util.Objects;
+import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 
-@FunctionalInterface
-public interface NpcProfileResolver<P> {
+public final class BukkitPlatformTaskManager implements PlatformTaskManager {
 
-  static @NotNull <P> NpcProfileResolver<P> ofSpawnedNpc() {
-    return (player, npc) -> CompletableFuture.completedFuture(npc.profile());
+  private final Plugin plugin;
+
+  private BukkitPlatformTaskManager(Plugin plugin) {
+    this.plugin = plugin;
   }
 
-  @NotNull CompletableFuture<Profile.Resolved> resolveNpcProfile(@NotNull P player, @NotNull Npc<?, P, ?, ?> npc);
+  public static @NotNull PlatformTaskManager taskManager(@NotNull Plugin plugin) {
+    Objects.requireNonNull(plugin, "plugin");
+    return new BukkitPlatformTaskManager(plugin);
+  }
+
+  @Override
+  public void scheduleSync(@NotNull Runnable task) {
+    this.plugin.getServer().getScheduler().runTask(this.plugin, task);
+  }
+
+  @Override
+  public void scheduleDelayedSync(@NotNull Runnable task, int delayTicks) {
+    this.plugin.getServer().getScheduler().runTaskLater(this.plugin, task, delayTicks);
+  }
+
+  @Override
+  public void scheduleAsync(@NotNull Runnable task) {
+    this.plugin.getServer().getScheduler().runTaskAsynchronously(this.plugin, task);
+  }
+
+  @Override
+  public void scheduleDelayedAsync(@NotNull Runnable task, int delayTicks) {
+    this.plugin.getServer().getScheduler().runTaskLaterAsynchronously(this.plugin, task, delayTicks);
+  }
 }

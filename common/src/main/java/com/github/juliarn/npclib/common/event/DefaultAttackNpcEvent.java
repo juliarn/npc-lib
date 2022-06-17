@@ -33,11 +33,11 @@ public final class DefaultAttackNpcEvent extends CommonPlayerNpcEvent implements
 
   private boolean cancelled = false;
 
-  private DefaultAttackNpcEvent(@NotNull Npc<?, ?, ?> npc, @NotNull Object player) {
+  private DefaultAttackNpcEvent(@NotNull Npc<?, ?, ?, ?> npc, @NotNull Object player) {
     super(npc, player);
   }
 
-  public static @NotNull AttackNpcEvent attackNpc(@NotNull Npc<?, ?, ?> npc, @NotNull Object player) {
+  public static @NotNull AttackNpcEvent attackNpc(@NotNull Npc<?, ?, ?, ?> npc, @NotNull Object player) {
     Objects.requireNonNull(npc, "npc");
     Objects.requireNonNull(player, "player");
 

@@ -30,7 +30,9 @@ import com.github.juliarn.npclib.api.Platform;
 import com.github.juliarn.npclib.api.Position;
 import com.github.juliarn.npclib.api.flag.NpcFlag;
 import com.github.juliarn.npclib.api.profile.Profile;
-import com.github.juliarn.npclib.api.protocol.PlayerInfoAction;
+import com.github.juliarn.npclib.api.protocol.NpcSpecificOutboundPacket;
+import com.github.juliarn.npclib.api.protocol.enums.ItemSlot;
+import com.github.juliarn.npclib.api.protocol.enums.PlayerInfoAction;
 import com.github.juliarn.npclib.api.settings.NpcSettings;
 import com.github.juliarn.npclib.common.event.DefaultHideNpcEvent;
 import com.github.juliarn.npclib.common.event.DefaultShowNpcEvent;
@@ -45,7 +47,7 @@ import java.util.Set;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.UnmodifiableView;
 
-public class CommonNpc<W, P, I> extends CommonNpcFlaggedObject implements Npc<W, P, I> {
+public class CommonNpc<W, P, I, E> extends CommonNpcFlaggedObject implements Npc<W, P, I, E> {
 
   protected final int entityId;
   protected final Profile.Resolved profile;
@@ -53,7 +55,7 @@ public class CommonNpc<W, P, I> extends CommonNpcFlaggedObject implements Npc<W,
   protected final W world;
   protected final Position pos;
 
-  protected final Platform<W, P, I> platform;
+  protected final Platform<W, P, I, E> platform;
   protected final NpcSettings<P> npcSettings;
 
   protected final Set<P> trackedPlayers = Collections.synchronizedSet(new HashSet<>());
@@ -65,7 +67,7 @@ public class CommonNpc<W, P, I> extends CommonNpcFlaggedObject implements Npc<W,
     @NotNull Profile.Resolved profile,
     @NotNull W world,
     @NotNull Position pos,
-    @NotNull Platform<W, P, I> platform,
+    @NotNull Platform<W, P, I, E> platform,
     @NotNull NpcSettings<P> npcSettings
   ) {
     super(flags);
@@ -103,12 +105,12 @@ public class CommonNpc<W, P, I> extends CommonNpcFlaggedObject implements Npc<W,
   }
 
   @Override
-  public @NotNull Platform<W, P, I> platform() {
+  public @NotNull Platform<W, P, I, E> platform() {
     return this.platform;
   }
 
   @Override
-  public @NotNull NpcTracker<W, P, I> npcTracker() {
+  public @NotNull NpcTracker<W, P, I, E> npcTracker() {
     return this.platform.npcTracker();
   }
 
@@ -123,13 +125,18 @@ public class CommonNpc<W, P, I> extends CommonNpcFlaggedObject implements Npc<W,
   }
 
   @Override
-  public @NotNull Npc<W, P, I> addIncludedPlayer(@NotNull P player) {
+  public boolean includesPlayer(@NotNull P player) {
+    return this.includedPlayers.contains(player);
+  }
+
+  @Override
+  public @NotNull Npc<W, P, I, E> addIncludedPlayer(@NotNull P player) {
     this.includedPlayers.add(player);
     return this;
   }
 
   @Override
-  public @NotNull Npc<W, P, I> removeIncludedPlayer(@NotNull P player) {
+  public @NotNull Npc<W, P, I, E> removeIncludedPlayer(@NotNull P player) {
     this.includedPlayers.remove(player);
     return this;
   }
@@ -140,7 +147,12 @@ public class CommonNpc<W, P, I> extends CommonNpcFlaggedObject implements Npc<W,
   }
 
   @Override
-  public @NotNull Npc<W, P, I> trackPlayer(@NotNull P player) {
+  public boolean tracksPlayer(@NotNull P player) {
+    return this.trackedPlayers.contains(player);
+  }
+
+  @Override
+  public @NotNull Npc<W, P, I, E> trackPlayer(@NotNull P player) {
     // check if we should track the player
     if (this.shouldIncludePlayer(player)) {
       return this.forceTrackPlayer(player);
@@ -151,7 +163,7 @@ public class CommonNpc<W, P, I> extends CommonNpcFlaggedObject implements Npc<W,
   }
 
   @Override
-  public @NotNull Npc<W, P, I> forceTrackPlayer(@NotNull P player) {
+  public @NotNull Npc<W, P, I, E> forceTrackPlayer(@NotNull P player) {
     // check if the player is not already tracked
     if (this.trackedPlayers.add(player)) {
       // break early if the add is not wanted by plugin
@@ -177,7 +189,7 @@ public class CommonNpc<W, P, I> extends CommonNpcFlaggedObject implements Npc<W,
   }
 
   @Override
-  public @NotNull Npc<W, P, I> stopTrackingPlayer(@NotNull P player) {
+  public @NotNull Npc<W, P, I, E> stopTrackingPlayer(@NotNull P player) {
     // check if the player was previously tracked
     if (this.trackedPlayers.remove(player)) {
       // break early if the removal is not wanted by plugin
@@ -195,5 +207,31 @@ public class CommonNpc<W, P, I> extends CommonNpcFlaggedObject implements Npc<W,
 
     // for chaining
     return this;
+  }
+
+  @Override
+  public @NotNull NpcSpecificOutboundPacket<W, P, I, E> lookAt(@NotNull Position position) {
+    double diffX = position.x() - this.pos.x();
+    double diffY = position.y() - this.pos.y();
+    double diffZ = position.z() - this.pos.z();
+
+    double distanceXZ = Math.sqrt(diffX * diffX + diffZ * diffZ);
+    double distanceY = Math.sqrt(distanceXZ * distanceXZ + diffY * diffY);
+
+    double yaw = Math.toDegrees(Math.acos(diffX / distanceXZ));
+    double pitch = Math.toDegrees(Math.acos(diffY / distanceY)) - 90;
+
+    // correct yaw according to difference
+    if (diffZ < 0) {
+      yaw += Math.abs(180 - yaw) * 2;
+    }
+    yaw -= 90;
+
+    return this.platform.packetFactory().createRotationPacket((float) yaw, (float) pitch).toSpecific(this);
+  }
+
+  @Override
+  public @NotNull NpcSpecificOutboundPacket<W, P, I, E> changeItem(@NotNull ItemSlot slot, @NotNull I item) {
+    return this.platform.packetFactory().createEquipmentPacket(slot, item).toSpecific(this);
   }
 }

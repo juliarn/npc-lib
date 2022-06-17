@@ -43,5 +43,5 @@ public interface NpcTrackingRule<P> {
     return (npc, player) -> npc.includedPlayers().contains(player);
   }
 
-  boolean shouldTrack(@NotNull Npc<?, P, ?> npc, @NotNull P player);
+  boolean shouldTrack(@NotNull Npc<?, P, ?, ?> npc, @NotNull P player);
 }

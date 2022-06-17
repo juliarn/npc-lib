@@ -31,18 +31,18 @@ import org.jetbrains.annotations.NotNull;
 
 public class DefaultShowNpcEvent extends CommonPlayerNpcEvent implements ShowNpcEvent {
 
-  private DefaultShowNpcEvent(@NotNull Npc<?, ?, ?> npc, @NotNull Object player) {
+  private DefaultShowNpcEvent(@NotNull Npc<?, ?, ?, ?> npc, @NotNull Object player) {
     super(npc, player);
   }
 
-  public static @NotNull Pre pre(@NotNull Npc<?, ?, ?> npc, @NotNull Object player) {
+  public static @NotNull Pre pre(@NotNull Npc<?, ?, ?, ?> npc, @NotNull Object player) {
     Objects.requireNonNull(npc, "npc");
     Objects.requireNonNull(player, "player");
 
     return new DefaultPre(npc, player);
   }
 
-  public static @NotNull Post post(@NotNull Npc<?, ?, ?> npc, @NotNull Object player) {
+  public static @NotNull Post post(@NotNull Npc<?, ?, ?, ?> npc, @NotNull Object player) {
     Objects.requireNonNull(npc, "npc");
     Objects.requireNonNull(player, "player");
 
@@ -53,7 +53,7 @@ public class DefaultShowNpcEvent extends CommonPlayerNpcEvent implements ShowNpc
 
     private boolean cancelled = false;
 
-    private DefaultPre(@NotNull Npc<?, ?, ?> npc, @NotNull Object player) {
+    private DefaultPre(@NotNull Npc<?, ?, ?, ?> npc, @NotNull Object player) {
       super(npc, player);
     }
 
@@ -70,7 +70,7 @@ public class DefaultShowNpcEvent extends CommonPlayerNpcEvent implements ShowNpc
 
   private static final class DefaultPost extends DefaultShowNpcEvent implements ShowNpcEvent.Post {
 
-    private DefaultPost(@NotNull Npc<?, ?, ?> npc, @NotNull Object player) {
+    private DefaultPost(@NotNull Npc<?, ?, ?, ?> npc, @NotNull Object player) {
       super(npc, player);
     }
   }

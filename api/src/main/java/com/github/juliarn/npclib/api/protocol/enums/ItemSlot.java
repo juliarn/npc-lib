@@ -22,19 +22,14 @@
  * THE SOFTWARE.
  */
 
-package com.github.juliarn.npclib.api.settings;
+package com.github.juliarn.npclib.api.protocol.enums;
 
-import com.github.juliarn.npclib.api.Npc;
-import com.github.juliarn.npclib.api.profile.Profile;
-import java.util.concurrent.CompletableFuture;
-import org.jetbrains.annotations.NotNull;
+public enum ItemSlot {
 
-@FunctionalInterface
-public interface NpcProfileResolver<P> {
-
-  static @NotNull <P> NpcProfileResolver<P> ofSpawnedNpc() {
-    return (player, npc) -> CompletableFuture.completedFuture(npc.profile());
-  }
-
-  @NotNull CompletableFuture<Profile.Resolved> resolveNpcProfile(@NotNull P player, @NotNull Npc<?, P, ?, ?> npc);
+  MAIN_HAND,
+  OFF_HAND,
+  FEET,
+  LEGS,
+  CHEST,
+  HEAD
 }

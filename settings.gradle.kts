@@ -25,4 +25,4 @@
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 rootProject.name = "npc-lib2"
-include(":api", ":common")
+include(":api", ":common", ":bukkit")

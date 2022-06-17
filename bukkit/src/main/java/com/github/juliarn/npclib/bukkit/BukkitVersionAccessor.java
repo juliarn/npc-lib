@@ -22,19 +22,43 @@
  * THE SOFTWARE.
  */
 
-package com.github.juliarn.npclib.api.settings;
+package com.github.juliarn.npclib.bukkit;
 
-import com.github.juliarn.npclib.api.Npc;
-import com.github.juliarn.npclib.api.profile.Profile;
-import java.util.concurrent.CompletableFuture;
-import org.jetbrains.annotations.NotNull;
+import com.github.juliarn.npclib.api.PlatformVersionAccessor;
+import io.papermc.lib.PaperLib;
 
-@FunctionalInterface
-public interface NpcProfileResolver<P> {
+public class BukkitVersionAccessor {
 
-  static @NotNull <P> NpcProfileResolver<P> ofSpawnedNpc() {
-    return (player, npc) -> CompletableFuture.completedFuture(npc.profile());
+  private BukkitVersionAccessor() {
+    throw new UnsupportedOperationException();
   }
 
-  @NotNull CompletableFuture<Profile.Resolved> resolveNpcProfile(@NotNull P player, @NotNull Npc<?, P, ?, ?> npc);
+  public static PlatformVersionAccessor versionAccessor() {
+    return PaperLibPlatformVersionAccessor.INSTANCE;
+  }
+
+  private static final class PaperLibPlatformVersionAccessor implements PlatformVersionAccessor {
+
+    private static final PaperLibPlatformVersionAccessor INSTANCE = new PaperLibPlatformVersionAccessor();
+
+    @Override
+    public int major() {
+      return 1;
+    }
+
+    @Override
+    public int minor() {
+      return PaperLib.getMinecraftVersion();
+    }
+
+    @Override
+    public int patch() {
+      return PaperLib.getMinecraftPatchVersion();
+    }
+
+    @Override
+    public boolean atLeast(int major, int minor, int patch) {
+      return PaperLib.isVersion(minor, patch);
+    }
+  }
 }

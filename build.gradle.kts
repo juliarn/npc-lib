@@ -35,8 +35,8 @@ allprojects {
 
   repositories {
     mavenCentral()
-    maven("https://jitpack.io")
-    maven("https://papermc.io/repo/repository/maven-public/")
+    maven("https://jitpack.io/")
+    maven("https://repo.papermc.io/repository/maven-public/")
     maven("https://s01.oss.sonatype.org/content/repositories/snapshots/")
   }
 }
@@ -64,13 +64,17 @@ subprojects {
   }
 
   tasks.withType<JavaCompile>().configureEach {
-    sourceCompatibility = JavaVersion.VERSION_1_8.toString()
-    targetCompatibility = JavaVersion.VERSION_1_8.toString()
     // options
+    options.release.set(8)
     options.encoding = "UTF-8"
     options.isIncremental = true
     // we are aware that those are there, but we only do that if there is no other way we can use - so please keep the terminal clean!
     options.compilerArgs = mutableListOf("-Xlint:-deprecation,-unchecked")
+  }
+
+  extensions.configure<JavaPluginExtension> {
+    disableAutoTargetJvm()
+    toolchain.languageVersion.set(JavaLanguageVersion.of(17))
   }
 
   tasks.withType<Checkstyle> {

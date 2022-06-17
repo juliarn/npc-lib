@@ -94,7 +94,7 @@ final class MojangProfileResolver implements ProfileResolver {
       Set<ProfileProperty> properties = GSON.fromJson(responseData.get("properties"), PROFILE_PROPERTIES_TYPE);
 
       // create the profile from the received data
-      return new DefaultResolvedProfile(name, uniqueId, properties);
+      return Profile.resolved(name, uniqueId, properties);
     }));
   }
 

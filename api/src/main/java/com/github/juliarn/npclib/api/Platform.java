@@ -32,44 +32,52 @@ import java.util.function.Consumer;
 import net.kyori.event.EventBus;
 import org.jetbrains.annotations.NotNull;
 
-public interface Platform<W, P, I> {
+public interface Platform<W, P, I, E> {
 
   boolean debug();
 
+  @NotNull E extension();
+
   @NotNull EventBus<NpcEvent> eventBus();
 
-  @NotNull NpcTracker<W, P, I> npcTracker();
+  @NotNull NpcTracker<W, P, I, E> npcTracker();
 
   @NotNull ProfileResolver profileResolver();
 
   @NotNull PlatformTaskManager taskManager();
 
-  @NotNull Npc.Builder<W, P, I> newNpcBuilder();
+  @NotNull Npc.Builder<W, P, I, E> newNpcBuilder();
+
+  @NotNull PlatformVersionAccessor versionAccessor();
 
   @NotNull PlatformWorldAccessor<W> worldAccessor();
 
-  @NotNull PlatformPacketAdapter<W, P, I> packetFactory();
+  @NotNull PlatformPacketAdapter<W, P, I, E> packetFactory();
 
   @NotNull Optional<NpcActionController> actionController();
 
-  interface Builder<W, P, I> {
+  interface Builder<W, P, I, E> {
 
-    @NotNull Builder<W, P, I> debug(boolean debug);
+    @NotNull Builder<W, P, I, E> debug(boolean debug);
 
-    @NotNull Builder<W, P, I> eventBus(@NotNull EventBus<NpcEvent> eventBus);
+    @NotNull Builder<W, P, I, E> extension(@NotNull E extension);
 
-    @NotNull Builder<W, P, I> npcTracker(@NotNull NpcTracker<W, P, I> npcTracker);
+    @NotNull Builder<W, P, I, E> eventBus(@NotNull EventBus<NpcEvent> eventBus);
 
-    @NotNull Builder<W, P, I> taskManager(@NotNull PlatformTaskManager taskManager);
+    @NotNull Builder<W, P, I, E> npcTracker(@NotNull NpcTracker<W, P, I, E> npcTracker);
 
-    @NotNull Builder<W, P, I> profileResolver(@NotNull ProfileResolver profileResolver);
+    @NotNull Builder<W, P, I, E> taskManager(@NotNull PlatformTaskManager taskManager);
 
-    @NotNull Builder<W, P, I> worldAccessor(@NotNull PlatformWorldAccessor<W> worldAccessor);
+    @NotNull Builder<W, P, I, E> profileResolver(@NotNull ProfileResolver profileResolver);
 
-    @NotNull Builder<W, P, I> packetFactory(@NotNull PlatformPacketAdapter<W, P, I> packetFactory);
+    @NotNull Builder<W, P, I, E> worldAccessor(@NotNull PlatformWorldAccessor<W> worldAccessor);
 
-    @NotNull Builder<W, P, I> actionController(@NotNull Consumer<NpcActionController.Builder> decorator);
+    @NotNull Builder<W, P, I, E> versionAccessor(@NotNull PlatformVersionAccessor versionAccessor);
 
-    @NotNull Platform<W, P, I> build();
+    @NotNull Builder<W, P, I, E> packetFactory(@NotNull PlatformPacketAdapter<W, P, I, E> packetFactory);
+
+    @NotNull Builder<W, P, I, E> actionController(@NotNull Consumer<NpcActionController.Builder> decorator);
+
+    @NotNull Platform<W, P, I, E> build();
   }
 }

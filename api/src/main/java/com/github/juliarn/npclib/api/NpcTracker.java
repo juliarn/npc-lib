@@ -30,16 +30,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnmodifiableView;
 
-public interface NpcTracker<W, P, I> {
+public interface NpcTracker<W, P, I, E> {
 
-  @Nullable Npc<W, P, I> npcById(int entityId);
+  @Nullable Npc<W, P, I, E> npcById(int entityId);
 
-  @Nullable Npc<W, P, I> npcByUniqueId(@NotNull UUID uniqueId);
+  @Nullable Npc<W, P, I, E> npcByUniqueId(@NotNull UUID uniqueId);
 
-  void trackNpc(@NotNull Npc<W, P, I> npc);
+  void trackNpc(@NotNull Npc<W, P, I, E> npc);
 
-  void stopTrackingNpc(@NotNull Npc<W, P, I> npc);
+  void stopTrackingNpc(@NotNull Npc<W, P, I, E> npc);
 
   @UnmodifiableView
-  @NotNull Collection<Npc<W, P, I>> trackedNpcs();
+  @NotNull Collection<Npc<W, P, I, E>> trackedNpcs();
 }

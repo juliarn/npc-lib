@@ -29,5 +29,5 @@ import org.jetbrains.annotations.NotNull;
 
 public interface NpcEvent {
 
-  @NotNull <W, P, I> Npc<W, P, I> npc();
+  @NotNull <W, P, I, E> Npc<W, P, I, E> npc();
 }

@@ -30,15 +30,15 @@ import org.jetbrains.annotations.NotNull;
 
 public abstract class CommonNpcEvent implements NpcEvent {
 
-  protected final Npc<?, ?, ?> npc;
+  protected final Npc<?, ?, ?, ?> npc;
 
-  public CommonNpcEvent(@NotNull Npc<?, ?, ?> npc) {
+  public CommonNpcEvent(@NotNull Npc<?, ?, ?, ?> npc) {
     this.npc = npc;
   }
 
   @Override
   @SuppressWarnings("unchecked")
-  public @NotNull <W, P, I> Npc<W, P, I> npc() {
-    return (Npc<W, P, I>) this.npc;
+  public @NotNull <W, P, I, E> Npc<W, P, I, E> npc() {
+    return (Npc<W, P, I, E>) this.npc;
   }
 }

@@ -24,17 +24,32 @@
 
 package com.github.juliarn.npclib.api.protocol;
 
+import com.github.juliarn.npclib.api.Platform;
+import com.github.juliarn.npclib.api.protocol.enums.EntityAnimation;
+import com.github.juliarn.npclib.api.protocol.enums.ItemSlot;
+import com.github.juliarn.npclib.api.protocol.enums.PlayerInfoAction;
+import com.github.juliarn.npclib.api.protocol.meta.EntityMetadataFactory;
 import org.jetbrains.annotations.NotNull;
 
-public interface PlatformPacketAdapter<W, P, I> {
+public interface PlatformPacketAdapter<W, P, I, E> {
 
-  @NotNull OutboundPacket<W, P, I> createEntitySpawnPacket();
+  @NotNull OutboundPacket<W, P, I, E> createEntitySpawnPacket();
 
-  @NotNull OutboundPacket<W, P, I> createEntityRemovePacket();
+  @NotNull OutboundPacket<W, P, I, E> createEntityRemovePacket();
 
-  @NotNull OutboundPacket<W, P, I> createPlayerInfoPacket(@NotNull PlayerInfoAction action);
+  @NotNull OutboundPacket<W, P, I, E> createPlayerInfoPacket(@NotNull PlayerInfoAction action);
 
-  @NotNull OutboundPacket<W, P, I> createRotationPacket(float yaw, float pitch);
+  @NotNull OutboundPacket<W, P, I, E> createRotationPacket(float yaw, float pitch);
 
-  @NotNull OutboundPacket<W, P, I> createAnimationPacket(@NotNull EntityAnimation animation);
+  @NotNull OutboundPacket<W, P, I, E> createAnimationPacket(@NotNull EntityAnimation animation);
+
+  @NotNull OutboundPacket<W, P, I, E> createEquipmentPacket(@NotNull ItemSlot slot, @NotNull I item);
+
+  @NotNull OutboundPacket<W, P, I, E> createCustomPayloadPacket(@NotNull String channelId, byte[] payload);
+
+  @NotNull <T, O> OutboundPacket<W, P, I, E> createEntityMetaPacket(
+    @NotNull T value,
+    @NotNull EntityMetadataFactory<T, O> metadata);
+
+  void initialize(@NotNull Platform<W, P, I, E> platform);
 }

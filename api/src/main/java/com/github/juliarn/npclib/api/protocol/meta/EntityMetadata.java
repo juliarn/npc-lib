@@ -22,10 +22,18 @@
  * THE SOFTWARE.
  */
 
-package com.github.juliarn.npclib.api.protocol;
+package com.github.juliarn.npclib.api.protocol.meta;
 
-public enum PlayerInfoAction {
+import java.lang.reflect.Type;
+import org.jetbrains.annotations.NotNull;
 
-  ADD_PLAYER,
-  REMOVE_PLAYER
+public interface EntityMetadata<O> {
+
+  int index();
+
+  boolean available();
+
+  @NotNull O value();
+
+  @NotNull Type type();
 }

@@ -26,15 +26,27 @@ package com.github.juliarn.npclib.api.protocol;
 
 import com.github.juliarn.npclib.api.Npc;
 import java.util.Collection;
+import java.util.function.Function;
 import org.jetbrains.annotations.NotNull;
 
 @FunctionalInterface
-public interface OutboundPacket<W, P, I> {
+public interface OutboundPacket<W, P, I, E> {
 
-  @NotNull OutboundPacket<W, P, I> schedule(@NotNull P player, @NotNull Npc<W, P, I> npc);
+  void schedule(@NotNull P player, @NotNull Npc<W, P, I, E> npc);
 
-  default @NotNull OutboundPacket<W, P, I> schedule(@NotNull Collection<P> players, @NotNull Npc<W, P, I> npc) {
+  default void scheduleForTracked(@NotNull Npc<W, P, I, E> npc) {
+    this.schedule(Npc::trackedPlayers, npc);
+  }
+
+  default void schedule(@NotNull Function<Npc<W, P, I, E>, Collection<P>> extractor, @NotNull Npc<W, P, I, E> npc) {
+    this.schedule(extractor.apply(npc), npc);
+  }
+
+  default void schedule(@NotNull Collection<P> players, @NotNull Npc<W, P, I, E> npc) {
     players.forEach(player -> this.schedule(player, npc));
-    return this;
+  }
+
+  default @NotNull NpcSpecificOutboundPacket<W, P, I, E> toSpecific(@NotNull Npc<W, P, I, E> targetNpc) {
+    return NpcSpecificOutboundPacket.fromOutboundPacket(targetNpc, this);
   }
 }

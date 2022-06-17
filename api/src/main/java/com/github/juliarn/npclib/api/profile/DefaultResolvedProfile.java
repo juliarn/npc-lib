@@ -38,7 +38,7 @@ public final class DefaultResolvedProfile implements Profile.Resolved {
   private final UUID uniqueId;
   private final Set<ProfileProperty> properties;
 
-  public DefaultResolvedProfile(
+  DefaultResolvedProfile(
     @NotNull String name,
     @NotNull UUID uniqueId,
     @NotNull Set<ProfileProperty> properties

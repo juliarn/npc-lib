@@ -32,7 +32,7 @@ public abstract class CommonPlayerNpcEvent extends CommonNpcEvent implements Pla
 
   protected final Object player;
 
-  public CommonPlayerNpcEvent(@NotNull Npc<?, ?, ?> npc, @NotNull Object player) {
+  public CommonPlayerNpcEvent(@NotNull Npc<?, ?, ?, ?> npc, @NotNull Object player) {
     super(npc);
     this.player = player;
   }

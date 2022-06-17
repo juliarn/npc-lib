@@ -9,6 +9,7 @@ licenser = "0.6.1"
 
 # general
 gson = "2.9.0"
+netty = "4.1.77.Final"
 annotations = "23.0.0"
 event = "5.0.0-SNAPSHOT"
 
@@ -16,29 +17,31 @@ event = "5.0.0-SNAPSHOT"
 sponge = "9.0.0"
 nukkitX = "1.0-SNAPSHOT"
 minestom = "master-SNAPSHOT"
-spigot = "1.8.8-R0.1-SNAPSHOT"
+paper = "1.19-R0.1-SNAPSHOT"
 
 # platform extensions
 paperLib = "1.0.7"
+packetEvents = "2.0-SNAPSHOT"
 protocolLib = "master-SNAPSHOT"
-
 
 [libraries]
 
 # general
 event = { group = "net.kyori", name = "event-api", version.ref = "event" }
+netty = { group = "io.netty", name = "netty-buffer", version.ref = "netty" }
 gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
 annotations = { group = "org.jetbrains", name = "annotations", version.ref = "annotations" }
 
 # platform api
 nukkitX = { group = "cn.nukkit", name = "nukkit", version.ref = "nukkitX" }
-spigot = { group = "org.spigotmc", name = "spigot-api", version.ref = "spigot" }
+paper = { group = "io.papermc.paper", name = "paper-api", version.ref = "paper" }
 sponge = { group = "org.spongepowered", name = "spongeapi", version.ref = "sponge" }
 minestom = { group = "com.github.Minestom", name = "Minestom", version.ref = "minestom" }
 
 # platform extensions
 paperLib = { group = "io.papermc", name = "paperlib", version.ref = "paperLib" }
 protocolLib = { group = "com.github.dmulloy2", name = "ProtocolLib", version.ref = "protocolLib" }
+packetEvents = { group = "com.github.retrooper.packetevents", name = "spigot", version.ref = "packetEvents" }
 
 
 [plugins]

@@ -44,10 +44,19 @@ public interface Profile {
   }
 
   static @NotNull Resolved resolved(@NotNull String name, @NotNull UUID uniqueId) {
+    return resolved(name, uniqueId, Collections.emptySet());
+  }
+
+  static @NotNull Resolved resolved(
+    @NotNull String name,
+    @NotNull UUID uniqueId,
+    @NotNull Set<ProfileProperty> properties
+  ) {
     Objects.requireNonNull(name, "name");
     Objects.requireNonNull(uniqueId, "unique id");
+    Objects.requireNonNull(properties, "properties");
 
-    return new DefaultResolvedProfile(name, uniqueId, Collections.emptySet());
+    return new DefaultResolvedProfile(name, uniqueId, properties);
   }
 
   boolean resolved();

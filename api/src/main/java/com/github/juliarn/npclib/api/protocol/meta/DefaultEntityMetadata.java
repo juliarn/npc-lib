@@ -22,19 +22,30 @@
  * THE SOFTWARE.
  */
 
-package com.github.juliarn.npclib.api.settings;
+package com.github.juliarn.npclib.api.protocol.meta;
 
-import com.github.juliarn.npclib.api.Npc;
-import com.github.juliarn.npclib.api.profile.Profile;
-import java.util.concurrent.CompletableFuture;
-import org.jetbrains.annotations.NotNull;
+import com.github.juliarn.npclib.api.protocol.enums.EntityPose;
 
-@FunctionalInterface
-public interface NpcProfileResolver<P> {
+interface DefaultEntityMetadata {
 
-  static @NotNull <P> NpcProfileResolver<P> ofSpawnedNpc() {
-    return (player, npc) -> CompletableFuture.completedFuture(npc.profile());
-  }
+  // https://wiki.vg/Entity_metadata#Entity - see index 0 and 6
+  EntityMetadataFactory<Boolean, Byte> SNEAKING = EntityMetadataFactory.<Boolean, Byte>metaFactoryBuilder()
+    .baseIndex(0)
+    .type(Byte.class)
+    .inputConverter(value -> (byte) (value ? 0x02 : 0x00))
+    .addRelatedMetadata(EntityMetadataFactory.<Boolean, Object>metaFactoryBuilder()
+      .baseIndex(6)
+      .type(EntityPose.class)
+      .inputConverter(value -> value ? EntityPose.CROUCHING : EntityPose.STANDING)
+      .availabilityChecker(versionAccessor -> versionAccessor.atLeast(1, 14, 0))
+      .build())
+    .build();
 
-  @NotNull CompletableFuture<Profile.Resolved> resolveNpcProfile(@NotNull P player, @NotNull Npc<?, P, ?, ?> npc);
+  // https://wiki.vg/Entity_metadata#Player
+  EntityMetadataFactory<Boolean, Byte> SKIN_LAYERS = EntityMetadataFactory.<Boolean, Byte>metaFactoryBuilder()
+    .baseIndex(10)
+    .type(Byte.class)
+    .indexShiftVersions(9, 9, 10, 14, 14, 15, 17)
+    .inputConverter(value -> (byte) (value ? 0xff : 0x00))
+    .build();
 }

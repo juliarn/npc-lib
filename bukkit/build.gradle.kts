@@ -22,19 +22,25 @@
  * THE SOFTWARE.
  */
 
-package com.github.juliarn.npclib.api.settings;
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
-import com.github.juliarn.npclib.api.Npc;
-import com.github.juliarn.npclib.api.profile.Profile;
-import java.util.concurrent.CompletableFuture;
-import org.jetbrains.annotations.NotNull;
+dependencies {
+  api(projects.api)
+  implementation(libs.paperLib)
+  implementation(projects.common)
+  implementation(libs.packetEvents)
 
-@FunctionalInterface
-public interface NpcProfileResolver<P> {
+  compileOnly(libs.netty)
+  compileOnly(libs.paper)
+  compileOnly(libs.protocolLib)
+}
 
-  static @NotNull <P> NpcProfileResolver<P> ofSpawnedNpc() {
-    return (player, npc) -> CompletableFuture.completedFuture(npc.profile());
-  }
+tasks.withType<ShadowJar>().configureEach {
+  minimize()
 
-  @NotNull CompletableFuture<Profile.Resolved> resolveNpcProfile(@NotNull P player, @NotNull Npc<?, P, ?, ?> npc);
+  relocate("net.kyori", "com.github.juliarn.npclib.relocate.kyori")
+  relocate("com.google.gson", "com.github.juliarn.npclib.relocate.gson")
+  relocate("io.papermc.lib", "com.github.juliarn.npclib.relocate.paperlib")
+  relocate("io.github.retrooper", "com.github.juliarn.npclib.relocate.io.packetevents")
+  relocate("com.github.retrooper", "com.github.juliarn.npclib.relocate.com.packetevents")
 }

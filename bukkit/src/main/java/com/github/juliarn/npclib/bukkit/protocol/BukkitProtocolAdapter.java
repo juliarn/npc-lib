@@ -22,19 +22,37 @@
  * THE SOFTWARE.
  */
 
-package com.github.juliarn.npclib.api.settings;
+package com.github.juliarn.npclib.bukkit.protocol;
 
-import com.github.juliarn.npclib.api.Npc;
-import com.github.juliarn.npclib.api.profile.Profile;
-import java.util.concurrent.CompletableFuture;
+import com.github.juliarn.npclib.api.protocol.PlatformPacketAdapter;
+import org.bukkit.Bukkit;
+import org.bukkit.World;
+import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 
-@FunctionalInterface
-public interface NpcProfileResolver<P> {
+public final class BukkitProtocolAdapter {
 
-  static @NotNull <P> NpcProfileResolver<P> ofSpawnedNpc() {
-    return (player, npc) -> CompletableFuture.completedFuture(npc.profile());
+  private BukkitProtocolAdapter() {
+    throw new UnsupportedOperationException();
   }
 
-  @NotNull CompletableFuture<Profile.Resolved> resolveNpcProfile(@NotNull P player, @NotNull Npc<?, P, ?, ?> npc);
+  public static @NotNull PlatformPacketAdapter<World, Player, ItemStack, Plugin> packetAdapter() {
+    // check if protocol lib is available
+    if (Bukkit.getPluginManager().getPlugin("ProtocolLib") != null) {
+      return ProtocolLibPacketAdapter.INSTANCE;
+    }
+
+    // fallback
+    return PacketEventsPacketAdapter.INSTANCE;
+  }
+
+  public static @NotNull PlatformPacketAdapter<World, Player, ItemStack, Plugin> protocolLib() {
+    return ProtocolLibPacketAdapter.INSTANCE;
+  }
+
+  public static @NotNull PlatformPacketAdapter<World, Player, ItemStack, Plugin> packetEvents() {
+    return PacketEventsPacketAdapter.INSTANCE;
+  }
 }

@@ -38,9 +38,9 @@ public final class EventDispatcher {
     throw new UnsupportedOperationException();
   }
 
-  public static @NotNull <W, P, I, E extends NpcEvent> E dispatch(
-    @NotNull Platform<W, P, I> platform,
-    @NotNull E event
+  public static @NotNull <W, P, I, E, N extends NpcEvent> N dispatch(
+    @NotNull Platform<W, P, I, E> platform,
+    @NotNull N event
   ) {
     // post the event
     PostResult result = platform.eventBus().post(event);

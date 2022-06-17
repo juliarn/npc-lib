@@ -29,6 +29,8 @@ import com.github.juliarn.npclib.api.flag.NpcFlaggedBuilder;
 import com.github.juliarn.npclib.api.flag.NpcFlaggedObject;
 import com.github.juliarn.npclib.api.profile.Profile;
 import com.github.juliarn.npclib.api.profile.ProfileResolver;
+import com.github.juliarn.npclib.api.protocol.NpcSpecificOutboundPacket;
+import com.github.juliarn.npclib.api.protocol.enums.ItemSlot;
 import com.github.juliarn.npclib.api.settings.NpcSettings;
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
@@ -37,7 +39,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnmodifiableView;
 
-public interface Npc<W, P, I> extends NpcFlaggedObject {
+public interface Npc<W, P, I, E> extends NpcFlaggedObject {
 
   NpcFlag<Boolean> LOOK_AT_PLAYER = NpcFlag.flag("imitate_player_look", false);
   NpcFlag<Boolean> HIT_WHEN_PLAYER_HITS = NpcFlag.flag("imitate_player_hit", false);
@@ -53,46 +55,55 @@ public interface Npc<W, P, I> extends NpcFlaggedObject {
 
   @NotNull NpcSettings<P> settings();
 
-  @NotNull Platform<W, P, I> platform();
+  @NotNull Platform<W, P, I, E> platform();
 
-  @NotNull NpcTracker<W, P, I> npcTracker();
+  @NotNull NpcTracker<W, P, I, E> npcTracker();
 
   boolean shouldIncludePlayer(@NotNull P player);
 
   @UnmodifiableView
   @NotNull Collection<P> includedPlayers();
 
-  @NotNull Npc<W, P, I> addIncludedPlayer(@NotNull P player);
+  boolean includesPlayer(@NotNull P player);
 
-  @NotNull Npc<W, P, I> removeIncludedPlayer(@NotNull P player);
+  @NotNull Npc<W, P, I, E> addIncludedPlayer(@NotNull P player);
+
+  @NotNull Npc<W, P, I, E> removeIncludedPlayer(@NotNull P player);
 
   @UnmodifiableView
   @NotNull Collection<P> trackedPlayers();
 
-  @NotNull Npc<W, P, I> trackPlayer(@NotNull P player);
+  boolean tracksPlayer(@NotNull P player);
 
-  @NotNull Npc<W, P, I> forceTrackPlayer(@NotNull P player);
+  @NotNull Npc<W, P, I, E> trackPlayer(@NotNull P player);
 
-  @NotNull Npc<W, P, I> stopTrackingPlayer(@NotNull P player);
+  @NotNull Npc<W, P, I, E> forceTrackPlayer(@NotNull P player);
 
-  interface Builder<W, P, I> extends NpcFlaggedBuilder<Builder<W, P, I>> {
+  @NotNull Npc<W, P, I, E> stopTrackingPlayer(@NotNull P player);
 
-    @NotNull Builder<W, P, I> entityId(int id);
+  @NotNull NpcSpecificOutboundPacket<W, P, I, E> lookAt(@NotNull Position position);
 
-    @NotNull Builder<W, P, I> position(@NotNull Position position);
+  @NotNull NpcSpecificOutboundPacket<W, P, I, E> changeItem(@NotNull ItemSlot slot, @NotNull I item);
 
-    @NotNull Builder<W, P, I> profile(@NotNull Profile.Resolved profile);
+  interface Builder<W, P, I, E> extends NpcFlaggedBuilder<Builder<W, P, I, E>> {
 
-    default @NotNull CompletableFuture<Builder<W, P, I>> profile(@NotNull Profile profile) {
+    @NotNull Builder<W, P, I, E> entityId(int id);
+
+    @NotNull Builder<W, P, I, E> position(@NotNull Position position);
+
+    @NotNull Builder<W, P, I, E> profile(@NotNull Profile.Resolved profile);
+
+    default @NotNull CompletableFuture<Builder<W, P, I, E>> profile(@NotNull Profile profile) {
       return this.profile(null, profile);
     }
 
-    @NotNull CompletableFuture<Builder<W, P, I>> profile(@Nullable ProfileResolver resolver, @NotNull Profile profile);
+    @NotNull CompletableFuture<Builder<W, P, I, E>> profile(@Nullable ProfileResolver resolver,
+      @NotNull Profile profile);
 
-    @NotNull Builder<W, P, I> npcSettings(@NotNull Consumer<NpcSettings.Builder<P>> decorator);
+    @NotNull Builder<W, P, I, E> npcSettings(@NotNull Consumer<NpcSettings.Builder<P>> decorator);
 
-    @NotNull Npc<W, P, I> build();
+    @NotNull Npc<W, P, I, E> build();
 
-    @NotNull Npc<W, P, I> buildAndTrack();
+    @NotNull Npc<W, P, I, E> buildAndTrack();
   }
 }

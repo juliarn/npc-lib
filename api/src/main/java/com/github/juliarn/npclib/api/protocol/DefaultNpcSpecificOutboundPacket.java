@@ -22,61 +22,48 @@
  * THE SOFTWARE.
  */
 
-package com.github.juliarn.npclib.common;
+package com.github.juliarn.npclib.api.protocol;
 
 import com.github.juliarn.npclib.api.Npc;
-import com.github.juliarn.npclib.api.NpcTracker;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.UUID;
+import java.util.function.Function;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.UnmodifiableView;
 
-public class CommonNpcTracker<W, P, I, E> implements NpcTracker<W, P, I, E> {
+final class DefaultNpcSpecificOutboundPacket<W, P, I, E> implements NpcSpecificOutboundPacket<W, P, I, E> {
 
-  protected final Set<Npc<W, P, I, E>> trackedNpcs = Collections.synchronizedSet(new HashSet<>());
+  private final Npc<W, P, I, E> target;
+  private final OutboundPacket<W, P, I, E> outboundPacket;
 
-  public static @NotNull <W, P, I, E> CommonNpcTracker<W, P, I, E> newNpcTracker() {
-    return new CommonNpcTracker<>();
+  public DefaultNpcSpecificOutboundPacket(
+    @NotNull Npc<W, P, I, E> target,
+    @NotNull OutboundPacket<W, P, I, E> outboundPacket
+  ) {
+    this.target = target;
+    this.outboundPacket = outboundPacket;
   }
 
   @Override
-  public @Nullable Npc<W, P, I, E> npcById(int entityId) {
-    for (Npc<W, P, I, E> trackedNpc : this.trackedNpcs) {
-      if (trackedNpc.entityId() == entityId) {
-        return trackedNpc;
-      }
-    }
-
-    return null;
+  public @NotNull Npc<W, P, I, E> npc() {
+    return this.target;
   }
 
   @Override
-  public @Nullable Npc<W, P, I, E> npcByUniqueId(@NotNull UUID uniqueId) {
-    for (Npc<W, P, I, E> trackedNpc : this.trackedNpcs) {
-      if (trackedNpc.profile().uniqueId().equals(uniqueId)) {
-        return trackedNpc;
-      }
-    }
-
-    return null;
+  public void scheduleForTracked() {
+    this.outboundPacket.scheduleForTracked(this.target);
   }
 
   @Override
-  public void trackNpc(@NotNull Npc<W, P, I, E> npc) {
-    this.trackedNpcs.add(npc);
+  public void schedule(@NotNull P player) {
+    this.outboundPacket.schedule(player, this.target);
   }
 
   @Override
-  public void stopTrackingNpc(@NotNull Npc<W, P, I, E> npc) {
-    this.trackedNpcs.remove(npc);
+  public void schedule(@NotNull Collection<P> players) {
+    this.outboundPacket.schedule(players, this.target);
   }
 
   @Override
-  public @UnmodifiableView @NotNull Collection<Npc<W, P, I, E>> trackedNpcs() {
-    return Collections.unmodifiableCollection(this.trackedNpcs);
+  public void schedule(@NotNull Function<Npc<W, P, I, E>, Collection<P>> extractor) {
+    this.outboundPacket.schedule(extractor, this.target);
   }
 }

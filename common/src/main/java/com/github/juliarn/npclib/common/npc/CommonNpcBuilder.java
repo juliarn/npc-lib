@@ -39,11 +39,11 @@ import java.util.function.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class CommonNpcBuilder<W, P, I>
-  extends CommonNpcFlaggedBuilder<Npc.Builder<W, P, I>>
-  implements Npc.Builder<W, P, I> {
+public class CommonNpcBuilder<W, P, I, E>
+  extends CommonNpcFlaggedBuilder<Npc.Builder<W, P, I, E>>
+  implements Npc.Builder<W, P, I, E> {
 
-  protected final Platform<W, P, I> platform;
+  protected final Platform<W, P, I, E> platform;
 
   protected int entityId = ThreadLocalRandom.current().nextInt(0, Integer.MAX_VALUE);
 
@@ -53,12 +53,12 @@ public class CommonNpcBuilder<W, P, I>
   protected Profile.Resolved profile;
   protected NpcSettings<P> npcSettings;
 
-  public CommonNpcBuilder(@NotNull Platform<W, P, I> platform) {
+  public CommonNpcBuilder(@NotNull Platform<W, P, I, E> platform) {
     this.platform = platform;
   }
 
   @Override
-  public @NotNull Npc.Builder<W, P, I> entityId(int id) {
+  public @NotNull Npc.Builder<W, P, I, E> entityId(int id) {
     // validate the npc entity id
     if (id < 0) {
       throw new IllegalArgumentException("NPC entity id must be positive");
@@ -69,7 +69,7 @@ public class CommonNpcBuilder<W, P, I>
   }
 
   @Override
-  public @NotNull Npc.Builder<W, P, I> position(@NotNull Position position) {
+  public @NotNull Npc.Builder<W, P, I, E> position(@NotNull Position position) {
     Objects.requireNonNull(position, "position");
 
     // try to resolve the world from the given position
@@ -86,13 +86,13 @@ public class CommonNpcBuilder<W, P, I>
   }
 
   @Override
-  public @NotNull Npc.Builder<W, P, I> profile(@NotNull Profile.Resolved profile) {
+  public @NotNull Npc.Builder<W, P, I, E> profile(@NotNull Profile.Resolved profile) {
     this.profile = Objects.requireNonNull(profile, "profile");
     return this;
   }
 
   @Override
-  public @NotNull CompletableFuture<Npc.Builder<W, P, I>> profile(
+  public @NotNull CompletableFuture<Npc.Builder<W, P, I, E>> profile(
     @Nullable ProfileResolver resolver,
     @NotNull Profile profile
   ) {
@@ -106,7 +106,7 @@ public class CommonNpcBuilder<W, P, I>
   }
 
   @Override
-  public @NotNull Npc.Builder<W, P, I> npcSettings(@NotNull Consumer<NpcSettings.Builder<P>> decorator) {
+  public @NotNull Npc.Builder<W, P, I, E> npcSettings(@NotNull Consumer<NpcSettings.Builder<P>> decorator) {
     // build the npc settings
     NpcSettings.Builder<P> builder = new CommonNpcSettingsBuilder<>();
     decorator.accept(builder);
@@ -116,7 +116,7 @@ public class CommonNpcBuilder<W, P, I>
   }
 
   @Override
-  public @NotNull Npc<W, P, I> build() {
+  public @NotNull Npc<W, P, I, E> build() {
     // fill in empty npc settings if not given
     if (this.npcSettings == null) {
       this.npcSettings(builder -> {
@@ -134,8 +134,8 @@ public class CommonNpcBuilder<W, P, I>
   }
 
   @Override
-  public @NotNull Npc<W, P, I> buildAndTrack() {
-    Npc<W, P, I> npc = this.build();
+  public @NotNull Npc<W, P, I, E> buildAndTrack() {
+    Npc<W, P, I, E> npc = this.build();
     this.platform.npcTracker().trackNpc(npc);
 
     return npc;
