@@ -79,6 +79,7 @@ import io.github.retrooper.packetevents.util.SpigotReflectionUtil;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
@@ -114,11 +115,11 @@ final class PacketEventsPacketAdapter implements PlatformPacketAdapter<World, Pl
   static {
     // associate item slots actions with their respective packet events enum
     ITEM_SLOT_CONVERTER = new EnumMap<>(ItemSlot.class);
-    ITEM_SLOT_CONVERTER.put(ItemSlot.MAIN_HAND, EquipmentSlot.MAINHAND);
-    ITEM_SLOT_CONVERTER.put(ItemSlot.OFF_HAND, EquipmentSlot.OFFHAND);
+    ITEM_SLOT_CONVERTER.put(ItemSlot.MAIN_HAND, EquipmentSlot.MAIN_HAND);
+    ITEM_SLOT_CONVERTER.put(ItemSlot.OFF_HAND, EquipmentSlot.OFF_HAND);
     ITEM_SLOT_CONVERTER.put(ItemSlot.FEET, EquipmentSlot.BOOTS);
     ITEM_SLOT_CONVERTER.put(ItemSlot.LEGS, EquipmentSlot.LEGGINGS);
-    ITEM_SLOT_CONVERTER.put(ItemSlot.CHEST, EquipmentSlot.CHESTPLATE);
+    ITEM_SLOT_CONVERTER.put(ItemSlot.CHEST, EquipmentSlot.CHEST_PLATE);
     ITEM_SLOT_CONVERTER.put(ItemSlot.HEAD, EquipmentSlot.HELMET);
 
     // associate hand actions with their respective packet events enum
@@ -138,19 +139,19 @@ final class PacketEventsPacketAdapter implements PlatformPacketAdapter<World, Pl
       WrapperPlayServerEntityAnimation.EntityAnimationType.SWING_MAIN_ARM);
     ENTITY_ANIMATION_CONVERTER.put(
       EntityAnimation.TAKE_DAMAGE,
-      WrapperPlayServerEntityAnimation.EntityAnimationType.TAKE_DAMAGE);
+      WrapperPlayServerEntityAnimation.EntityAnimationType.HURT);
     ENTITY_ANIMATION_CONVERTER.put(
       EntityAnimation.LEAVE_BED,
-      WrapperPlayServerEntityAnimation.EntityAnimationType.LEAVE_BED);
+      WrapperPlayServerEntityAnimation.EntityAnimationType.WAKE_UP);
     ENTITY_ANIMATION_CONVERTER.put(
       EntityAnimation.SWING_OFF_HAND,
-      WrapperPlayServerEntityAnimation.EntityAnimationType.SWING_OFFHAND);
+      WrapperPlayServerEntityAnimation.EntityAnimationType.SWING_OFF_HAND);
     ENTITY_ANIMATION_CONVERTER.put(
       EntityAnimation.CRITICAL_EFFECT,
-      WrapperPlayServerEntityAnimation.EntityAnimationType.CRITICAL_EFFECT);
+      WrapperPlayServerEntityAnimation.EntityAnimationType.CRITICAL_HIT);
     ENTITY_ANIMATION_CONVERTER.put(
       EntityAnimation.MAGIC_CRITICAL_EFFECT,
-      WrapperPlayServerEntityAnimation.EntityAnimationType.MAGIC_CRITICAL_EFFECT);
+      WrapperPlayServerEntityAnimation.EntityAnimationType.MAGIC_CRITICAL_HIT);
 
     // associate entity poses with their respective packet events enum
     ENTITY_POSE_CONVERTER = new EnumMap<>(EntityPose.class);
@@ -323,7 +324,9 @@ final class PacketEventsPacketAdapter implements PlatformPacketAdapter<World, Pl
 
       // EntityEquipment (https://wiki.vg/Protocol#Entity_Equipment)
       Equipment equipment = new Equipment(equipmentSlot, is);
-      PacketWrapper<?> wrapper = new WrapperPlayServerEntityEquipment(npc.entityId(), equipment);
+      PacketWrapper<?> wrapper = new WrapperPlayServerEntityEquipment(
+        npc.entityId(),
+        Collections.singletonList(equipment));
 
       // send the packet without notifying any listeners
       this.packetPlayerManager.sendPacketSilently(player, wrapper);
