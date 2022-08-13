@@ -27,7 +27,6 @@ package com.github.juliarn.npclib.bukkit.protocol;
 import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.ProtocolManager;
-import com.comphenix.protocol.events.ListenerPriority;
 import com.comphenix.protocol.events.PacketAdapter;
 import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.events.PacketEvent;
@@ -448,7 +447,7 @@ final class ProtocolLibPacketAdapter implements PlatformPacketAdapter<World, Pla
     private final Platform<World, Player, ItemStack, Plugin> platform;
 
     public NpcUsePacketAdapter(@NotNull Platform<World, Player, ItemStack, Plugin> platform) {
-      super(platform.extension(), ListenerPriority.HIGHEST, PacketType.Play.Client.USE_ENTITY);
+      super(PacketAdapter.params(platform.extension(), PacketType.Play.Client.USE_ENTITY).optionAsync());
       this.platform = platform;
     }
 
