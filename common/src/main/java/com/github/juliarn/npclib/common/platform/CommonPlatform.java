@@ -32,6 +32,7 @@ import com.github.juliarn.npclib.api.PlatformTaskManager;
 import com.github.juliarn.npclib.api.PlatformVersionAccessor;
 import com.github.juliarn.npclib.api.PlatformWorldAccessor;
 import com.github.juliarn.npclib.api.event.NpcEvent;
+import com.github.juliarn.npclib.api.log.PlatformLogger;
 import com.github.juliarn.npclib.api.profile.ProfileResolver;
 import com.github.juliarn.npclib.api.protocol.PlatformPacketAdapter;
 import com.github.juliarn.npclib.common.npc.CommonNpcBuilder;
@@ -44,6 +45,7 @@ public class CommonPlatform<W, P, I, E> implements Platform<W, P, I, E> {
 
   protected final E extension;
   protected final boolean debug;
+  protected final PlatformLogger logger;
   protected final EventBus<NpcEvent> eventBus;
   protected final NpcTracker<W, P, I, E> npcTracker;
   protected final ProfileResolver profileResolver;
@@ -56,6 +58,7 @@ public class CommonPlatform<W, P, I, E> implements Platform<W, P, I, E> {
   public CommonPlatform(
     boolean debug,
     @NotNull E extension,
+    @NotNull PlatformLogger logger,
     @NotNull NpcTracker<W, P, I, E> npcTracker,
     @NotNull ProfileResolver profileResolver,
     @NotNull PlatformTaskManager taskManager,
@@ -66,6 +69,7 @@ public class CommonPlatform<W, P, I, E> implements Platform<W, P, I, E> {
     @NotNull PlatformPacketAdapter<W, P, I, E> packetAdapter
   ) {
     this.debug = debug;
+    this.logger = logger;
     this.extension = extension;
     this.npcTracker = npcTracker;
     this.profileResolver = profileResolver;
@@ -88,6 +92,11 @@ public class CommonPlatform<W, P, I, E> implements Platform<W, P, I, E> {
   @Override
   public @NotNull E extension() {
     return this.extension;
+  }
+
+  @Override
+  public @NotNull PlatformLogger logger() {
+    return this.logger;
   }
 
   @Override

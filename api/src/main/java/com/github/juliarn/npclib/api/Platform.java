@@ -25,6 +25,7 @@
 package com.github.juliarn.npclib.api;
 
 import com.github.juliarn.npclib.api.event.NpcEvent;
+import com.github.juliarn.npclib.api.log.PlatformLogger;
 import com.github.juliarn.npclib.api.profile.ProfileResolver;
 import com.github.juliarn.npclib.api.protocol.PlatformPacketAdapter;
 import java.util.Optional;
@@ -37,6 +38,8 @@ public interface Platform<W, P, I, E> {
   boolean debug();
 
   @NotNull E extension();
+
+  @NotNull PlatformLogger logger();
 
   @NotNull EventBus<NpcEvent> eventBus();
 
@@ -61,6 +64,8 @@ public interface Platform<W, P, I, E> {
     @NotNull Builder<W, P, I, E> debug(boolean debug);
 
     @NotNull Builder<W, P, I, E> extension(@NotNull E extension);
+
+    @NotNull Builder<W, P, I, E> logger(@NotNull PlatformLogger logger);
 
     @NotNull Builder<W, P, I, E> eventBus(@NotNull EventBus<NpcEvent> eventBus);
 

@@ -31,6 +31,7 @@ import com.github.juliarn.npclib.api.PlatformTaskManager;
 import com.github.juliarn.npclib.api.PlatformVersionAccessor;
 import com.github.juliarn.npclib.api.PlatformWorldAccessor;
 import com.github.juliarn.npclib.api.event.NpcEvent;
+import com.github.juliarn.npclib.api.log.PlatformLogger;
 import com.github.juliarn.npclib.api.profile.ProfileResolver;
 import com.github.juliarn.npclib.api.protocol.PlatformPacketAdapter;
 import com.github.juliarn.npclib.common.CommonNpcTracker;
@@ -45,6 +46,7 @@ public abstract class CommonPlatformBuilder<W, P, I, E> implements Platform.Buil
   protected static final ProfileResolver DEFAULT_PROFILE_RESOLVER = ProfileResolver.caching(ProfileResolver.mojang());
 
   protected E extension;
+  protected PlatformLogger logger;
   protected boolean debug = DEFAULT_DEBUG;
   protected EventBus<NpcEvent> eventBus;
   protected NpcTracker<W, P, I, E> npcTracker;
@@ -64,6 +66,12 @@ public abstract class CommonPlatformBuilder<W, P, I, E> implements Platform.Buil
   @Override
   public @NotNull Platform.Builder<W, P, I, E> extension(@NotNull E extension) {
     this.extension = Objects.requireNonNull(extension, "extension");
+    return this;
+  }
+
+  @Override
+  public @NotNull CommonPlatformBuilder<W, P, I, E> logger(@NotNull PlatformLogger logger) {
+    this.logger = logger;
     return this;
   }
 

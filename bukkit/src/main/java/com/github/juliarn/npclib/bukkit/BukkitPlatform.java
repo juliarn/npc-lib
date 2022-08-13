@@ -26,6 +26,7 @@ package com.github.juliarn.npclib.bukkit;
 
 import com.github.juliarn.npclib.api.NpcActionController;
 import com.github.juliarn.npclib.api.Platform;
+import com.github.juliarn.npclib.api.log.PlatformLogger;
 import com.github.juliarn.npclib.bukkit.protocol.BukkitProtocolAdapter;
 import com.github.juliarn.npclib.common.platform.CommonPlatform;
 import com.github.juliarn.npclib.common.platform.CommonPlatformBuilder;
@@ -70,6 +71,11 @@ public final class BukkitPlatform extends CommonPlatformBuilder<World, Player, I
     if (this.packetAdapter == null) {
       this.packetAdapter = BukkitProtocolAdapter.packetAdapter();
     }
+
+    // set the default logger if no logger was provided
+    if (this.logger == null) {
+      this.logger = PlatformLogger.fromJul(this.extension.getLogger());
+    }
   }
 
   @Override
@@ -89,6 +95,7 @@ public final class BukkitPlatform extends CommonPlatformBuilder<World, Player, I
     return new CommonPlatform<>(
       this.debug,
       this.extension,
+      this.logger,
       this.npcTracker,
       this.profileResolver,
       this.taskManager,

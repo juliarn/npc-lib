@@ -22,42 +22,28 @@
  * THE SOFTWARE.
  */
 
-package com.github.juliarn.npclib.common.util;
+package com.github.juliarn.npclib.api.log;
 
-import com.github.juliarn.npclib.api.Platform;
-import com.github.juliarn.npclib.api.event.NpcEvent;
-import java.util.Map;
-import net.kyori.event.EventSubscriber;
-import net.kyori.event.PostResult;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public final class EventDispatcher {
+final class NopPlatformLogger implements PlatformLogger {
 
-  private EventDispatcher() {
-    throw new UnsupportedOperationException();
+  public static final NopPlatformLogger INSTANCE = new NopPlatformLogger();
+
+  @Override
+  public void info(@NotNull String message) {
   }
 
-  public static @NotNull <W, P, I, E, N extends NpcEvent> N dispatch(
-    @NotNull Platform<W, P, I, E> platform,
-    @NotNull N event
-  ) {
-    // post the event
-    PostResult result = platform.eventBus().post(event);
+  @Override
+  public void warning(@NotNull String message) {
+  }
 
-    // check if we need to print out if something failed during execution
-    Map<EventSubscriber<?>, Throwable> exceptions = result.exceptions();
-    if (platform.debug() && !exceptions.isEmpty()) {
-      // print all exceptions
-      for (Map.Entry<EventSubscriber<?>, Throwable> entry : exceptions.entrySet()) {
-        platform.logger().error(String.format(
-            "Subscriber %s was unable to handle %s:",
-            entry.getKey().getClass().getName(),
-            event.getClass().getSimpleName()),
-          entry.getValue());
-      }
-    }
+  @Override
+  public void error(@NotNull String message) {
+  }
 
-    // the same event instance, for chaining
-    return event;
+  @Override
+  public void error(@NotNull String message, @Nullable Throwable exception) {
   }
 }
