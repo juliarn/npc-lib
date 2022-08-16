@@ -41,6 +41,7 @@ import org.jetbrains.annotations.UnmodifiableView;
 
 public interface Npc<W, P, I, E> extends NpcFlaggedObject {
 
+  NpcFlag<String> DISPLAY_NAME = NpcFlag.flag("display_name", "");
   NpcFlag<Boolean> LOOK_AT_PLAYER = NpcFlag.flag("imitate_player_look", false);
   NpcFlag<Boolean> HIT_WHEN_PLAYER_HITS = NpcFlag.flag("imitate_player_hit", false);
   NpcFlag<Boolean> SNEAK_WHEN_PLAYER_SNEAKS = NpcFlag.flag("imitate_player_sneak", false);

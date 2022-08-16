@@ -26,8 +26,11 @@ package com.github.juliarn.npclib.api.flag;
 
 import java.util.Optional;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public interface NpcFlaggedObject {
+
+  <T> void flagValue(@NotNull NpcFlag<T> flag, @Nullable T newValue);
 
   @NotNull <T> Optional<T> flagValue(@NotNull NpcFlag<T> flag);
 

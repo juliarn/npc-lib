@@ -30,6 +30,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class CommonNpcFlaggedObject implements NpcFlaggedObject {
 
@@ -37,6 +38,11 @@ public abstract class CommonNpcFlaggedObject implements NpcFlaggedObject {
 
   public CommonNpcFlaggedObject(@NotNull Map<NpcFlag<?>, Optional<?>> flags) {
     this.flags = new HashMap<>(flags);
+  }
+
+  @Override
+  public <T> void flagValue(@NotNull NpcFlag<T> flag, @Nullable T newValue) {
+    this.flags.put(flag, Optional.ofNullable(newValue));
   }
 
   @Override

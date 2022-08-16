@@ -123,6 +123,9 @@ final class ProtocolLibPacketAdapter implements PlatformPacketAdapter<World, Pla
     PLAYER_INFO_ACTION_CONVERTER = new EnumMap<>(PlayerInfoAction.class);
     PLAYER_INFO_ACTION_CONVERTER.put(PlayerInfoAction.ADD_PLAYER, EnumWrappers.PlayerInfoAction.ADD_PLAYER);
     PLAYER_INFO_ACTION_CONVERTER.put(PlayerInfoAction.REMOVE_PLAYER, EnumWrappers.PlayerInfoAction.REMOVE_PLAYER);
+    PLAYER_INFO_ACTION_CONVERTER.put(
+      PlayerInfoAction.UPDATE_DISPLAY_NAME,
+      EnumWrappers.PlayerInfoAction.UPDATE_DISPLAY_NAME);
 
     // meta serializers
     //noinspection SuspiciousMethodCalls
@@ -248,12 +251,25 @@ final class ProtocolLibPacketAdapter implements PlatformPacketAdapter<World, Pla
           profile.getProperties().put(prop.name(), wrapped);
         }
 
+        // convert the display name (if given)
+        WrappedChatComponent displayName = npc.flagValue(Npc.DISPLAY_NAME)
+          .map(displayNameText -> {
+            // check if the text is given in a json format
+            displayNameText = displayNameText.trim();
+            if (displayNameText.startsWith("{") && displayNameText.endsWith("}")) {
+              return WrappedChatComponent.fromJson(displayNameText);
+            } else {
+              return WrappedChatComponent.fromLegacyText(displayNameText);
+            }
+          })
+          .orElse(EMPTY_COMPONENT);
+
         // add the player info data
         PlayerInfoData playerInfoData = new PlayerInfoData(
           profile,
           20,
           EnumWrappers.NativeGameMode.CREATIVE,
-          EMPTY_COMPONENT);
+          displayName);
         container.getPlayerInfoDataLists().write(0, Lists.newArrayList(playerInfoData));
 
         // send the packet without notifying any bound packet listeners

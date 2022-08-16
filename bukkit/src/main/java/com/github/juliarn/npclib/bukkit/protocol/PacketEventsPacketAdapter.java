@@ -85,6 +85,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -131,6 +133,9 @@ final class PacketEventsPacketAdapter implements PlatformPacketAdapter<World, Pl
     PLAYER_INFO_ACTION_CONVERTER = new EnumMap<>(PlayerInfoAction.class);
     PLAYER_INFO_ACTION_CONVERTER.put(PlayerInfoAction.ADD_PLAYER, WrapperPlayServerPlayerInfo.Action.ADD_PLAYER);
     PLAYER_INFO_ACTION_CONVERTER.put(PlayerInfoAction.REMOVE_PLAYER, WrapperPlayServerPlayerInfo.Action.REMOVE_PLAYER);
+    PLAYER_INFO_ACTION_CONVERTER.put(
+      PlayerInfoAction.UPDATE_DISPLAY_NAME,
+      WrapperPlayServerPlayerInfo.Action.UPDATE_DISPLAY_NAME);
 
     // associate entity animations with their respective packet events enum
     ENTITY_ANIMATION_CONVERTER = new EnumMap<>(EntityAnimation.class);
@@ -259,9 +264,22 @@ final class PacketEventsPacketAdapter implements PlatformPacketAdapter<World, Pl
         userProfile.getTextureProperties().add(textureProperty);
       }
 
+      // convert the display name (if given)
+      Component displayName = npc.flagValue(Npc.DISPLAY_NAME)
+        .map(displayNameText -> {
+          // check if the text is given in a json format
+          displayNameText = displayNameText.trim();
+          if (displayNameText.startsWith("{") && displayNameText.endsWith("}")) {
+            return GsonComponentSerializer.gson().deserialize(displayNameText);
+          } else {
+            return LegacyComponentSerializer.legacySection().deserialize(displayNameText);
+          }
+        })
+        .orElse(Component.empty());
+
       // create the player profile data
       WrapperPlayServerPlayerInfo.PlayerData playerData = new WrapperPlayServerPlayerInfo.PlayerData(
-        Component.empty(),
+        displayName,
         userProfile,
         GameMode.CREATIVE,
         20);
