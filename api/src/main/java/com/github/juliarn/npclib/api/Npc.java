@@ -71,6 +71,8 @@ public interface Npc<W, P, I, E> extends NpcFlaggedObject {
 
   @NotNull Npc<W, P, I, E> removeIncludedPlayer(@NotNull P player);
 
+  @NotNull Npc<W, P, I, E> unlink();
+
   @UnmodifiableView
   @NotNull Collection<P> trackedPlayers();
 

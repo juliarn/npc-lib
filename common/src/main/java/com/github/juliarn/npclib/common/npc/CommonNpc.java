@@ -142,6 +142,22 @@ public class CommonNpc<W, P, I, E> extends CommonNpcFlaggedObject implements Npc
   }
 
   @Override
+  @SuppressWarnings("unchecked")
+  public @NotNull Npc<W, P, I, E> unlink() {
+    // remove this npc from the tracked ones, do it first to prevent further player tracking
+    this.npcTracker().stopTrackingNpc(this);
+
+    // remove this npc for all tracked players
+    Object[] players = this.trackedPlayers.toArray();
+    for (Object player : players) {
+      this.stopTrackingPlayer((P) player);
+    }
+
+    // for chaining
+    return this;
+  }
+
+  @Override
   public @UnmodifiableView @NotNull Collection<P> trackedPlayers() {
     return Collections.unmodifiableSet(this.trackedPlayers);
   }
