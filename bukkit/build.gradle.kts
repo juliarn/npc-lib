@@ -38,7 +38,6 @@ dependencies {
 tasks.withType<ShadowJar>().configureEach {
   minimize()
 
-  relocate("net.kyori", "com.github.juliarn.npclib.relocate.kyori")
   relocate("com.google.gson", "com.github.juliarn.npclib.relocate.gson")
   relocate("io.papermc.lib", "com.github.juliarn.npclib.relocate.paperlib")
   relocate("io.github.retrooper", "com.github.juliarn.npclib.relocate.io.packetevents")
