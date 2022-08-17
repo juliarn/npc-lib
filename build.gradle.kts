@@ -107,4 +107,12 @@ subprojects {
     options.addStringOption("-html5")
     options.addBooleanOption("Xdoclint:-missing", true)
   }
+
+  extensions.configure<PublishingExtension> {
+    publications.apply {
+      create("maven", MavenPublication::class.java).apply {
+        from(components.getByName("java"))
+      }
+    }
+  }
 }
