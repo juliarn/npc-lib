@@ -1,3 +1,5 @@
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+
 /*
  * This file is part of npc-lib, licensed under the MIT License (MIT).
  *
@@ -61,6 +63,10 @@ subprojects {
   tasks.withType<Jar> {
     from(rootProject.file("license.txt"))
     duplicatesStrategy = DuplicatesStrategy.INCLUDE
+  }
+
+  tasks.withType<ShadowJar> {
+    archiveClassifier.set(null as String?)
   }
 
   tasks.withType<JavaCompile>().configureEach {

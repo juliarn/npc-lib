@@ -22,10 +22,13 @@
  * THE SOFTWARE.
  */
 
-enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
-rootProject.name = "npc-lib2"
-include(":api", ":common", ":bukkit", ":ext")
+dependencies {
+  compileOnly(libs.gson)
+}
 
-// external modules
-include(":ext:labymod")
+tasks.withType<ShadowJar> {
+  minimize()
+  relocate("com.google.gson", "com.github.juliarn.npclib.relocate.gson")
+}

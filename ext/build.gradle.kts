@@ -22,10 +22,8 @@
  * THE SOFTWARE.
  */
 
-enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
-
-rootProject.name = "npc-lib2"
-include(":api", ":common", ":bukkit", ":ext")
-
-// external modules
-include(":ext:labymod")
+subprojects {
+  dependencies {
+    compileOnly(rootProject.projects.api)
+  }
+}
