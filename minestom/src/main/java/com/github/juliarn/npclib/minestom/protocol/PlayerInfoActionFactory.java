@@ -1,5 +1,3 @@
-import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
-
 /*
  * This file is part of npc-lib, licensed under the MIT License (MIT).
  *
@@ -24,10 +22,21 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
  * THE SOFTWARE.
  */
 
-dependencies {
-  api(projects.api)
-}
+package com.github.juliarn.npclib.minestom.protocol;
 
-tasks.withType<ShadowJar> {
-  dependsOn(":api:shadowJar")
+import com.github.juliarn.npclib.api.Npc;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import net.minestom.server.entity.Player;
+import net.minestom.server.extensions.Extension;
+import net.minestom.server.instance.Instance;
+import net.minestom.server.item.ItemStack;
+import net.minestom.server.network.packet.server.play.PlayerInfoPacket;
+import org.jetbrains.annotations.NotNull;
+
+interface PlayerInfoActionFactory {
+
+  @NotNull CompletableFuture<Map.Entry<PlayerInfoPacket.Action, PlayerInfoPacket.Entry>> buildAction(
+    @NotNull Npc<Instance, Player, ItemStack, Extension> npc,
+    @NotNull Player player);
 }

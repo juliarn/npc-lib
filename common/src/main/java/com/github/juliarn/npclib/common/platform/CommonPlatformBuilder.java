@@ -45,6 +45,9 @@ public abstract class CommonPlatformBuilder<W, P, I, E> implements Platform.Buil
   protected static final boolean DEFAULT_DEBUG = Boolean.getBoolean("npc.lib.debug");
   protected static final ProfileResolver DEFAULT_PROFILE_RESOLVER = ProfileResolver.caching(ProfileResolver.mojang());
 
+  // marker - some platforms have no need for the extension to be present
+  protected boolean extensionRequired = true;
+
   protected E extension;
   protected PlatformLogger logger;
   protected boolean debug = DEFAULT_DEBUG;
@@ -128,7 +131,9 @@ public abstract class CommonPlatformBuilder<W, P, I, E> implements Platform.Buil
   @Override
   public @NotNull Platform<W, P, I, E> build() {
     // validate that the required values are present
-    Objects.requireNonNull(this.extension, "extension");
+    if (this.extensionRequired) {
+      Objects.requireNonNull(this.extension, "extension");
+    }
 
     // let the downstream builder set all default values if required
     this.prepareBuild();

@@ -275,7 +275,7 @@ final class PacketEventsPacketAdapter implements PlatformPacketAdapter<World, Pl
             return LegacyComponentSerializer.legacySection().deserialize(displayNameText);
           }
         })
-        .orElse(Component.empty());
+        .orElse(null);
 
       // create the player profile data
       WrapperPlayServerPlayerInfo.PlayerData playerData = new WrapperPlayServerPlayerInfo.PlayerData(

@@ -22,43 +22,68 @@
  * THE SOFTWARE.
  */
 
-package com.github.juliarn.npclib.bukkit;
+package com.github.juliarn.npclib.minestom;
 
 import com.github.juliarn.npclib.api.PlatformVersionAccessor;
-import io.papermc.lib.PaperLib;
+import net.minestom.server.MinecraftServer;
+import org.jetbrains.annotations.NotNull;
 
-public final class BukkitVersionAccessor {
+public final class MinestomVersionAccessor {
 
-  private BukkitVersionAccessor() {
+  private MinestomVersionAccessor() {
     throw new UnsupportedOperationException();
   }
 
-  public static PlatformVersionAccessor versionAccessor() {
-    return PaperLibPlatformVersionAccessor.INSTANCE;
+  private static int[] extractServerVersionParts() {
+    String[] parts = MinecraftServer.VERSION_NAME.split("\\.");
+    if (parts.length == 2 || parts.length == 3) {
+      // should be in the correct format, just to make sure
+      try {
+        int major = Integer.parseInt(parts[0]);
+        int minor = Integer.parseInt(parts[1]);
+        int patch = parts.length == 3 ? Integer.parseInt(parts[2]) : 0;
+
+        // return the version array from that
+        return new int[]{major, minor, patch};
+      } catch (NumberFormatException ignored) {
+      }
+    }
+
+    // unable to pars
+    return new int[0];
   }
 
-  private static final class PaperLibPlatformVersionAccessor implements PlatformVersionAccessor {
+  public static @NotNull PlatformVersionAccessor versionNameBased() {
+    return MinestomVersionNameAccessor.INSTANCE;
+  }
 
-    private static final PaperLibPlatformVersionAccessor INSTANCE = new PaperLibPlatformVersionAccessor();
+  private static final class MinestomVersionNameAccessor implements PlatformVersionAccessor {
+
+    private static final int[] VERSION_NUMBER_PARTS = extractServerVersionParts();
+    private static final MinestomVersionNameAccessor INSTANCE = new MinestomVersionNameAccessor();
+
+    private static int safeGetPart(int index, int def) {
+      return VERSION_NUMBER_PARTS.length > index ? VERSION_NUMBER_PARTS[index] : def;
+    }
 
     @Override
     public int major() {
-      return 1;
+      return safeGetPart(0, 1);
     }
 
     @Override
     public int minor() {
-      return PaperLib.getMinecraftVersion();
+      return safeGetPart(1, 0);
     }
 
     @Override
     public int patch() {
-      return PaperLib.getMinecraftPatchVersion();
+      return safeGetPart(2, 0);
     }
 
     @Override
     public boolean atLeast(int major, int minor, int patch) {
-      return PaperLib.isVersion(minor, patch);
+      return this.major() >= major && this.minor() >= major && this.patch() >= patch;
     }
   }
 }

@@ -22,43 +22,46 @@
  * THE SOFTWARE.
  */
 
-package com.github.juliarn.npclib.bukkit;
+package com.github.juliarn.npclib.minestom;
 
 import com.github.juliarn.npclib.api.PlatformTaskManager;
-import java.util.Objects;
-import org.bukkit.plugin.Plugin;
+import net.minestom.server.MinecraftServer;
+import net.minestom.server.timer.ExecutionType;
+import net.minestom.server.timer.TaskSchedule;
 import org.jetbrains.annotations.NotNull;
 
-public final class BukkitPlatformTaskManager implements PlatformTaskManager {
+public final class MinestomPlatformTaskManager implements PlatformTaskManager {
 
-  private final Plugin plugin;
+  private static final MinestomPlatformTaskManager INSTANCE = new MinestomPlatformTaskManager();
 
-  private BukkitPlatformTaskManager(@NotNull Plugin plugin) {
-    this.plugin = plugin;
+  private MinestomPlatformTaskManager() {
   }
 
-  public static @NotNull PlatformTaskManager taskManager(@NotNull Plugin plugin) {
-    Objects.requireNonNull(plugin, "plugin");
-    return new BukkitPlatformTaskManager(plugin);
+  public static @NotNull PlatformTaskManager taskManager() {
+    return INSTANCE;
   }
 
   @Override
   public void scheduleSync(@NotNull Runnable task) {
-    this.plugin.getServer().getScheduler().runTask(this.plugin, task);
+    MinecraftServer.getSchedulerManager().scheduleNextTick(task);
   }
 
   @Override
   public void scheduleDelayedSync(@NotNull Runnable task, int delayTicks) {
-    this.plugin.getServer().getScheduler().runTaskLater(this.plugin, task, delayTicks);
+    MinecraftServer.getSchedulerManager().scheduleTask(task, TaskSchedule.tick(delayTicks), TaskSchedule.stop());
   }
 
   @Override
   public void scheduleAsync(@NotNull Runnable task) {
-    this.plugin.getServer().getScheduler().runTaskAsynchronously(this.plugin, task);
+    MinecraftServer.getSchedulerManager().scheduleNextTick(task, ExecutionType.ASYNC);
   }
 
   @Override
   public void scheduleDelayedAsync(@NotNull Runnable task, int delayTicks) {
-    this.plugin.getServer().getScheduler().runTaskLaterAsynchronously(this.plugin, task, delayTicks);
+    MinecraftServer.getSchedulerManager().scheduleTask(
+      task,
+      TaskSchedule.tick(delayTicks),
+      TaskSchedule.stop(),
+      ExecutionType.ASYNC);
   }
 }

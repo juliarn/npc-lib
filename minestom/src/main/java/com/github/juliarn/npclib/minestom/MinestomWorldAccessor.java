@@ -1,5 +1,3 @@
-import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
-
 /*
  * This file is part of npc-lib, licensed under the MIT License (MIT).
  *
@@ -24,10 +22,33 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
  * THE SOFTWARE.
  */
 
-dependencies {
-  api(projects.api)
-}
+package com.github.juliarn.npclib.minestom;
 
-tasks.withType<ShadowJar> {
-  dependsOn(":api:shadowJar")
+import com.github.juliarn.npclib.api.PlatformWorldAccessor;
+import java.util.UUID;
+import net.minestom.server.MinecraftServer;
+import net.minestom.server.instance.Instance;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+public final class MinestomWorldAccessor {
+
+  public static @NotNull PlatformWorldAccessor<Instance> uuidBased() {
+    return UuidBasedInstanceAccessor.INSTANCE;
+  }
+
+  private static final class UuidBasedInstanceAccessor implements PlatformWorldAccessor<Instance> {
+
+    private static final UuidBasedInstanceAccessor INSTANCE = new UuidBasedInstanceAccessor();
+
+    @Override
+    public @NotNull String extractWorldIdentifier(@NotNull Instance world) {
+      return world.getUniqueId().toString();
+    }
+
+    @Override
+    public @Nullable Instance resolveWorldFromIdentifier(@NotNull String identifier) {
+      return MinecraftServer.getInstanceManager().getInstance(UUID.fromString(identifier));
+    }
+  }
 }

@@ -83,8 +83,6 @@ final class ProtocolLibPacketAdapter implements PlatformPacketAdapter<World, Pla
   private static final ProtocolManager PROTOCOL_MANAGER = ProtocolLibrary.getProtocolManager();
   private static final MinecraftVersion SERVER_VERSION = MinecraftVersion.fromServerVersion(Bukkit.getVersion());
 
-  private static final WrappedChatComponent EMPTY_COMPONENT = WrappedChatComponent.fromText("");
-
   private static final EnumMap<ItemSlot, EnumWrappers.ItemSlot> ITEM_SLOT_CONVERTER;
   private static final EnumMap<EnumWrappers.Hand, InteractNpcEvent.Hand> HAND_CONVERTER;
   private static final EnumMap<EntityPose, EnumWrappers.EntityPose> ENTITY_POSE_CONVERTER;
@@ -262,7 +260,7 @@ final class ProtocolLibPacketAdapter implements PlatformPacketAdapter<World, Pla
               return WrappedChatComponent.fromLegacyText(displayNameText);
             }
           })
-          .orElse(EMPTY_COMPONENT);
+          .orElse(null);
 
         // add the player info data
         PlayerInfoData playerInfoData = new PlayerInfoData(
@@ -433,7 +431,7 @@ final class ProtocolLibPacketAdapter implements PlatformPacketAdapter<World, Pla
         entityMetadata.type(),
         entityMetadata.value()));
 
-      // add ll dependant metas
+      // add all dependant metas
       for (EntityMetadataFactory<T, Object> relatedMetadata : metadata.relatedMetadata()) {
         EntityMetadata<Object> related = relatedMetadata.create(value, versionAccessor);
         if (related.available()) {

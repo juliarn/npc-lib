@@ -1,5 +1,3 @@
-import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
-
 /*
  * This file is part of npc-lib, licensed under the MIT License (MIT).
  *
@@ -24,10 +22,21 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
  * THE SOFTWARE.
  */
 
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+
 dependencies {
   api(projects.api)
+  compileOnly(libs.minestom)
+  implementation(projects.common)
+}
+
+tasks.withType<JavaCompile> {
+  options.release.set(17)
 }
 
 tasks.withType<ShadowJar> {
-  dependsOn(":api:shadowJar")
+  dependsOn(":common:shadowJar")
+
+  minimize()
+  relocate("com.google.gson", "com.github.juliarn.npclib.relocate.gson")
 }

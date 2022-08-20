@@ -35,9 +35,10 @@ dependencies {
   compileOnly(libs.protocolLib)
 }
 
-tasks.withType<ShadowJar>().configureEach {
-  minimize()
+tasks.withType<ShadowJar> {
+  dependsOn(":common:shadowJar")
 
+  minimize()
   relocate("com.google.gson", "com.github.juliarn.npclib.relocate.gson")
   relocate("io.papermc.lib", "com.github.juliarn.npclib.relocate.paperlib")
   relocate("io.github.retrooper", "com.github.juliarn.npclib.relocate.io.packetevents")

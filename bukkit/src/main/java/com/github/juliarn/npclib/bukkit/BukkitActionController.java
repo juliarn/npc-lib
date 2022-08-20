@@ -47,7 +47,8 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.event.player.PlayerInteractEntityEvent;
+import org.bukkit.event.block.Action;
+import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerToggleSneakEvent;
@@ -169,18 +170,20 @@ public final class BukkitActionController extends CommonNpcActionController impl
   }
 
   @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
-  public void handleLeftClick(@NotNull PlayerInteractEntityEvent event) {
-    Player player = event.getPlayer();
-    for (Npc<World, Player, ItemStack, Plugin> npc : this.npcTracker.trackedNpcs()) {
-      double distance = BukkitPlatformUtil.distance(npc, player.getLocation());
+  public void handleLeftClick(@NotNull PlayerInteractEvent event) {
+    if (event.getAction() == Action.LEFT_CLICK_AIR || event.getAction() == Action.LEFT_CLICK_BLOCK) {
+      Player player = event.getPlayer();
+      for (Npc<World, Player, ItemStack, Plugin> npc : this.npcTracker.trackedNpcs()) {
+        double distance = BukkitPlatformUtil.distance(npc, player.getLocation());
 
-      // check if we should imitate the action
-      if (Objects.equals(player.getWorld(), npc.world())
-        && npc.tracksPlayer(player)
-        && distance <= this.imitateDistance
-        && npc.flagValueOrDefault(Npc.HIT_WHEN_PLAYER_HITS)) {
-        // let the npc left click as well
-        npc.platform().packetFactory().createAnimationPacket(EntityAnimation.SWING_MAIN_ARM).schedule(player, npc);
+        // check if we should imitate the action
+        if (Objects.equals(player.getWorld(), npc.world())
+          && npc.tracksPlayer(player)
+          && distance <= this.imitateDistance
+          && npc.flagValueOrDefault(Npc.HIT_WHEN_PLAYER_HITS)) {
+          // let the npc left click as well
+          npc.platform().packetFactory().createAnimationPacket(EntityAnimation.SWING_MAIN_ARM).schedule(player, npc);
+        }
       }
     }
   }

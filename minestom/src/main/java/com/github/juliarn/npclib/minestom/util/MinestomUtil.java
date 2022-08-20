@@ -1,5 +1,3 @@
-import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
-
 /*
  * This file is part of npc-lib, licensed under the MIT License (MIT).
  *
@@ -24,10 +22,33 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
  * THE SOFTWARE.
  */
 
-dependencies {
-  api(projects.api)
-}
+package com.github.juliarn.npclib.minestom.util;
 
-tasks.withType<ShadowJar> {
-  dependsOn(":api:shadowJar")
+import static net.minestom.server.utils.MathUtils.square;
+
+import com.github.juliarn.npclib.api.Npc;
+import com.github.juliarn.npclib.api.Position;
+import net.minestom.server.coordinate.Pos;
+import net.minestom.server.instance.Instance;
+import org.jetbrains.annotations.NotNull;
+
+@SuppressWarnings("UnstableApiUsage")
+public final class MinestomUtil {
+
+  private MinestomUtil() {
+    throw new UnsupportedOperationException();
+  }
+
+  public static double distance(@NotNull Npc<?, ?, ?, ?> npc, @NotNull Pos pos) {
+    Position position = npc.position();
+    return square(pos.x() - position.x()) + square(pos.y() - position.y()) + square(pos.z() - position.z());
+  }
+
+  public static @NotNull Pos minestomFromPosition(@NotNull Position position) {
+    return new Pos(position.x(), position.y(), position.z(), position.yaw(), position.pitch());
+  }
+
+  public static @NotNull Position positionFromMinestom(@NotNull Pos pos, @NotNull Instance world) {
+    return Position.position(pos.x(), pos.y(), pos.z(), pos.yaw(), pos.pitch(), world.getUniqueId().toString());
+  }
 }
