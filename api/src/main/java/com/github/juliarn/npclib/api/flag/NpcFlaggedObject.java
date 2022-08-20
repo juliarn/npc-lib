@@ -27,6 +27,7 @@ package com.github.juliarn.npclib.api.flag;
 import java.util.Optional;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.UnknownNullability;
 
 public interface NpcFlaggedObject {
 
@@ -34,7 +35,7 @@ public interface NpcFlaggedObject {
 
   @NotNull <T> Optional<T> flagValue(@NotNull NpcFlag<T> flag);
 
-  default @NotNull <T> T flagValueOrDefault(@NotNull NpcFlag<T> flag) {
+  default @UnknownNullability <T> T flagValueOrDefault(@NotNull NpcFlag<T> flag) {
     return this.flagValue(flag).orElse(flag.defaultValue());
   }
 }

@@ -27,6 +27,7 @@ package com.github.juliarn.npclib.api.flag;
 import java.util.function.Predicate;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.UnknownNullability;
 
 final class DefaultNpcFlag<T> implements NpcFlag<T> {
 
@@ -34,7 +35,7 @@ final class DefaultNpcFlag<T> implements NpcFlag<T> {
   private final T defaultValue;
   private final Predicate<T> valueTester;
 
-  public DefaultNpcFlag(@NotNull String key, @NotNull T defaultValue, @NotNull Predicate<T> valueTester) {
+  public DefaultNpcFlag(@NotNull String key, @Nullable T defaultValue, @NotNull Predicate<T> valueTester) {
     this.key = key;
     this.defaultValue = defaultValue;
     this.valueTester = valueTester;
@@ -46,7 +47,7 @@ final class DefaultNpcFlag<T> implements NpcFlag<T> {
   }
 
   @Override
-  public @NotNull T defaultValue() {
+  public @UnknownNullability T defaultValue() {
     return this.defaultValue;
   }
 

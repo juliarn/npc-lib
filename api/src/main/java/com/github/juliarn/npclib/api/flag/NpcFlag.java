@@ -28,16 +28,20 @@ import java.util.Objects;
 import java.util.function.Predicate;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.UnknownNullability;
 
 public interface NpcFlag<T> {
 
-  static @NotNull <T> NpcFlag<T> flag(@NotNull String key, @NotNull T defaultValue) {
+  static @NotNull <T> NpcFlag<T> flag(@NotNull String key, @Nullable T defaultValue) {
     return flag(key, defaultValue, value -> true);
   }
 
-  static @NotNull <T> NpcFlag<T> flag(@NotNull String key, @NotNull T defaultValue, @NotNull Predicate<T> valueTester) {
+  static @NotNull <T> NpcFlag<T> flag(
+    @NotNull String key,
+    @Nullable T defaultValue,
+    @NotNull Predicate<T> valueTester
+  ) {
     Objects.requireNonNull(key, "key");
-    Objects.requireNonNull(defaultValue, "defaultValue");
     Objects.requireNonNull(valueTester, "valueTester");
 
     return new DefaultNpcFlag<>(key, defaultValue, valueTester);
@@ -45,7 +49,7 @@ public interface NpcFlag<T> {
 
   @NotNull String key();
 
-  @NotNull T defaultValue();
+  @UnknownNullability T defaultValue();
 
   boolean accepts(@Nullable T value);
 }
