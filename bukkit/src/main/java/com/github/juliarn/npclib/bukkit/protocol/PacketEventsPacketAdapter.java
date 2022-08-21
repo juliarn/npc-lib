@@ -32,6 +32,7 @@ import com.github.juliarn.npclib.api.event.InteractNpcEvent;
 import com.github.juliarn.npclib.api.profile.ProfileProperty;
 import com.github.juliarn.npclib.api.protocol.OutboundPacket;
 import com.github.juliarn.npclib.api.protocol.PlatformPacketAdapter;
+import com.github.juliarn.npclib.api.protocol.chat.Component;
 import com.github.juliarn.npclib.api.protocol.enums.EntityAnimation;
 import com.github.juliarn.npclib.api.protocol.enums.EntityPose;
 import com.github.juliarn.npclib.api.protocol.enums.ItemSlot;
@@ -74,6 +75,9 @@ import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPl
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPluginMessage;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSpawnPlayer;
 import com.google.common.collect.ImmutableMap;
+import com.google.gson.reflect.TypeToken;
+import io.github.retrooper.packetevents.adventure.serializer.gson.GsonComponentSerializer;
+import io.github.retrooper.packetevents.adventure.serializer.legacy.LegacyComponentSerializer;
 import io.github.retrooper.packetevents.factory.spigot.SpigotPacketEventsBuilder;
 import io.github.retrooper.packetevents.util.SpigotReflectionUtil;
 import java.lang.reflect.Type;
@@ -83,10 +87,9 @@ import java.util.Collections;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.UnaryOperator;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
-import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.function.BiFunction;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -104,6 +107,11 @@ final class PacketEventsPacketAdapter implements PlatformPacketAdapter<World, Pl
     .readOnlyListeners(true)
     .timeStampMode(TimeStampMode.NONE);
 
+  private static final Type OPTIONAL_CHAT_COMPONENT_TYPE = TypeToken.getParameterized(
+    Optional.class,
+    net.kyori.adventure.text.Component.class
+  ).getType();
+
   private static final EnumMap<ItemSlot, EquipmentSlot> ITEM_SLOT_CONVERTER;
   private static final EnumMap<InteractionHand, InteractNpcEvent.Hand> HAND_CONVERTER;
   private static final EnumMap<PlayerInfoAction, WrapperPlayServerPlayerInfo.Action> PLAYER_INFO_ACTION_CONVERTER;
@@ -112,7 +120,7 @@ final class PacketEventsPacketAdapter implements PlatformPacketAdapter<World, Pl
 
   // serializer converters for metadata
   private static final Map<Type, EntityDataType<?>> ENTITY_DATA_TYPE_LOOKUP;
-  private static final Map<Type, Map.Entry<Class<?>, UnaryOperator<Object>>> SERIALIZER_CONVERTERS;
+  private static final Map<Type, BiFunction<PlatformVersionAccessor, Object, Map.Entry<Type, Object>>> SERIALIZER_CONVERTERS;
 
   static {
     // associate item slots actions with their respective packet events enum
@@ -187,15 +195,45 @@ final class PacketEventsPacketAdapter implements PlatformPacketAdapter<World, Pl
 
     // meta serializers
     //noinspection SuspiciousMethodCalls
-    SERIALIZER_CONVERTERS = ImmutableMap.of(EntityPose.class, new AbstractMap.SimpleImmutableEntry<>(
-      com.github.retrooper.packetevents.protocol.entity.pose.EntityPose.class,
-      ENTITY_POSE_CONVERTER::get));
+    SERIALIZER_CONVERTERS = ImmutableMap.<Type, BiFunction<PlatformVersionAccessor, Object, Map.Entry<Type, Object>>>builder()
+      .put(EntityPose.class, ($, value) -> new AbstractMap.SimpleImmutableEntry<>(
+        com.github.retrooper.packetevents.protocol.entity.pose.EntityPose.class,
+        ENTITY_POSE_CONVERTER.get(value)))
+      .put(
+        TypeToken.getParameterized(Optional.class, Component.class).getType(),
+        (versionAccessor, value) -> {
+          //noinspection unchecked
+          Optional<Component> optionalComponent = (Optional<Component>) value;
+          // check if the display name is wrapped in a component
+          if (versionAccessor.atLeast(1, 13, 0)) {
+            // construct the entry
+            return new AbstractMap.SimpleImmutableEntry<>(
+              OPTIONAL_CHAT_COMPONENT_TYPE,
+              optionalComponent.map(component -> {
+                // build the component based on the given input
+                if (component.rawMessage() != null) {
+                  return LegacyComponentSerializer.legacySection().deserialize(component.rawMessage());
+                } else {
+                  return GsonComponentSerializer.gson().deserializeOrNull(component.encodedJsonMessage());
+                }
+              }));
+          } else {
+            return new AbstractMap.SimpleImmutableEntry<>(String.class, optionalComponent
+              .map(component -> Objects.requireNonNull(
+                component.rawMessage(),
+                "Versions older than 1.13 don't support json component"))
+              .orElse(null));
+          }
+        })
+      .build();
+
     ENTITY_DATA_TYPE_LOOKUP = ImmutableMap.<Type, EntityDataType<?>>builder()
       .put(byte.class, EntityDataTypes.BYTE)
       .put(int.class, EntityDataTypes.INT)
       .put(float.class, EntityDataTypes.FLOAT)
       .put(boolean.class, EntityDataTypes.BOOLEAN)
       .put(String.class, EntityDataTypes.STRING)
+      .put(OPTIONAL_CHAT_COMPONENT_TYPE, EntityDataTypes.OPTIONAL_COMPONENT)
       .put(com.github.retrooper.packetevents.protocol.entity.pose.EntityPose.class, EntityDataTypes.ENTITY_POSE)
       .build();
   }
@@ -209,18 +247,22 @@ final class PacketEventsPacketAdapter implements PlatformPacketAdapter<World, Pl
     return new Location(pos.x(), pos.y(), pos.z(), pos.yaw(), pos.pitch());
   }
 
-  private static @NotNull EntityData createEntityData(int index, @NotNull Type type, @NotNull Object value) {
-    Class<?> registryType;
+  private static @NotNull EntityData createEntityData(
+    int index,
+    @NotNull Type type,
+    @NotNull Object value,
+    @NotNull PlatformVersionAccessor versionAccessor
+  ) {
     // pre-convert the value if needed
-    Map.Entry<Class<?>, UnaryOperator<Object>> metaConverter = SERIALIZER_CONVERTERS.get(type);
-    if (metaConverter != null) {
-      registryType = metaConverter.getKey();
-      value = metaConverter.getValue().apply(value);
-    } else {
-      registryType = ProtocolUtil.extractRawType(type);
+    BiFunction<PlatformVersionAccessor, Object, Map.Entry<Type, Object>> converter = SERIALIZER_CONVERTERS.get(type);
+    if (converter != null) {
+      Map.Entry<Type, Object> converted = converter.apply(versionAccessor, value);
+      // re-assign the type and value
+      type = converted.getKey();
+      value = converted.getValue();
     }
 
-    return new EntityData(index, ENTITY_DATA_TYPE_LOOKUP.get(registryType), value);
+    return new EntityData(index, ENTITY_DATA_TYPE_LOOKUP.get(type), value);
   }
 
   @Override
@@ -256,22 +298,9 @@ final class PacketEventsPacketAdapter implements PlatformPacketAdapter<World, Pl
         userProfile.getTextureProperties().add(textureProperty);
       }
 
-      // convert the display name (if given)
-      Component displayName = npc.flagValue(Npc.DISPLAY_NAME)
-        .map(displayNameText -> {
-          // check if the text is given in a json format
-          displayNameText = displayNameText.trim();
-          if (displayNameText.startsWith("{") && displayNameText.endsWith("}")) {
-            return GsonComponentSerializer.gson().deserialize(displayNameText);
-          } else {
-            return LegacyComponentSerializer.legacySection().deserialize(displayNameText);
-          }
-        })
-        .orElse(null);
-
       // create the player profile data
       WrapperPlayServerPlayerInfo.PlayerData playerData = new WrapperPlayServerPlayerInfo.PlayerData(
-        displayName,
+        null,
         userProfile,
         GameMode.CREATIVE,
         20);
@@ -375,13 +404,14 @@ final class PacketEventsPacketAdapter implements PlatformPacketAdapter<World, Pl
       entityData.add(createEntityData(
         entityMetadata.index(),
         entityMetadata.type(),
-        entityMetadata.value()));
+        entityMetadata.value(),
+        versionAccessor));
 
       // add ll dependant metas
       for (EntityMetadataFactory<T, Object> relatedMetadata : metadata.relatedMetadata()) {
         EntityMetadata<Object> related = relatedMetadata.create(value, versionAccessor);
         if (related.available()) {
-          entityData.add(createEntityData(related.index(), related.type(), related.value()));
+          entityData.add(createEntityData(related.index(), related.type(), related.value(), versionAccessor));
         }
       }
 

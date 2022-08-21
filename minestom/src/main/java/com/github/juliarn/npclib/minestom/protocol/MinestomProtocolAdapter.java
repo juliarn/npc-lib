@@ -30,6 +30,7 @@ import com.github.juliarn.npclib.api.PlatformVersionAccessor;
 import com.github.juliarn.npclib.api.event.InteractNpcEvent;
 import com.github.juliarn.npclib.api.protocol.OutboundPacket;
 import com.github.juliarn.npclib.api.protocol.PlatformPacketAdapter;
+import com.github.juliarn.npclib.api.protocol.chat.Component;
 import com.github.juliarn.npclib.api.protocol.enums.EntityAnimation;
 import com.github.juliarn.npclib.api.protocol.enums.EntityPose;
 import com.github.juliarn.npclib.api.protocol.enums.ItemSlot;
@@ -40,12 +41,18 @@ import com.github.juliarn.npclib.common.event.DefaultAttackNpcEvent;
 import com.github.juliarn.npclib.common.event.DefaultInteractNpcEvent;
 import com.github.juliarn.npclib.common.util.EventDispatcher;
 import com.github.juliarn.npclib.minestom.util.MinestomUtil;
+import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
+import java.util.AbstractMap;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Function;
+import java.util.function.UnaryOperator;
+import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import net.minestom.server.MinecraftServer;
 import net.minestom.server.entity.Entity;
 import net.minestom.server.entity.EquipmentSlot;
@@ -72,14 +79,19 @@ public final class MinestomProtocolAdapter implements PlatformPacketAdapter<Inst
 
   private static final MinestomProtocolAdapter INSTANCE = new MinestomProtocolAdapter();
 
+  private static final Type OPTIONAL_CHAT_COMPONENT_TYPE = TypeToken.getParameterized(
+    Optional.class,
+    net.kyori.adventure.text.Component.class
+  ).getType();
+
   private static final EnumMap<ItemSlot, EquipmentSlot> ITEM_SLOT_CONVERTER;
   private static final EnumMap<EntityPose, Entity.Pose> ENTITY_POSE_CONVERTER;
   private static final EnumMap<Player.Hand, InteractNpcEvent.Hand> HAND_CONVERTER;
   private static final EnumMap<EntityAnimation, EntityAnimationPacket.Animation> ANIMATION_CONVERTER;
   private static final Map<PlayerInfoAction, PlayerInfoActionFactory> ACTION_FACTORY;
 
-  private static final Map<Type, Function<Object, Object>> SERIALIZER_CONVERTERS;
   private static final Map<Type, Function<Object, Metadata.Entry<?>>> META_ENTRY_FACTORY;
+  private static final Map<Type, Map.Entry<Type, UnaryOperator<Object>>> SERIALIZER_CONVERTERS;
 
   static {
     // associate item slots with their respective minestom lib enum
@@ -127,7 +139,26 @@ public final class MinestomProtocolAdapter implements PlatformPacketAdapter<Inst
     // init the meta value converter
     SERIALIZER_CONVERTERS = new HashMap<>(1);
     //noinspection SuspiciousMethodCalls
-    SERIALIZER_CONVERTERS.put(EntityPose.class, ENTITY_POSE_CONVERTER::get);
+    SERIALIZER_CONVERTERS.put(EntityPose.class, new AbstractMap.SimpleImmutableEntry<>(
+      Entity.Pose.class,
+      ENTITY_POSE_CONVERTER::get));
+    SERIALIZER_CONVERTERS.put(
+      TypeToken.getParameterized(Optional.class, Component.class).getType(),
+      new AbstractMap.SimpleImmutableEntry<>(
+        OPTIONAL_CHAT_COMPONENT_TYPE,
+        value -> {
+          //noinspection unchecked
+          Optional<Component> optionalComponent = (Optional<Component>) value;
+          return optionalComponent.map(component -> {
+            // build the component based on the given input
+            if (component.rawMessage() != null) {
+              return LegacyComponentSerializer.legacySection().deserialize(component.rawMessage());
+            } else {
+              return GsonComponentSerializer.gson().deserializeOrNull(component.encodedJsonMessage());
+            }
+          });
+        }
+      ));
 
     // init the meta entry factories
     META_ENTRY_FACTORY = new HashMap<>(6);
@@ -137,6 +168,10 @@ public final class MinestomProtocolAdapter implements PlatformPacketAdapter<Inst
     META_ENTRY_FACTORY.put(boolean.class, value -> Metadata.Boolean((boolean) value));
     META_ENTRY_FACTORY.put(String.class, value -> Metadata.String((String) value));
     META_ENTRY_FACTORY.put(Entity.Pose.class, value -> Metadata.Pose((Entity.Pose) value));
+    //noinspection unchecked
+    META_ENTRY_FACTORY.put(
+      OPTIONAL_CHAT_COMPONENT_TYPE,
+      value -> Metadata.OptChat(((Optional<net.kyori.adventure.text.Component>) value).orElse(null)));
   }
 
   private MinestomProtocolAdapter() {
@@ -147,17 +182,18 @@ public final class MinestomProtocolAdapter implements PlatformPacketAdapter<Inst
   }
 
   private static @NotNull Metadata.Entry<?> createMetadataEntry(@NotNull Type type, @NotNull Object value) {
+    // check if we need to convert the value before creating the meta object
+    Map.Entry<Type, UnaryOperator<Object>> converter = SERIALIZER_CONVERTERS.get(type);
+    if (converter != null) {
+      type = converter.getKey();
+      value = converter.getValue().apply(value);
+    }
+
     // get the meta factory which is converting the type
     Function<Object, Metadata.Entry<?>> metaFactory = META_ENTRY_FACTORY.get(type);
     if (metaFactory == null) {
       // unable to handle that
       throw new IllegalArgumentException("Unsupported type: " + type);
-    }
-
-    // check if we need to convert the value before creating the meta object
-    Function<Object, Object> converter = SERIALIZER_CONVERTERS.get(type);
-    if (converter != null) {
-      value = converter.apply(value);
     }
 
     // create the meta entry
@@ -279,18 +315,15 @@ public final class MinestomProtocolAdapter implements PlatformPacketAdapter<Inst
   public void initialize(@NotNull Platform<Instance, Player, ItemStack, Extension> platform) {
     MinecraftServer.getGlobalEventHandler().addListener(PlayerPacketEvent.class, event -> {
       // check if the inbound packet is USE_ENTITY, it's the only interesting for us
-      if (event.getPacket() instanceof ClientInteractEntityPacket) {
-        ClientInteractEntityPacket packet = (ClientInteractEntityPacket) event.getPacket();
-
+      if (event.getPacket() instanceof ClientInteractEntityPacket packet) {
         // get the associated npc from the tracked entities
         Npc<Instance, Player, ItemStack, Extension> npc = platform.npcTracker().npcById(packet.targetId());
         if (npc != null) {
           // call the correct event based on the taken action
           if (packet.type() instanceof ClientInteractEntityPacket.Attack) {
             EventDispatcher.dispatch(platform, DefaultAttackNpcEvent.attackNpc(npc, event.getPlayer()));
-          } else if (packet.type() instanceof ClientInteractEntityPacket.Interact) {
+          } else if (packet.type() instanceof ClientInteractEntityPacket.Interact interact) {
             // extract the used hand from the packet
-            ClientInteractEntityPacket.Interact interact = (ClientInteractEntityPacket.Interact) packet.type();
             InteractNpcEvent.Hand hand = HAND_CONVERTER.get(interact.hand());
 
             // call the event

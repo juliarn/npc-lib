@@ -49,6 +49,7 @@ import com.github.juliarn.npclib.api.event.InteractNpcEvent;
 import com.github.juliarn.npclib.api.profile.ProfileProperty;
 import com.github.juliarn.npclib.api.protocol.OutboundPacket;
 import com.github.juliarn.npclib.api.protocol.PlatformPacketAdapter;
+import com.github.juliarn.npclib.api.protocol.chat.Component;
 import com.github.juliarn.npclib.api.protocol.enums.EntityAnimation;
 import com.github.juliarn.npclib.api.protocol.enums.EntityPose;
 import com.github.juliarn.npclib.api.protocol.enums.ItemSlot;
@@ -60,6 +61,7 @@ import com.github.juliarn.npclib.common.event.DefaultInteractNpcEvent;
 import com.github.juliarn.npclib.common.util.EventDispatcher;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import com.google.gson.reflect.TypeToken;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import java.lang.reflect.ParameterizedType;
@@ -69,7 +71,9 @@ import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.UnaryOperator;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.function.BiFunction;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
@@ -81,6 +85,11 @@ final class ProtocolLibPacketAdapter implements PlatformPacketAdapter<World, Pla
 
   static final ProtocolLibPacketAdapter INSTANCE = new ProtocolLibPacketAdapter();
 
+  private static final Type OPTIONAL_COMPONENT_TYPE = TypeToken.getParameterized(
+    Optional.class,
+    MinecraftReflection.getIChatBaseComponentClass()
+  ).getType();
+
   private static final ProtocolManager PROTOCOL_MANAGER = ProtocolLibrary.getProtocolManager();
   private static final MinecraftVersion SERVER_VERSION = MinecraftVersion.fromServerVersion(Bukkit.getVersion());
 
@@ -90,7 +99,7 @@ final class ProtocolLibPacketAdapter implements PlatformPacketAdapter<World, Pla
   private static final EnumMap<PlayerInfoAction, EnumWrappers.PlayerInfoAction> PLAYER_INFO_ACTION_CONVERTER;
 
   // serializer converters for metadata
-  private static final Map<Type, Map.Entry<Class<?>, UnaryOperator<Object>>> SERIALIZER_CONVERTERS;
+  private static final Map<Type, BiFunction<PlatformVersionAccessor, Object, Map.Entry<Type, Object>>> SERIALIZER_CONVERTERS;
 
   static {
     // associate item slots with their respective protocol lib enum
@@ -128,30 +137,60 @@ final class ProtocolLibPacketAdapter implements PlatformPacketAdapter<World, Pla
 
     // meta serializers
     //noinspection SuspiciousMethodCalls
-    SERIALIZER_CONVERTERS = ImmutableMap.of(EntityPose.class, new AbstractMap.SimpleImmutableEntry<>(
-      EnumWrappers.getEntityPoseClass(),
-      ENTITY_POSE_CONVERTER::get));
+    SERIALIZER_CONVERTERS = ImmutableMap.<Type, BiFunction<PlatformVersionAccessor, Object, Map.Entry<Type, Object>>>builder()
+      .put(
+        EntityPose.class,
+        ($, value) -> new AbstractMap.SimpleEntry<>(
+          EnumWrappers.getEntityPoseClass(),
+          ENTITY_POSE_CONVERTER.get(value)))
+      .put(
+        TypeToken.getParameterized(Optional.class, Component.class).getType(),
+        (versionAccess, value) -> {
+          //noinspection unchecked
+          Optional<Component> optionalComponent = (Optional<Component>) value;
+          // check if the display name is wrapped in a component
+          if (versionAccess.atLeast(1, 13, 0)) {
+            // construct the entry
+            return new AbstractMap.SimpleImmutableEntry<>(
+              OPTIONAL_COMPONENT_TYPE,
+              optionalComponent.map(component -> {
+                // build the component based on the given input
+                if (component.rawMessage() != null) {
+                  return WrappedChatComponent.fromLegacyText(component.rawMessage());
+                } else {
+                  return WrappedChatComponent.fromJson(component.encodedJsonMessage());
+                }
+              }).map(WrappedChatComponent::getHandle));
+          } else {
+            return new AbstractMap.SimpleImmutableEntry<>(String.class, optionalComponent
+              .map(component -> Objects.requireNonNull(
+                component.rawMessage(),
+                "Versions older than 1.13 don't support json component"))
+              .orElse(null));
+          }
+        })
+      .build();
   }
 
   private static @NotNull WrappedWatchableObject createWatchableObject(
     int index,
     @NotNull Type type,
-    @NotNull Object value
+    @NotNull Object value,
+    @NotNull PlatformVersionAccessor versionAccessor
   ) {
-    Class<?> registryType;
     // pre-convert the value if needed
-    Map.Entry<Class<?>, UnaryOperator<Object>> metaConverter = SERIALIZER_CONVERTERS.get(type);
-    if (metaConverter != null) {
-      registryType = metaConverter.getKey();
-      value = metaConverter.getValue().apply(value);
-    } else {
-      registryType = ProtocolUtil.extractRawType(type);
+    BiFunction<PlatformVersionAccessor, Object, Map.Entry<Type, Object>> converter = SERIALIZER_CONVERTERS.get(type);
+    if (converter != null) {
+      Map.Entry<Type, Object> converted = converter.apply(versionAccessor, value);
+      // re-assign the type and value
+      type = converted.getKey();
+      value = converted.getValue();
     }
 
     if (MinecraftVersion.COMBAT_UPDATE.atOrAbove()) {
       // mc 1.9: watchable object now contains a serializer for the type
       WrappedDataWatcher.Serializer serializer = WrappedDataWatcher.Registry.get(
-        registryType,
+        ProtocolUtil.extractRawType(type),
         type instanceof ParameterizedType);
       // create the watchable object
       return new WrappedWatchableObject(new WrappedDataWatcher.WrappedDataWatcherObject(index, serializer), value);
@@ -242,25 +281,12 @@ final class ProtocolLibPacketAdapter implements PlatformPacketAdapter<World, Pla
           profile.getProperties().put(prop.name(), wrapped);
         }
 
-        // convert the display name (if given)
-        WrappedChatComponent displayName = npc.flagValue(Npc.DISPLAY_NAME)
-          .map(displayNameText -> {
-            // check if the text is given in a json format
-            displayNameText = displayNameText.trim();
-            if (displayNameText.startsWith("{") && displayNameText.endsWith("}")) {
-              return WrappedChatComponent.fromJson(displayNameText);
-            } else {
-              return WrappedChatComponent.fromLegacyText(displayNameText);
-            }
-          })
-          .orElse(null);
-
         // add the player info data
         PlayerInfoData playerInfoData = new PlayerInfoData(
           profile,
           20,
           EnumWrappers.NativeGameMode.CREATIVE,
-          displayName);
+          null);
         container.getPlayerInfoDataLists().write(0, Lists.newArrayList(playerInfoData));
 
         // send the packet without notifying any bound packet listeners
@@ -409,8 +435,8 @@ final class ProtocolLibPacketAdapter implements PlatformPacketAdapter<World, Pla
   ) {
     return (player, npc) -> {
       // create the entity meta
-      PlatformVersionAccessor versionAccessor = npc.platform().versionAccessor();
-      EntityMetadata<O> entityMetadata = metadata.create(value, versionAccessor);
+      PlatformVersionAccessor versionAcc = npc.platform().versionAccessor();
+      EntityMetadata<O> entityMetadata = metadata.create(value, versionAcc);
 
       // check if the meta is available
       if (!entityMetadata.available()) {
@@ -422,13 +448,14 @@ final class ProtocolLibPacketAdapter implements PlatformPacketAdapter<World, Pla
       watchableObjects.add(createWatchableObject(
         entityMetadata.index(),
         entityMetadata.type(),
-        entityMetadata.value()));
+        entityMetadata.value(),
+        versionAcc));
 
       // add all dependant metas
       for (EntityMetadataFactory<T, Object> relatedMetadata : metadata.relatedMetadata()) {
-        EntityMetadata<Object> related = relatedMetadata.create(value, versionAccessor);
+        EntityMetadata<Object> related = relatedMetadata.create(value, versionAcc);
         if (related.available()) {
-          watchableObjects.add(createWatchableObject(related.index(), related.type(), related.value()));
+          watchableObjects.add(createWatchableObject(related.index(), related.type(), related.value(), versionAcc));
         }
       }
 

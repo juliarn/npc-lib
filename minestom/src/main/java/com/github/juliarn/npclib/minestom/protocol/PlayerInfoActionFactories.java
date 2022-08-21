@@ -33,8 +33,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
-import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import net.minestom.server.entity.GameMode;
 import net.minestom.server.entity.Player;
 import net.minestom.server.extensions.Extension;
@@ -42,7 +40,6 @@ import net.minestom.server.instance.Instance;
 import net.minestom.server.item.ItemStack;
 import net.minestom.server.network.packet.server.play.PlayerInfoPacket;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 final class PlayerInfoActionFactories {
 
@@ -57,20 +54,6 @@ final class PlayerInfoActionFactories {
     return npc.settings().profileResolver().resolveNpcProfile(player, npc);
   }
 
-  private static @Nullable Component resolveDisplayName(@NotNull Npc<?, ?, ?, ?> npc) {
-    return npc.flagValue(Npc.DISPLAY_NAME)
-      .map(displayNameText -> {
-        // check if the text is given in a json format
-        displayNameText = displayNameText.trim();
-        if (displayNameText.startsWith("{") && displayNameText.endsWith("}")) {
-          return GsonComponentSerializer.gson().deserialize(displayNameText);
-        } else {
-          return LegacyComponentSerializer.legacySection().deserialize(displayNameText);
-        }
-      })
-      .orElse(null);
-  }
-
   public static final class AddPlayerFactory implements PlayerInfoActionFactory {
 
     @Override
@@ -79,9 +62,6 @@ final class PlayerInfoActionFactories {
       @NotNull Player player
     ) {
       return resolveProfile(npc, player).thenApply(profile -> {
-        // resolve the display name of the npc (if any)
-        Component displayName = resolveDisplayName(npc);
-
         // convert the profile properties
         List<PlayerInfoPacket.AddPlayer.Property> properties = new ArrayList<>();
         for (ProfileProperty property : profile.properties()) {
@@ -99,7 +79,7 @@ final class PlayerInfoActionFactories {
           properties,
           GameMode.CREATIVE,
           20,
-          displayName);
+          null);
         return new AbstractMap.SimpleImmutableEntry<>(PlayerInfoPacket.Action.ADD_PLAYER, addPlayerAction);
       });
     }
@@ -127,10 +107,9 @@ final class PlayerInfoActionFactories {
       @NotNull Player player
     ) {
       return resolveProfile(npc, player).thenApply(profile -> {
-        // resolve the display name of the npc (if any) & build the action
-        Component displayName = resolveDisplayName(npc);
-        PlayerInfoPacket.Entry updateEntry = new PlayerInfoPacket.UpdateDisplayName(profile.uniqueId(), displayName);
-
+        PlayerInfoPacket.Entry updateEntry = new PlayerInfoPacket.UpdateDisplayName(
+          profile.uniqueId(),
+          (Component) null);
         return new AbstractMap.SimpleImmutableEntry<>(PlayerInfoPacket.Action.UPDATE_DISPLAY_NAME, updateEntry);
       });
     }
