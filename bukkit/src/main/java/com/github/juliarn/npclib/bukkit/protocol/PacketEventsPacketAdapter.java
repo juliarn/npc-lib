@@ -76,14 +76,14 @@ import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSp
 import com.google.common.collect.ImmutableMap;
 import io.github.retrooper.packetevents.factory.spigot.SpigotPacketEventsBuilder;
 import io.github.retrooper.packetevents.util.SpigotReflectionUtil;
-import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
+import java.util.function.UnaryOperator;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
@@ -112,7 +112,7 @@ final class PacketEventsPacketAdapter implements PlatformPacketAdapter<World, Pl
 
   // serializer converters for metadata
   private static final Map<Type, EntityDataType<?>> ENTITY_DATA_TYPE_LOOKUP;
-  private static final Map<Type, Function<Object, Object>> SERIALIZER_CONVERTERS;
+  private static final Map<Type, Map.Entry<Class<?>, UnaryOperator<Object>>> SERIALIZER_CONVERTERS;
 
   static {
     // associate item slots actions with their respective packet events enum
@@ -187,7 +187,9 @@ final class PacketEventsPacketAdapter implements PlatformPacketAdapter<World, Pl
 
     // meta serializers
     //noinspection SuspiciousMethodCalls
-    SERIALIZER_CONVERTERS = ImmutableMap.of(EntityPose.class, ENTITY_POSE_CONVERTER::get);
+    SERIALIZER_CONVERTERS = ImmutableMap.of(EntityPose.class, new AbstractMap.SimpleImmutableEntry<>(
+      com.github.retrooper.packetevents.protocol.entity.pose.EntityPose.class,
+      ENTITY_POSE_CONVERTER::get));
     ENTITY_DATA_TYPE_LOOKUP = ImmutableMap.<Type, EntityDataType<?>>builder()
       .put(byte.class, EntityDataTypes.BYTE)
       .put(int.class, EntityDataTypes.INT)
@@ -208,27 +210,17 @@ final class PacketEventsPacketAdapter implements PlatformPacketAdapter<World, Pl
   }
 
   private static @NotNull EntityData createEntityData(int index, @NotNull Type type, @NotNull Object value) {
-    // get the type information of the value to write
-    Class<?> valueType;
-    if (type instanceof Class<?>) {
-      // direct access via the given class type
-      valueType = (Class<?>) type;
-    } else if (type instanceof ParameterizedType) {
-      // optional type (access via first type parameter)
-      ParameterizedType parameterizedType = (ParameterizedType) type;
-      valueType = (Class<?>) parameterizedType.getActualTypeArguments()[0];
-    } else {
-      // unable to handle that
-      throw new IllegalArgumentException("Unsupported type: " + type);
-    }
-
+    Class<?> registryType;
     // pre-convert the value if needed
-    Function<Object, Object> metaConverter = SERIALIZER_CONVERTERS.get(valueType);
+    Map.Entry<Class<?>, UnaryOperator<Object>> metaConverter = SERIALIZER_CONVERTERS.get(type);
     if (metaConverter != null) {
-      value = metaConverter.apply(value);
+      registryType = metaConverter.getKey();
+      value = metaConverter.getValue().apply(value);
+    } else {
+      registryType = ProtocolUtil.extractRawType(type);
     }
 
-    return new EntityData(index, ENTITY_DATA_TYPE_LOOKUP.get(type), value);
+    return new EntityData(index, ENTITY_DATA_TYPE_LOOKUP.get(registryType), value);
   }
 
   @Override

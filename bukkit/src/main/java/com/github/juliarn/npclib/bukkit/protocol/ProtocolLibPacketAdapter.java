@@ -64,11 +64,12 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
+import java.util.function.UnaryOperator;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
@@ -89,7 +90,7 @@ final class ProtocolLibPacketAdapter implements PlatformPacketAdapter<World, Pla
   private static final EnumMap<PlayerInfoAction, EnumWrappers.PlayerInfoAction> PLAYER_INFO_ACTION_CONVERTER;
 
   // serializer converters for metadata
-  private static final Map<Type, Function<Object, Object>> SERIALIZER_CONVERTERS;
+  private static final Map<Type, Map.Entry<Class<?>, UnaryOperator<Object>>> SERIALIZER_CONVERTERS;
 
   static {
     // associate item slots with their respective protocol lib enum
@@ -127,7 +128,9 @@ final class ProtocolLibPacketAdapter implements PlatformPacketAdapter<World, Pla
 
     // meta serializers
     //noinspection SuspiciousMethodCalls
-    SERIALIZER_CONVERTERS = ImmutableMap.of(EntityPose.class, ENTITY_POSE_CONVERTER::get);
+    SERIALIZER_CONVERTERS = ImmutableMap.of(EntityPose.class, new AbstractMap.SimpleImmutableEntry<>(
+      EnumWrappers.getEntityPoseClass(),
+      ENTITY_POSE_CONVERTER::get));
   }
 
   private static @NotNull WrappedWatchableObject createWatchableObject(
@@ -135,30 +138,20 @@ final class ProtocolLibPacketAdapter implements PlatformPacketAdapter<World, Pla
     @NotNull Type type,
     @NotNull Object value
   ) {
-    // get the type information of the value to write
-    Class<?> valueType;
-    if (type instanceof Class<?>) {
-      // direct access via the given class type
-      valueType = (Class<?>) type;
-    } else if (type instanceof ParameterizedType) {
-      // optional type (access via first type parameter)
-      ParameterizedType parameterizedType = (ParameterizedType) type;
-      valueType = (Class<?>) parameterizedType.getActualTypeArguments()[0];
-    } else {
-      // unable to handle that
-      throw new IllegalArgumentException("Unsupported type: " + type);
-    }
-
+    Class<?> registryType;
     // pre-convert the value if needed
-    Function<Object, Object> metaConverter = SERIALIZER_CONVERTERS.get(valueType);
+    Map.Entry<Class<?>, UnaryOperator<Object>> metaConverter = SERIALIZER_CONVERTERS.get(type);
     if (metaConverter != null) {
-      value = metaConverter.apply(value);
+      registryType = metaConverter.getKey();
+      value = metaConverter.getValue().apply(value);
+    } else {
+      registryType = ProtocolUtil.extractRawType(type);
     }
 
     if (MinecraftVersion.COMBAT_UPDATE.atOrAbove()) {
       // mc 1.9: watchable object now contains a serializer for the type
       WrappedDataWatcher.Serializer serializer = WrappedDataWatcher.Registry.get(
-        valueType,
+        registryType,
         type instanceof ParameterizedType);
       // create the watchable object
       return new WrappedWatchableObject(new WrappedDataWatcher.WrappedDataWatcherObject(index, serializer), value);
