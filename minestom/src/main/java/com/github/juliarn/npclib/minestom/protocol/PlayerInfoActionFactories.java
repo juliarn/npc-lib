@@ -32,7 +32,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import net.kyori.adventure.text.Component;
 import net.minestom.server.entity.GameMode;
 import net.minestom.server.entity.Player;
 import net.minestom.server.extensions.Extension;
@@ -95,22 +94,6 @@ final class PlayerInfoActionFactories {
       return resolveProfile(npc, player).thenApply(profile -> {
         PlayerInfoPacket.Entry removePlayerAction = new PlayerInfoPacket.RemovePlayer(profile.uniqueId());
         return new AbstractMap.SimpleImmutableEntry<>(PlayerInfoPacket.Action.REMOVE_PLAYER, removePlayerAction);
-      });
-    }
-  }
-
-  public static final class UpdateDisplayNameFactory implements PlayerInfoActionFactory {
-
-    @Override
-    public @NotNull CompletableFuture<Map.Entry<PlayerInfoPacket.Action, PlayerInfoPacket.Entry>> buildAction(
-      @NotNull Npc<Instance, Player, ItemStack, Extension> npc,
-      @NotNull Player player
-    ) {
-      return resolveProfile(npc, player).thenApply(profile -> {
-        PlayerInfoPacket.Entry updateEntry = new PlayerInfoPacket.UpdateDisplayName(
-          profile.uniqueId(),
-          (Component) null);
-        return new AbstractMap.SimpleImmutableEntry<>(PlayerInfoPacket.Action.UPDATE_DISPLAY_NAME, updateEntry);
       });
     }
   }

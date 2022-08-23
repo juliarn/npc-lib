@@ -131,9 +131,6 @@ final class ProtocolLibPacketAdapter implements PlatformPacketAdapter<World, Pla
     PLAYER_INFO_ACTION_CONVERTER = new EnumMap<>(PlayerInfoAction.class);
     PLAYER_INFO_ACTION_CONVERTER.put(PlayerInfoAction.ADD_PLAYER, EnumWrappers.PlayerInfoAction.ADD_PLAYER);
     PLAYER_INFO_ACTION_CONVERTER.put(PlayerInfoAction.REMOVE_PLAYER, EnumWrappers.PlayerInfoAction.REMOVE_PLAYER);
-    PLAYER_INFO_ACTION_CONVERTER.put(
-      PlayerInfoAction.UPDATE_DISPLAY_NAME,
-      EnumWrappers.PlayerInfoAction.UPDATE_DISPLAY_NAME);
 
     // meta serializers
     //noinspection SuspiciousMethodCalls

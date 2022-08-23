@@ -134,7 +134,6 @@ public final class MinestomProtocolAdapter implements PlatformPacketAdapter<Inst
     ACTION_FACTORY = new HashMap<>(3);
     ACTION_FACTORY.put(PlayerInfoAction.ADD_PLAYER, new PlayerInfoActionFactories.AddPlayerFactory());
     ACTION_FACTORY.put(PlayerInfoAction.REMOVE_PLAYER, new PlayerInfoActionFactories.RemovePlayerFactory());
-    ACTION_FACTORY.put(PlayerInfoAction.UPDATE_DISPLAY_NAME, new PlayerInfoActionFactories.UpdateDisplayNameFactory());
 
     // init the meta value converter
     SERIALIZER_CONVERTERS = new HashMap<>(1);

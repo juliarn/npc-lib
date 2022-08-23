@@ -27,6 +27,5 @@ package com.github.juliarn.npclib.api.protocol.enums;
 public enum PlayerInfoAction {
 
   ADD_PLAYER,
-  REMOVE_PLAYER,
-  UPDATE_DISPLAY_NAME
+  REMOVE_PLAYER
 }

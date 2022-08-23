@@ -141,9 +141,6 @@ final class PacketEventsPacketAdapter implements PlatformPacketAdapter<World, Pl
     PLAYER_INFO_ACTION_CONVERTER = new EnumMap<>(PlayerInfoAction.class);
     PLAYER_INFO_ACTION_CONVERTER.put(PlayerInfoAction.ADD_PLAYER, WrapperPlayServerPlayerInfo.Action.ADD_PLAYER);
     PLAYER_INFO_ACTION_CONVERTER.put(PlayerInfoAction.REMOVE_PLAYER, WrapperPlayServerPlayerInfo.Action.REMOVE_PLAYER);
-    PLAYER_INFO_ACTION_CONVERTER.put(
-      PlayerInfoAction.UPDATE_DISPLAY_NAME,
-      WrapperPlayServerPlayerInfo.Action.UPDATE_DISPLAY_NAME);
 
     // associate entity animations with their respective packet events enum
     ENTITY_ANIMATION_CONVERTER = new EnumMap<>(EntityAnimation.class);
