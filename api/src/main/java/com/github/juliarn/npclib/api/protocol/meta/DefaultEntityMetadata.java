@@ -24,11 +24,7 @@
 
 package com.github.juliarn.npclib.api.protocol.meta;
 
-import com.github.juliarn.npclib.api.protocol.chat.Component;
 import com.github.juliarn.npclib.api.protocol.enums.EntityPose;
-import com.google.gson.reflect.TypeToken;
-import java.util.Optional;
-import java.util.function.Function;
 
 interface DefaultEntityMetadata {
 
@@ -44,19 +40,6 @@ interface DefaultEntityMetadata {
       .availabilityChecker(versionAccessor -> versionAccessor.atLeast(1, 14, 0))
       .build())
     .build();
-
-  // https://wiki.vg/Entity_metadata#Entity - see index 2
-  EntityMetadataFactory<Optional<Component>, Optional<Component>> DISPLAY_NAME =
-    EntityMetadataFactory.<Optional<Component>, Optional<Component>>metaFactoryBuilder()
-      .baseIndex(2)
-      .type(TypeToken.getParameterized(Optional.class, Component.class).getType())
-      .inputConverter(Function.identity())
-      .addRelatedMetadata(EntityMetadataFactory.<Optional<Component>, Object>metaFactoryBuilder()
-        .baseIndex(3)
-        .type(Byte.class)
-        .inputConverter(component -> component.map(ignored -> (byte) 1).orElse((byte) 0))
-        .build())
-      .build();
 
   // https://wiki.vg/Entity_metadata#Player - see index 10
   EntityMetadataFactory<Boolean, Byte> SKIN_LAYERS = EntityMetadataFactory.<Boolean, Byte>metaFactoryBuilder()
