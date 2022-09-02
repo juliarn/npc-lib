@@ -27,7 +27,8 @@ package com.github.juliarn.npclib.api.protocol.meta;
 import com.github.juliarn.npclib.api.protocol.enums.EntityPose;
 import com.github.juliarn.npclib.api.protocol.enums.EntityStatus;
 import java.util.Collection;
-import java.util.EnumSet;
+import java.util.HashSet;
+import java.util.Set;
 
 interface DefaultEntityMetadata {
 
@@ -37,9 +38,26 @@ interface DefaultEntityMetadata {
       .baseIndex(0)
       .type(Byte.class)
       .inputConverter(rawEntries -> {
+        // if there are no entries the mask is always 0
+        int size = rawEntries.size();
+        if (size == 0) {
+          return (byte) 0;
+        }
+
+        // ensure that there are no duplicates
+        Set<EntityStatus> entries;
+        if (rawEntries instanceof Set<?>) {
+          // already a set - nice
+          entries = (Set<EntityStatus>) rawEntries;
+        } else {
+          // copy over the elements
+          entries = new HashSet<>(size + 1, 1f);
+          entries.addAll(rawEntries);
+        }
+
         // calculate the bitmask to send
         byte entryMask = 0;
-        for (EntityStatus entry : EnumSet.copyOf(rawEntries)) {
+        for (EntityStatus entry : entries) {
           entryMask |= entry.bitmask();
         }
 
