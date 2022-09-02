@@ -25,6 +25,7 @@
 package com.github.juliarn.npclib.api.protocol.meta;
 
 import com.github.juliarn.npclib.api.PlatformVersionAccessor;
+import com.github.juliarn.npclib.api.protocol.enums.EntityStatus;
 import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.function.Function;
@@ -43,6 +44,10 @@ public interface EntityMetadataFactory<I, O> {
 
   static @NotNull EntityMetadataFactory<Boolean, Byte> skinLayerMetaFactory() {
     return DefaultEntityMetadata.SKIN_LAYERS;
+  }
+
+  static @NotNull EntityMetadataFactory<Collection<EntityStatus>, Byte> entityStatusMetaFactory() {
+    return DefaultEntityMetadata.ENTITY_STATUS;
   }
 
   @Unmodifiable

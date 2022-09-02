@@ -239,7 +239,7 @@ final class PacketEventsPacketAdapter implements PlatformPacketAdapter<World, Pl
   private ServerVersion serverVersion;
   private PlayerManager packetPlayerManager;
 
-  private static Location npcLocation(@NotNull Npc<?, ?, ?, ?> npc) {
+  private static @NotNull Location npcLocation(@NotNull Npc<?, ?, ?, ?> npc) {
     Position pos = npc.position();
     return new Location(pos.x(), pos.y(), pos.z(), pos.yaw(), pos.pitch());
   }

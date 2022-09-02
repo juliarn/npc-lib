@@ -25,8 +25,26 @@
 package com.github.juliarn.npclib.api.protocol.meta;
 
 import com.github.juliarn.npclib.api.protocol.enums.EntityPose;
+import com.github.juliarn.npclib.api.protocol.enums.EntityStatus;
+import java.util.Collection;
+import java.util.EnumSet;
 
 interface DefaultEntityMetadata {
+
+  // https://wiki.vg/Entity_metadata#Entity - see index 0
+  EntityMetadataFactory<Collection<EntityStatus>, Byte> ENTITY_STATUS =
+    EntityMetadataFactory.<Collection<EntityStatus>, Byte>metaFactoryBuilder()
+      .baseIndex(0)
+      .type(Byte.class)
+      .inputConverter(rawEntries -> {
+        // calculate the bitmask to send
+        byte entryMask = 0;
+        for (EntityStatus entry : EnumSet.copyOf(rawEntries)) {
+          entryMask |= (1 << entry.bitmask());
+        }
+
+        return entryMask;
+      }).build();
 
   // https://wiki.vg/Entity_metadata#Entity - see index 0 and 6
   EntityMetadataFactory<Boolean, Byte> SNEAKING = EntityMetadataFactory.<Boolean, Byte>metaFactoryBuilder()
