@@ -40,7 +40,7 @@ interface DefaultEntityMetadata {
         // calculate the bitmask to send
         byte entryMask = 0;
         for (EntityStatus entry : EnumSet.copyOf(rawEntries)) {
-          entryMask |= (1 << entry.bitmask());
+          entryMask |= entry.bitmask();
         }
 
         return entryMask;
