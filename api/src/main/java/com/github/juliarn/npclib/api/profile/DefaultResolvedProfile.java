@@ -24,6 +24,7 @@
 
 package com.github.juliarn.npclib.api.profile;
 
+import com.github.juliarn.npclib.api.util.Util;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Objects;
@@ -101,5 +102,17 @@ public final class DefaultResolvedProfile implements Profile.Resolved {
   @Override
   public @NotNull Resolved withProperties(@NotNull Set<ProfileProperty> properties) {
     return new DefaultResolvedProfile(this.name, this.uniqueId, new HashSet<>(properties));
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(this.name, this.uniqueId, this.properties);
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    return Util.equals(Profile.Resolved.class, this, obj, (orig, comp) -> orig.name().equals(comp.name())
+      && orig.uniqueId().equals(comp.uniqueId())
+      && orig.properties().equals(comp.properties()));
   }
 }

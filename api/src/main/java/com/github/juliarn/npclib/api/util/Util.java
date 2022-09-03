@@ -25,9 +25,11 @@
 package com.github.juliarn.npclib.api.util;
 
 import java.util.concurrent.Callable;
+import java.util.function.BiPredicate;
 import java.util.function.Supplier;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Internal
 public final class Util {
@@ -50,5 +52,31 @@ public final class Util {
         throw new IllegalStateException(exception);
       }
     };
+  }
+
+  @SuppressWarnings("unchecked")
+  public static <T> boolean equals(
+    @NotNull Class<T> expectedType,
+    @Nullable Object original,
+    @Nullable Object compare,
+    @NotNull BiPredicate<T, T> checker
+  ) {
+    // fast check for nullability
+    if (original == null || compare == null) {
+      return original == null && compare == null;
+    }
+
+    // fast path for the same object
+    if (original == compare) {
+      return true;
+    }
+
+    // check if both values are of the same type
+    if (!expectedType.isAssignableFrom(original.getClass()) || !expectedType.isAssignableFrom(compare.getClass())) {
+      return false;
+    }
+
+    // cast both and apply to the checker
+    return checker.test((T) original, (T) compare);
   }
 }

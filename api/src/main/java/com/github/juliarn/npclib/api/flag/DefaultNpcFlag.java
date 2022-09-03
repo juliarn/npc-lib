@@ -24,6 +24,7 @@
 
 package com.github.juliarn.npclib.api.flag;
 
+import com.github.juliarn.npclib.api.util.Util;
 import java.util.function.Predicate;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -63,17 +64,6 @@ final class DefaultNpcFlag<T> implements NpcFlag<T> {
 
   @Override
   public boolean equals(Object obj) {
-    // fast path for same object
-    if (obj == this) {
-      return true;
-    }
-
-    // check if it's the same type
-    if (obj instanceof NpcFlag) {
-      NpcFlag<?> other = (NpcFlag<?>) obj;
-      return other.key().equals(this.key);
-    }
-
-    return false;
+    return Util.equals(NpcFlag.class, this, obj, (orig, comp) -> orig.key().equals(comp.key()));
   }
 }

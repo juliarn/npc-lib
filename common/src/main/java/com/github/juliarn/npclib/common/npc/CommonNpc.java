@@ -34,6 +34,7 @@ import com.github.juliarn.npclib.api.protocol.NpcSpecificOutboundPacket;
 import com.github.juliarn.npclib.api.protocol.enums.ItemSlot;
 import com.github.juliarn.npclib.api.protocol.enums.PlayerInfoAction;
 import com.github.juliarn.npclib.api.settings.NpcSettings;
+import com.github.juliarn.npclib.api.util.Util;
 import com.github.juliarn.npclib.common.event.DefaultHideNpcEvent;
 import com.github.juliarn.npclib.common.event.DefaultShowNpcEvent;
 import com.github.juliarn.npclib.common.flag.CommonNpcFlaggedObject;
@@ -249,5 +250,15 @@ public class CommonNpc<W, P, I, E> extends CommonNpcFlaggedObject implements Npc
   @Override
   public @NotNull NpcSpecificOutboundPacket<W, P, I, E> changeItem(@NotNull ItemSlot slot, @NotNull I item) {
     return this.platform.packetFactory().createEquipmentPacket(slot, item).toSpecific(this);
+  }
+
+  @Override
+  public int hashCode() {
+    return Integer.hashCode(this.entityId());
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    return Util.equals(Npc.class, this, obj, (orig, comp) -> orig.entityId() == comp.entityId());
   }
 }

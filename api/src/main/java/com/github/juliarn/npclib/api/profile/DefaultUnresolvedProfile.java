@@ -24,6 +24,8 @@
 
 package com.github.juliarn.npclib.api.profile;
 
+import com.github.juliarn.npclib.api.util.Util;
+import java.util.Objects;
 import java.util.UUID;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,5 +47,19 @@ final class DefaultUnresolvedProfile implements Profile.Unresolved {
   @Override
   public @Nullable String name() {
     return this.name;
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(this.name, this.uniqueId);
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    return Util.equals(
+      Profile.Unresolved.class,
+      this,
+      obj,
+      (orig, comp) -> Objects.equals(orig.name(), comp.name()) && Objects.equals(orig.uniqueId(), comp.uniqueId()));
   }
 }

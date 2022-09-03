@@ -24,6 +24,7 @@
 
 package com.github.juliarn.npclib.api.profile;
 
+import com.github.juliarn.npclib.api.util.Util;
 import java.util.Objects;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -57,24 +58,13 @@ final class DefaultProfileProperty implements ProfileProperty {
 
   @Override
   public int hashCode() {
-    return this.name.hashCode();
+    return Objects.hash(this.name, this.value, this.signature);
   }
 
   @Override
   public boolean equals(Object obj) {
-    // quick exit for the same instance
-    if (obj == this) {
-      return true;
-    }
-
-    // check for the type
-    if (obj instanceof ProfileProperty) {
-      ProfileProperty other = (ProfileProperty) obj;
-      return this.name.equals(other.name())
-        && this.value.equals(other.value())
-        && Objects.equals(this.signature, other.signature());
-    }
-
-    return false;
+    return Util.equals(ProfileProperty.class, this, obj, (orig, comp) -> orig.name().equals(comp.name())
+      && orig.value().equals(comp.value())
+      && Objects.equals(orig.signature(), comp.signature()));
   }
 }
