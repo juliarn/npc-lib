@@ -93,9 +93,9 @@ final class ProtocolLibPacketAdapter implements PlatformPacketAdapter<World, Pla
   private static final ProtocolManager PROTOCOL_MANAGER = ProtocolLibrary.getProtocolManager();
   private static final MinecraftVersion SERVER_VERSION = MinecraftVersion.fromServerVersion(Bukkit.getVersion());
 
+  private static final EnumMap<EntityPose, Object> ENTITY_POSE_CONVERTER;
   private static final EnumMap<ItemSlot, EnumWrappers.ItemSlot> ITEM_SLOT_CONVERTER;
   private static final EnumMap<EnumWrappers.Hand, InteractNpcEvent.Hand> HAND_CONVERTER;
-  private static final EnumMap<EntityPose, EnumWrappers.EntityPose> ENTITY_POSE_CONVERTER;
   private static final EnumMap<PlayerInfoAction, EnumWrappers.PlayerInfoAction> PLAYER_INFO_ACTION_CONVERTER;
 
   // serializer converters for metadata
@@ -118,14 +118,14 @@ final class ProtocolLibPacketAdapter implements PlatformPacketAdapter<World, Pla
 
     // associate entity poses with their respective protocol lib enum
     ENTITY_POSE_CONVERTER = new EnumMap<>(EntityPose.class);
-    ENTITY_POSE_CONVERTER.put(EntityPose.STANDING, EnumWrappers.EntityPose.STANDING);
-    ENTITY_POSE_CONVERTER.put(EntityPose.FALL_FLYING, EnumWrappers.EntityPose.FALL_FLYING);
-    ENTITY_POSE_CONVERTER.put(EntityPose.SLEEPING, EnumWrappers.EntityPose.SLEEPING);
-    ENTITY_POSE_CONVERTER.put(EntityPose.SWIMMING, EnumWrappers.EntityPose.SWIMMING);
-    ENTITY_POSE_CONVERTER.put(EntityPose.SPIN_ATTACK, EnumWrappers.EntityPose.SPIN_ATTACK);
-    ENTITY_POSE_CONVERTER.put(EntityPose.CROUCHING, EnumWrappers.EntityPose.CROUCHING);
-    ENTITY_POSE_CONVERTER.put(EntityPose.LONG_JUMPING, EnumWrappers.EntityPose.LONG_JUMPING);
-    ENTITY_POSE_CONVERTER.put(EntityPose.DYING, EnumWrappers.EntityPose.DYING);
+    ENTITY_POSE_CONVERTER.put(EntityPose.STANDING, EnumWrappers.EntityPose.STANDING.toNms());
+    ENTITY_POSE_CONVERTER.put(EntityPose.FALL_FLYING, EnumWrappers.EntityPose.FALL_FLYING.toNms());
+    ENTITY_POSE_CONVERTER.put(EntityPose.SLEEPING, EnumWrappers.EntityPose.SLEEPING.toNms());
+    ENTITY_POSE_CONVERTER.put(EntityPose.SWIMMING, EnumWrappers.EntityPose.SWIMMING.toNms());
+    ENTITY_POSE_CONVERTER.put(EntityPose.SPIN_ATTACK, EnumWrappers.EntityPose.SPIN_ATTACK.toNms());
+    ENTITY_POSE_CONVERTER.put(EntityPose.CROUCHING, EnumWrappers.EntityPose.CROUCHING.toNms());
+    ENTITY_POSE_CONVERTER.put(EntityPose.LONG_JUMPING, EnumWrappers.EntityPose.LONG_JUMPING.toNms());
+    ENTITY_POSE_CONVERTER.put(EntityPose.DYING, EnumWrappers.EntityPose.DYING.toNms());
 
     // associate player info actions with their respective protocol lib enum
     PLAYER_INFO_ACTION_CONVERTER = new EnumMap<>(PlayerInfoAction.class);
