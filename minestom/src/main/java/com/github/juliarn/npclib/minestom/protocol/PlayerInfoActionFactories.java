@@ -78,6 +78,7 @@ final class PlayerInfoActionFactories {
           properties,
           GameMode.CREATIVE,
           20,
+          null,
           null);
         return new AbstractMap.SimpleImmutableEntry<>(PlayerInfoPacket.Action.ADD_PLAYER, addPlayerAction);
       });
