@@ -32,7 +32,7 @@ plugins {
 defaultTasks("build", "checkLicenses", "shadowJar")
 
 allprojects {
-  version = "1.0.0-SNAPSHOT"
+  version = "2.0.0-SNAPSHOT"
   group = "com.github.juliarn"
 
   repositories {
