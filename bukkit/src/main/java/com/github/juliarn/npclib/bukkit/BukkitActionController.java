@@ -169,7 +169,7 @@ public final class BukkitActionController extends CommonNpcActionController impl
     }
   }
 
-  @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+  @EventHandler(priority = EventPriority.MONITOR)
   public void handleLeftClick(@NotNull PlayerInteractEvent event) {
     if (event.getAction() == Action.LEFT_CLICK_AIR || event.getAction() == Action.LEFT_CLICK_BLOCK) {
       Player player = event.getPlayer();
