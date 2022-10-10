@@ -26,7 +26,9 @@ package com.github.juliarn.npclib.bukkit.protocol;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.util.function.Supplier;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 final class ProtocolUtil {
 
@@ -46,6 +48,14 @@ final class ProtocolUtil {
     } else {
       // unable to handle that
       throw new IllegalArgumentException("Unsupported type: " + type);
+    }
+  }
+
+  public static @Nullable <T> T getOrNull(@NotNull Supplier<T> action) {
+    try {
+      return action.get();
+    } catch (Exception exception) {
+      return null;
     }
   }
 }

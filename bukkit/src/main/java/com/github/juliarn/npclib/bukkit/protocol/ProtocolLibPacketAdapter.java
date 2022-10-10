@@ -80,6 +80,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 final class ProtocolLibPacketAdapter implements PlatformPacketAdapter<World, Player, ItemStack, Plugin> {
 
@@ -116,16 +117,22 @@ final class ProtocolLibPacketAdapter implements PlatformPacketAdapter<World, Pla
     HAND_CONVERTER.put(EnumWrappers.Hand.MAIN_HAND, InteractNpcEvent.Hand.MAIN_HAND);
     HAND_CONVERTER.put(EnumWrappers.Hand.OFF_HAND, InteractNpcEvent.Hand.OFF_HAND);
 
-    // associate entity poses with their respective protocol lib enum
+    // associate entity poses with their respective protocol lib enum (if possible, only present on 1.13+)
     ENTITY_POSE_CONVERTER = new EnumMap<>(EntityPose.class);
-    ENTITY_POSE_CONVERTER.put(EntityPose.STANDING, EnumWrappers.EntityPose.STANDING.toNms());
-    ENTITY_POSE_CONVERTER.put(EntityPose.FALL_FLYING, EnumWrappers.EntityPose.FALL_FLYING.toNms());
-    ENTITY_POSE_CONVERTER.put(EntityPose.SLEEPING, EnumWrappers.EntityPose.SLEEPING.toNms());
-    ENTITY_POSE_CONVERTER.put(EntityPose.SWIMMING, EnumWrappers.EntityPose.SWIMMING.toNms());
-    ENTITY_POSE_CONVERTER.put(EntityPose.SPIN_ATTACK, EnumWrappers.EntityPose.SPIN_ATTACK.toNms());
-    ENTITY_POSE_CONVERTER.put(EntityPose.CROUCHING, EnumWrappers.EntityPose.CROUCHING.toNms());
-    ENTITY_POSE_CONVERTER.put(EntityPose.LONG_JUMPING, EnumWrappers.EntityPose.LONG_JUMPING.toNms());
-    ENTITY_POSE_CONVERTER.put(EntityPose.DYING, EnumWrappers.EntityPose.DYING.toNms());
+    if (EnumWrappers.getEntityPoseClass() != null) {
+      // always present since 1.13
+      ENTITY_POSE_CONVERTER.put(EntityPose.STANDING, EnumWrappers.EntityPose.STANDING.toNms());
+      ENTITY_POSE_CONVERTER.put(EntityPose.FALL_FLYING, EnumWrappers.EntityPose.FALL_FLYING.toNms());
+      ENTITY_POSE_CONVERTER.put(EntityPose.SLEEPING, EnumWrappers.EntityPose.SLEEPING.toNms());
+      ENTITY_POSE_CONVERTER.put(EntityPose.SWIMMING, EnumWrappers.EntityPose.SWIMMING.toNms());
+      ENTITY_POSE_CONVERTER.put(EntityPose.SPIN_ATTACK, EnumWrappers.EntityPose.SPIN_ATTACK.toNms());
+      ENTITY_POSE_CONVERTER.put(EntityPose.CROUCHING, EnumWrappers.EntityPose.CROUCHING.toNms());
+      ENTITY_POSE_CONVERTER.put(EntityPose.DYING, EnumWrappers.EntityPose.DYING.toNms());
+      // new poses
+      ENTITY_POSE_CONVERTER.put(
+        EntityPose.LONG_JUMPING,
+        ProtocolUtil.getOrNull(EnumWrappers.EntityPose.LONG_JUMPING::toNms));
+    }
 
     // associate player info actions with their respective protocol lib enum
     PLAYER_INFO_ACTION_CONVERTER = new EnumMap<>(PlayerInfoAction.class);
@@ -169,7 +176,7 @@ final class ProtocolLibPacketAdapter implements PlatformPacketAdapter<World, Pla
       .build();
   }
 
-  private static @NotNull WrappedWatchableObject createWatchableObject(
+  private static @Nullable WrappedWatchableObject createWatchableObject(
     int index,
     @NotNull Type type,
     @NotNull Object value,
@@ -182,6 +189,11 @@ final class ProtocolLibPacketAdapter implements PlatformPacketAdapter<World, Pla
       // re-assign the type and value
       type = converted.getKey();
       value = converted.getValue();
+
+      // the value might not be accessible on the current version
+      if (value == null) {
+        return null;
+      }
     }
 
     if (MinecraftVersion.COMBAT_UPDATE.atOrAbove()) {
@@ -452,7 +464,15 @@ final class ProtocolLibPacketAdapter implements PlatformPacketAdapter<World, Pla
       for (EntityMetadataFactory<T, Object> relatedMetadata : metadata.relatedMetadata()) {
         EntityMetadata<Object> related = relatedMetadata.create(value, versionAcc);
         if (related.available()) {
-          watchableObjects.add(createWatchableObject(related.index(), related.type(), related.value(), versionAcc));
+          // create & register the watchable object
+          WrappedWatchableObject watchableObject = createWatchableObject(
+            related.index(),
+            related.type(),
+            related.value(),
+            versionAcc);
+          if (watchableObject != null) {
+            watchableObjects.add(watchableObject);
+          }
         }
       }
 
