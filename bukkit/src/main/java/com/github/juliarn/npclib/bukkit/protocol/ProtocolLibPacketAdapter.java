@@ -128,10 +128,20 @@ final class ProtocolLibPacketAdapter implements PlatformPacketAdapter<World, Pla
       ENTITY_POSE_CONVERTER.put(EntityPose.SPIN_ATTACK, EnumWrappers.EntityPose.SPIN_ATTACK.toNms());
       ENTITY_POSE_CONVERTER.put(EntityPose.CROUCHING, EnumWrappers.EntityPose.CROUCHING.toNms());
       ENTITY_POSE_CONVERTER.put(EntityPose.DYING, EnumWrappers.EntityPose.DYING.toNms());
-      // new poses
-      ENTITY_POSE_CONVERTER.put(
-        EntityPose.LONG_JUMPING,
-        ProtocolUtil.getOrNull(EnumWrappers.EntityPose.LONG_JUMPING::toNms));
+      // poses of newer mc versions
+      // 1.17+
+      if (MinecraftVersion.CAVES_CLIFFS_1.atOrAbove()) {
+        ENTITY_POSE_CONVERTER.put(EntityPose.LONG_JUMPING, EnumWrappers.EntityPose.LONG_JUMPING.toNms());
+      }
+      // 1.19+
+      if (MinecraftVersion.WILD_UPDATE.atOrAbove()) {
+        ENTITY_POSE_CONVERTER.put(EntityPose.CROAKING, EnumWrappers.EntityPose.CROAKING.toNms());
+        ENTITY_POSE_CONVERTER.put(EntityPose.USING_TONGUE, EnumWrappers.EntityPose.USING_TONGUE.toNms());
+        ENTITY_POSE_CONVERTER.put(EntityPose.ROARING, EnumWrappers.EntityPose.ROARING.toNms());
+        ENTITY_POSE_CONVERTER.put(EntityPose.SNIFFING, EnumWrappers.EntityPose.SNIFFING.toNms());
+        ENTITY_POSE_CONVERTER.put(EntityPose.EMERGING, EnumWrappers.EntityPose.EMERGING.toNms());
+        ENTITY_POSE_CONVERTER.put(EntityPose.DIGGING, EnumWrappers.EntityPose.DIGGING.toNms());
+      }
     }
 
     // associate player info actions with their respective protocol lib enum

@@ -189,6 +189,24 @@ final class PacketEventsPacketAdapter implements PlatformPacketAdapter<World, Pl
     ENTITY_POSE_CONVERTER.put(
       EntityPose.DYING,
       com.github.retrooper.packetevents.protocol.entity.pose.EntityPose.DYING);
+    ENTITY_POSE_CONVERTER.put(
+      EntityPose.CROAKING,
+      com.github.retrooper.packetevents.protocol.entity.pose.EntityPose.CROAKING);
+    ENTITY_POSE_CONVERTER.put(
+      EntityPose.USING_TONGUE,
+      com.github.retrooper.packetevents.protocol.entity.pose.EntityPose.USING_TONGUE);
+    ENTITY_POSE_CONVERTER.put(
+      EntityPose.ROARING,
+      com.github.retrooper.packetevents.protocol.entity.pose.EntityPose.ROARING);
+    ENTITY_POSE_CONVERTER.put(
+      EntityPose.SNIFFING,
+      com.github.retrooper.packetevents.protocol.entity.pose.EntityPose.SNIFFING);
+    ENTITY_POSE_CONVERTER.put(
+      EntityPose.EMERGING,
+      com.github.retrooper.packetevents.protocol.entity.pose.EntityPose.EMERGING);
+    ENTITY_POSE_CONVERTER.put(
+      EntityPose.DIGGING,
+      com.github.retrooper.packetevents.protocol.entity.pose.EntityPose.DIGGING);
 
     // meta serializers
     //noinspection SuspiciousMethodCalls
