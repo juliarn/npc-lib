@@ -33,7 +33,7 @@ plugins {
 defaultTasks("build", "shadowJar")
 
 allprojects {
-  version = "2.0.0-SNAPSHOT"
+  version = "3.0.0-SNAPSHOT"
   group = "com.github.juliarn"
 
   repositories {
