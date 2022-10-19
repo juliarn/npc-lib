@@ -21,7 +21,7 @@ paper = "1.19.2-R0.1-SNAPSHOT"
 
 # platform extensions
 paperLib = "1.0.7"
-packetEvents = "2.0.0-SNAPSHOT"
+packetEvents = "2.0-SNAPSHOT"
 protocolLib = "master-SNAPSHOT"
 
 
