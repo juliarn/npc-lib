@@ -5,7 +5,7 @@ metadata.format.version = "1.1"
 # plugins
 shadow = "7.1.2"
 blossom = "1.3.1"
-licenser = "0.6.1"
+spotless = "6.11.0"
 
 # general
 gson = "2.9.1"
@@ -14,15 +14,16 @@ annotations = "23.0.0"
 event = "5.0.0-SNAPSHOT"
 
 # platform api versions
-sponge = "9.0.0"
+sponge = "10.0.0"
 nukkitX = "1.0-SNAPSHOT"
 minestom = "master-SNAPSHOT"
 paper = "1.19.2-R0.1-SNAPSHOT"
 
 # platform extensions
 paperLib = "1.0.7"
-packetEvents = "2.0-SNAPSHOT"
+packetEvents = "2.0.0-SNAPSHOT"
 protocolLib = "master-SNAPSHOT"
+
 
 [libraries]
 
@@ -47,5 +48,5 @@ packetEvents = { group = "com.github.retrooper.packetevents", name = "spigot", v
 [plugins]
 
 blossom = { id = "net.kyori.blossom", version.ref = "blossom" }
-licenser = { id = "org.cadixdev.licenser", version.ref = "licenser" }
+spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
 shadow = { id = "com.github.johnrengelman.shadow", version.ref = "shadow" }

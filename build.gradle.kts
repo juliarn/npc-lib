@@ -1,5 +1,3 @@
-import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
-
 /*
  * This file is part of npc-lib, licensed under the MIT License (MIT).
  *
@@ -24,12 +22,15 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
  * THE SOFTWARE.
  */
 
+import com.diffplug.gradle.spotless.SpotlessExtension
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+
 plugins {
-  alias(libs.plugins.licenser)
+  alias(libs.plugins.spotless)
   alias(libs.plugins.shadow) apply false
 }
 
-defaultTasks("build", "checkLicenses", "shadowJar")
+defaultTasks("build", "shadowJar")
 
 allprojects {
   version = "2.0.0-SNAPSHOT"
@@ -39,6 +40,7 @@ allprojects {
     mavenCentral()
     maven("https://jitpack.io/")
     maven("https://repo.papermc.io/repository/maven-public/")
+    maven("https://repo.codemc.io/repository/maven-snapshots/")
     maven("https://s01.oss.sonatype.org/content/repositories/snapshots/")
   }
 }
@@ -48,7 +50,7 @@ subprojects {
   apply(plugin = "checkstyle")
   apply(plugin = "java-library")
   apply(plugin = "maven-publish")
-  apply(plugin = "org.cadixdev.licenser")
+  apply(plugin = "com.diffplug.spotless")
   apply(plugin = "com.github.johnrengelman.shadow")
 
   dependencies {
@@ -90,12 +92,13 @@ subprojects {
   }
 
   extensions.configure<CheckstyleExtension> {
-    toolVersion = "10.3"
+    toolVersion = "10.3.4"
   }
 
-  extensions.configure<org.cadixdev.gradle.licenser.LicenseExtension> {
-    include("**/*.java")
-    header(rootProject.file("license_header.txt"))
+  extensions.configure<SpotlessExtension> {
+    java {
+      licenseHeaderFile(rootProject.file("license_header.txt"))
+    }
   }
 
   tasks.withType<Javadoc> {

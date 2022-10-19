@@ -61,6 +61,7 @@ import com.github.retrooper.packetevents.protocol.player.TextureProperty;
 import com.github.retrooper.packetevents.protocol.player.UserProfile;
 import com.github.retrooper.packetevents.protocol.world.Location;
 import com.github.retrooper.packetevents.settings.PacketEventsSettings;
+import com.github.retrooper.packetevents.util.AdventureSerializer;
 import com.github.retrooper.packetevents.util.TimeStampMode;
 import com.github.retrooper.packetevents.wrapper.PacketWrapper;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientInteractEntity;
@@ -76,8 +77,6 @@ import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPl
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSpawnPlayer;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.reflect.TypeToken;
-import io.github.retrooper.packetevents.adventure.serializer.gson.GsonComponentSerializer;
-import io.github.retrooper.packetevents.adventure.serializer.legacy.LegacyComponentSerializer;
 import io.github.retrooper.packetevents.factory.spigot.SpigotPacketEventsBuilder;
 import io.github.retrooper.packetevents.util.SpigotReflectionUtil;
 import java.lang.reflect.Type;
@@ -227,9 +226,9 @@ final class PacketEventsPacketAdapter implements PlatformPacketAdapter<World, Pl
               optionalComponent.map(component -> {
                 // build the component based on the given input
                 if (component.rawMessage() != null) {
-                  return LegacyComponentSerializer.legacySection().deserialize(component.rawMessage());
+                  return AdventureSerializer.fromLegacyFormat(component.rawMessage());
                 } else {
-                  return GsonComponentSerializer.gson().deserializeOrNull(component.encodedJsonMessage());
+                  return AdventureSerializer.getGsonSerializer().deserializeOrNull(component.encodedJsonMessage());
                 }
               }));
           } else {
