@@ -115,6 +115,47 @@ subprojects {
     publications.apply {
       create("maven", MavenPublication::class.java).apply {
         from(components.getByName("java"))
+
+        pom {
+          name.set(project.name)
+          description.set(project.description)
+          url.set("https://github.com/juliarn/NPC-Lib")
+
+          licenses {
+            license {
+              name.set("MIT")
+              url.set("https://opensource.org/licenses/MIT")
+            }
+          }
+
+          scm {
+            tag.set("HEAD")
+            url.set("git@github.com:juliarn/NPC-Lib.git")
+            connection.set("scm:git:git@github.com:juliarn/NPC-Lib.git")
+            developerConnection.set("scm:git:git@github.com:juliarn/NPC-Lib.git")
+          }
+
+          issueManagement {
+            system.set("GitHub Issues")
+            url.set("https://github.com/juliarn/NPC-Lib/issues")
+          }
+
+          ciManagement {
+            system.set("GitHub Actions")
+            url.set("https://github.com/juliarn/NPC-Lib/actions")
+          }
+
+          withXml {
+            val repositories = asNode().appendNode("repositories")
+            project.repositories.forEach {
+              if (it is MavenArtifactRepository && it.url.toString().startsWith("https://")) {
+                val repo = repositories.appendNode("repository")
+                repo.appendNode("id", it.name)
+                repo.appendNode("url", it.url.toString())
+              }
+            }
+          }
+        }
       }
     }
   }
