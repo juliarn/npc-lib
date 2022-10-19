@@ -111,8 +111,14 @@ public final class MinestomProtocolAdapter implements PlatformPacketAdapter<Inst
     ENTITY_POSE_CONVERTER.put(EntityPose.SWIMMING, Entity.Pose.SWIMMING);
     ENTITY_POSE_CONVERTER.put(EntityPose.SPIN_ATTACK, Entity.Pose.SPIN_ATTACK);
     ENTITY_POSE_CONVERTER.put(EntityPose.CROUCHING, Entity.Pose.SNEAKING);
-    //ENTITY_POSE_CONVERTER.put(EntityPose.LONG_JUMPING, Entity.Pose.LONG_JUMPING); // TODO: missing in Minestom
+    ENTITY_POSE_CONVERTER.put(EntityPose.LONG_JUMPING, Entity.Pose.LONG_JUMPING);
     ENTITY_POSE_CONVERTER.put(EntityPose.DYING, Entity.Pose.DYING);
+    ENTITY_POSE_CONVERTER.put(EntityPose.CROAKING, Entity.Pose.CROAKING);
+    ENTITY_POSE_CONVERTER.put(EntityPose.USING_TONGUE, Entity.Pose.USING_TONGUE);
+    ENTITY_POSE_CONVERTER.put(EntityPose.ROARING, Entity.Pose.ROARING);
+    ENTITY_POSE_CONVERTER.put(EntityPose.SNIFFING, Entity.Pose.SNIFFING);
+    ENTITY_POSE_CONVERTER.put(EntityPose.EMERGING, Entity.Pose.EMERGING);
+    ENTITY_POSE_CONVERTER.put(EntityPose.DIGGING, Entity.Pose.DIGGING);
 
     // associate hands with their respective minestom lib enum
     HAND_CONVERTER = new EnumMap<>(Player.Hand.class);
