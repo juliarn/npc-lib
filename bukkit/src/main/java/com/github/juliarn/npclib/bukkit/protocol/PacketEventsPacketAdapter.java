@@ -242,10 +242,10 @@ final class PacketEventsPacketAdapter implements PlatformPacketAdapter<World, Pl
       .build();
 
     ENTITY_DATA_TYPE_LOOKUP = ImmutableMap.<Type, EntityDataType<?>>builder()
-      .put(byte.class, EntityDataTypes.BYTE)
-      .put(int.class, EntityDataTypes.INT)
-      .put(float.class, EntityDataTypes.FLOAT)
-      .put(boolean.class, EntityDataTypes.BOOLEAN)
+      .put(Byte.class, EntityDataTypes.BYTE)
+      .put(Integer.class, EntityDataTypes.INT)
+      .put(Float.class, EntityDataTypes.FLOAT)
+      .put(Boolean.class, EntityDataTypes.BOOLEAN)
       .put(String.class, EntityDataTypes.STRING)
       .put(OPTIONAL_CHAT_COMPONENT_TYPE, EntityDataTypes.OPTIONAL_COMPONENT)
       .put(com.github.retrooper.packetevents.protocol.entity.pose.EntityPose.class, EntityDataTypes.ENTITY_POSE)
