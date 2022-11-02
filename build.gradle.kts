@@ -38,9 +38,20 @@ allprojects {
 
   repositories {
     mavenCentral()
-    maven("https://jitpack.io/")
     maven("https://repo.papermc.io/repository/maven-public/")
     maven("https://s01.oss.sonatype.org/content/repositories/snapshots/")
+
+    // more stable replacement for jitpack
+    maven("https://repository.derklaro.dev/releases/") {
+      mavenContent {
+        releasesOnly()
+      }
+    }
+    maven("https://repository.derklaro.dev/snapshots/") {
+      mavenContent {
+        snapshotsOnly()
+      }
+    }
   }
 }
 

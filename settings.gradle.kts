@@ -23,6 +23,7 @@
  */
 
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
+enableFeaturePreview("STABLE_CONFIGURATION_CACHE")
 
 rootProject.name = "npc-lib2"
 include(":api", ":common", ":bukkit", ":minestom", ":ext")
