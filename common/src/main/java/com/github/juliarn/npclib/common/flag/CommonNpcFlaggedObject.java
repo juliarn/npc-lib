@@ -48,6 +48,6 @@ public abstract class CommonNpcFlaggedObject implements NpcFlaggedObject {
   @Override
   @SuppressWarnings("unchecked")
   public @NotNull <T> Optional<T> flagValue(@NotNull NpcFlag<T> flag) {
-    return (Optional<T>) this.flags.get(flag);
+    return (Optional<T>) this.flags.getOrDefault(flag, Optional.empty());
   }
 }
