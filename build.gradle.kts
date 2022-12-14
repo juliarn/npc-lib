@@ -102,7 +102,7 @@ subprojects {
   }
 
   extensions.configure<CheckstyleExtension> {
-    toolVersion = "10.3.4"
+    toolVersion = "10.5.0"
   }
 
   extensions.configure<SpotlessExtension> {
