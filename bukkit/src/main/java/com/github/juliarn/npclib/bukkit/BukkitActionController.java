@@ -27,6 +27,7 @@ package com.github.juliarn.npclib.bukkit;
 import com.github.juliarn.npclib.api.Npc;
 import com.github.juliarn.npclib.api.NpcActionController;
 import com.github.juliarn.npclib.api.NpcTracker;
+import com.github.juliarn.npclib.api.PlatformVersionAccessor;
 import com.github.juliarn.npclib.api.Position;
 import com.github.juliarn.npclib.api.event.NpcEvent;
 import com.github.juliarn.npclib.api.event.ShowNpcEvent;
@@ -68,6 +69,7 @@ public final class BukkitActionController extends CommonNpcActionController impl
     @NotNull Map<NpcFlag<?>, Optional<?>> flags,
     @NotNull Plugin plugin,
     @NotNull EventBus<NpcEvent> eventBus,
+    @NotNull PlatformVersionAccessor versionAccessor,
     @NotNull NpcTracker<World, Player, ItemStack, Plugin> tracker
   ) {
     super(flags);
@@ -75,17 +77,21 @@ public final class BukkitActionController extends CommonNpcActionController impl
 
     // add all listeners
     plugin.getServer().getPluginManager().registerEvents(this, plugin);
-    eventBus.subscribe(ShowNpcEvent.Post.class, event -> {
-      // remove the npc from the tab list after the given amount of time (never smaller than 0 because of validation)
-      int tabRemovalTicks = this.flagValueOrDefault(TAB_REMOVAL_TICKS);
-      plugin.getServer().getScheduler().runTaskLaterAsynchronously(plugin, () -> {
-        // schedule the removal of the player from the tab list, can be done async
-        Player player = event.player();
-        event.npc().platform().packetFactory()
-          .createPlayerInfoPacket(PlayerInfoAction.REMOVE_PLAYER)
-          .schedule(player, event.npc());
-      }, tabRemovalTicks);
-    });
+
+    // register a listener for the post spawn event if we need to send out an update to remove the spawned player
+    if (!versionAccessor.atLeast(1, 19, 3)) {
+      eventBus.subscribe(ShowNpcEvent.Post.class, event -> {
+        // remove the npc from the tab list after the given amount of time (never smaller than 0 because of validation)
+        int tabRemovalTicks = this.flagValueOrDefault(TAB_REMOVAL_TICKS);
+        plugin.getServer().getScheduler().runTaskLaterAsynchronously(plugin, () -> {
+          // schedule the removal of the player from the tab list, can be done async
+          Player player = event.player();
+          event.npc().platform().packetFactory()
+            .createPlayerInfoPacket(PlayerInfoAction.REMOVE_PLAYER)
+            .schedule(player, event.npc());
+        }, tabRemovalTicks);
+      });
+    }
 
     // pre-calculate flag values
     int spawnDistance = this.flagValueOrDefault(SPAWN_DISTANCE);
@@ -98,13 +104,15 @@ public final class BukkitActionController extends CommonNpcActionController impl
   static @NotNull NpcActionController.Builder actionControllerBuilder(
     @NotNull Plugin plugin,
     @NotNull EventBus<NpcEvent> eventBus,
+    @NotNull PlatformVersionAccessor versionAccessor,
     @NotNull NpcTracker<World, Player, ItemStack, Plugin> npcTracker
   ) {
     Objects.requireNonNull(plugin, "plugin");
     Objects.requireNonNull(eventBus, "eventBus");
     Objects.requireNonNull(npcTracker, "npcTracker");
+    Objects.requireNonNull(versionAccessor, "versionAccessor");
 
-    return new BukkitActionControllerBuilder(plugin, eventBus, npcTracker);
+    return new BukkitActionControllerBuilder(plugin, eventBus, versionAccessor, npcTracker);
   }
 
   @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
@@ -202,21 +210,24 @@ public final class BukkitActionController extends CommonNpcActionController impl
 
     private final Plugin plugin;
     private final EventBus<NpcEvent> eventBus;
+    private final PlatformVersionAccessor versionAccessor;
     private final NpcTracker<World, Player, ItemStack, Plugin> npcTracker;
 
     public BukkitActionControllerBuilder(
       @NotNull Plugin plugin,
       @NotNull EventBus<NpcEvent> eventBus,
+      @NotNull PlatformVersionAccessor versionAccessor,
       @NotNull NpcTracker<World, Player, ItemStack, Plugin> npcTracker
     ) {
       this.plugin = plugin;
       this.eventBus = eventBus;
       this.npcTracker = npcTracker;
+      this.versionAccessor = versionAccessor;
     }
 
     @Override
     public @NotNull NpcActionController build() {
-      return new BukkitActionController(this.flags, this.plugin, this.eventBus, this.npcTracker);
+      return new BukkitActionController(this.flags, this.plugin, this.eventBus, this.versionAccessor, this.npcTracker);
     }
   }
 }

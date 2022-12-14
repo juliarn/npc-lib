@@ -73,6 +73,8 @@ import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEn
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityRotation;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityTeleport;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPlayerInfo;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPlayerInfoRemove;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPlayerInfoUpdate;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPluginMessage;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSpawnPlayer;
 import com.google.common.collect.ImmutableMap;
@@ -84,10 +86,12 @@ import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.function.BiFunction;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
@@ -120,6 +124,14 @@ final class PacketEventsPacketAdapter implements PlatformPacketAdapter<World, Pl
   // serializer converters for metadata
   private static final Map<Type, EntityDataType<?>> ENTITY_DATA_TYPE_LOOKUP;
   private static final Map<Type, BiFunction<PlatformVersionAccessor, Object, Map.Entry<Type, Object>>> SERIALIZER_CONVERTERS;
+
+  // static actions we need to send out for all player updates (since 1.19.3)
+  private static final EnumSet<WrapperPlayServerPlayerInfoUpdate.Action> ADD_ACTIONS = EnumSet.of(
+    WrapperPlayServerPlayerInfoUpdate.Action.ADD_PLAYER,
+    WrapperPlayServerPlayerInfoUpdate.Action.UPDATE_LISTED,
+    WrapperPlayServerPlayerInfoUpdate.Action.UPDATE_LATENCY,
+    WrapperPlayServerPlayerInfoUpdate.Action.UPDATE_GAME_MODE,
+    WrapperPlayServerPlayerInfoUpdate.Action.UPDATE_DISPLAY_NAME);
 
   static {
     // associate item slots actions with their respective packet events enum
@@ -312,16 +324,42 @@ final class PacketEventsPacketAdapter implements PlatformPacketAdapter<World, Pl
         userProfile.getTextureProperties().add(textureProperty);
       }
 
-      // create the player profile data
-      WrapperPlayServerPlayerInfo.PlayerData playerData = new WrapperPlayServerPlayerInfo.PlayerData(
-        null,
-        userProfile,
-        GameMode.CREATIVE,
-        20);
+      // the wrapper we want to send
+      PacketWrapper<?> wrapper;
 
-      // PlayerInfo (https://wiki.vg/Protocol#Player_Info)
-      WrapperPlayServerPlayerInfo.Action playerInfoAction = PLAYER_INFO_ACTION_CONVERTER.get(action);
-      WrapperPlayServerPlayerInfo wrapper = new WrapperPlayServerPlayerInfo(playerInfoAction, playerData);
+      // check if we need to apply the old handling or new handling
+      ServerVersion serverVersion = PacketEvents.getAPI().getServerManager().getVersion();
+      if (serverVersion.isNewerThanOrEquals(ServerVersion.V_1_19_3)) {
+        if (action == PlayerInfoAction.REMOVE_PLAYER) {
+          // PlayerRemove (https://wiki.vg/Protocol#Player_Remove)
+          List<UUID> uuidsToRemove = Collections.singletonList(profile.uniqueId());
+          wrapper = new WrapperPlayServerPlayerInfoRemove(uuidsToRemove);
+        } else {
+          // create the player
+          WrapperPlayServerPlayerInfoUpdate.PlayerInfo playerInfo = new WrapperPlayServerPlayerInfoUpdate.PlayerInfo(
+            profile.uniqueId(),
+            userProfile,
+            false,
+            20,
+            GameMode.CREATIVE,
+            null,
+            null);
+
+          // PlayerInfo (https://wiki.vg/Protocol#Player_Info)
+          wrapper = new WrapperPlayServerPlayerInfoUpdate(ADD_ACTIONS, Collections.singletonList(playerInfo));
+        }
+      } else {
+        // create the player profile data
+        WrapperPlayServerPlayerInfo.PlayerData playerData = new WrapperPlayServerPlayerInfo.PlayerData(
+          null,
+          userProfile,
+          GameMode.CREATIVE,
+          20);
+
+        // PlayerInfo (https://wiki.vg/Protocol#Player_Info)
+        WrapperPlayServerPlayerInfo.Action playerInfoAction = PLAYER_INFO_ACTION_CONVERTER.get(action);
+        wrapper = new WrapperPlayServerPlayerInfo(playerInfoAction, playerData);
+      }
 
       // send the packet without notifying any listeners
       this.packetPlayerManager.sendPacketSilently(player, wrapper);

@@ -30,13 +30,17 @@ import com.comphenix.protocol.ProtocolManager;
 import com.comphenix.protocol.events.PacketAdapter;
 import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.events.PacketEvent;
+import com.comphenix.protocol.reflect.EquivalentConverter;
 import com.comphenix.protocol.utility.MinecraftReflection;
 import com.comphenix.protocol.utility.MinecraftVersion;
+import com.comphenix.protocol.wrappers.BukkitConverters;
+import com.comphenix.protocol.wrappers.Converters;
 import com.comphenix.protocol.wrappers.EnumWrappers;
 import com.comphenix.protocol.wrappers.MinecraftKey;
 import com.comphenix.protocol.wrappers.Pair;
 import com.comphenix.protocol.wrappers.PlayerInfoData;
 import com.comphenix.protocol.wrappers.WrappedChatComponent;
+import com.comphenix.protocol.wrappers.WrappedDataValue;
 import com.comphenix.protocol.wrappers.WrappedDataWatcher;
 import com.comphenix.protocol.wrappers.WrappedEnumEntityUseAction;
 import com.comphenix.protocol.wrappers.WrappedGameProfile;
@@ -68,11 +72,14 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.AbstractMap;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.EnumMap;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.function.BiFunction;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
@@ -101,6 +108,18 @@ final class ProtocolLibPacketAdapter implements PlatformPacketAdapter<World, Pla
 
   // serializer converters for metadata
   private static final Map<Type, BiFunction<PlatformVersionAccessor, Object, Map.Entry<Type, Object>>> SERIALIZER_CONVERTERS;
+
+  // converter for uuid lists
+  private static final EquivalentConverter<List<UUID>> UUID_LIST_CONVERTER = BukkitConverters.getListConverter(
+    Converters.passthrough(UUID.class));
+
+  // static actions we need to send out for all player updates (since 1.19.3)
+  private static final EnumSet<EnumWrappers.PlayerInfoAction> ADD_ACTIONS = EnumSet.of(
+    EnumWrappers.PlayerInfoAction.ADD_PLAYER,
+    EnumWrappers.PlayerInfoAction.UPDATE_LISTED,
+    EnumWrappers.PlayerInfoAction.UPDATE_LATENCY,
+    EnumWrappers.PlayerInfoAction.UPDATE_GAME_MODE,
+    EnumWrappers.PlayerInfoAction.UPDATE_DISPLAY_NAME);
 
   static {
     // associate item slots with their respective protocol lib enum
@@ -141,6 +160,10 @@ final class ProtocolLibPacketAdapter implements PlatformPacketAdapter<World, Pla
         ENTITY_POSE_CONVERTER.put(EntityPose.SNIFFING, EnumWrappers.EntityPose.SNIFFING.toNms());
         ENTITY_POSE_CONVERTER.put(EntityPose.EMERGING, EnumWrappers.EntityPose.EMERGING.toNms());
         ENTITY_POSE_CONVERTER.put(EntityPose.DIGGING, EnumWrappers.EntityPose.DIGGING.toNms());
+      }
+      // 1.19.3+
+      if (MinecraftVersion.FEATURE_PREVIEW_UPDATE.atOrAbove()) {
+        ENTITY_POSE_CONVERTER.put(EntityPose.SITTING, EnumWrappers.EntityPose.SITTING.toNms());
       }
     }
 
@@ -283,35 +306,55 @@ final class ProtocolLibPacketAdapter implements PlatformPacketAdapter<World, Pla
   public @NotNull OutboundPacket<World, Player, ItemStack, Plugin> createPlayerInfoPacket(
     @NotNull PlayerInfoAction action
   ) {
-    return (player, npc) -> {
+    return (player, npc) -> npc.settings().profileResolver().resolveNpcProfile(player, npc).thenAcceptAsync(profile -> {
+      // since 1.19.3 removing of players is handled in a separate packet
+      if (action == PlayerInfoAction.REMOVE_PLAYER && MinecraftVersion.FEATURE_PREVIEW_UPDATE.atOrAbove()) {
+        // PlayerRemove (https://wiki.vg/Protocol#Player_Remove)
+        PacketContainer container = new PacketContainer(PacketType.Play.Server.PLAYER_INFO_REMOVE);
+
+        // write the npc uuid to remove
+        List<UUID> uuidsToRemove = Collections.singletonList(profile.uniqueId());
+        container.getModifier().withType(List.class, UUID_LIST_CONVERTER).write(0, uuidsToRemove);
+
+        // send the packet without notifying any bound packet listeners
+        PROTOCOL_MANAGER.sendServerPacket(player, container, false);
+        return;
+      }
+
       // PlayerInfo (https://wiki.vg/Protocol#Player_Info)
       PacketContainer container = new PacketContainer(PacketType.Play.Server.PLAYER_INFO);
 
       // action
-      EnumWrappers.PlayerInfoAction playerInfoAction = PLAYER_INFO_ACTION_CONVERTER.get(action);
-      container.getPlayerInfoAction().write(0, playerInfoAction);
+      if (MinecraftVersion.FEATURE_PREVIEW_UPDATE.atOrAbove()) {
+        // at this point the only way this could be called is because we want to register a new player
+        container.getPlayerInfoActions().write(0, ADD_ACTIONS);
+      } else {
+        // old system, just add the translated action
+        EnumWrappers.PlayerInfoAction playerInfoAction = PLAYER_INFO_ACTION_CONVERTER.get(action);
+        container.getPlayerInfoAction().write(0, playerInfoAction);
+      }
 
-      // player info
-      npc.settings().profileResolver().resolveNpcProfile(player, npc).thenAcceptAsync(resolvedProfile -> {
-        // convert to a protocol lib profile
-        WrappedGameProfile profile = new WrappedGameProfile(resolvedProfile.uniqueId(), resolvedProfile.name());
-        for (ProfileProperty prop : resolvedProfile.properties()) {
-          WrappedSignedProperty wrapped = new WrappedSignedProperty(prop.name(), prop.value(), prop.signature());
-          profile.getProperties().put(prop.name(), wrapped);
-        }
+      // convert to a protocol lib profile
+      WrappedGameProfile wrappedGameProfile = new WrappedGameProfile(profile.uniqueId(), profile.name());
+      for (ProfileProperty prop : profile.properties()) {
+        WrappedSignedProperty wrapped = new WrappedSignedProperty(prop.name(), prop.value(), prop.signature());
+        wrappedGameProfile.getProperties().put(prop.name(), wrapped);
+      }
 
-        // add the player info data
-        PlayerInfoData playerInfoData = new PlayerInfoData(
-          profile,
-          20,
-          EnumWrappers.NativeGameMode.CREATIVE,
-          null);
-        container.getPlayerInfoDataLists().write(0, Lists.newArrayList(playerInfoData));
+      // add the player info data
+      PlayerInfoData playerInfoData = new PlayerInfoData(
+        profile.uniqueId(),
+        20,
+        false,
+        EnumWrappers.NativeGameMode.CREATIVE,
+        wrappedGameProfile,
+        null,
+        null);
+      container.getPlayerInfoDataLists().write(0, Lists.newArrayList(playerInfoData));
 
-        // send the packet without notifying any bound packet listeners
-        PROTOCOL_MANAGER.sendServerPacket(player, container, false);
-      });
-    };
+      // send the packet without notifying any bound packet listeners
+      PROTOCOL_MANAGER.sendServerPacket(player, container, false);
+    });
   }
 
   @Override
@@ -489,9 +532,27 @@ final class ProtocolLibPacketAdapter implements PlatformPacketAdapter<World, Pla
       // EntityMetadata (https://wiki.vg/Protocol#Entity_Metadata)
       PacketContainer container = new PacketContainer(PacketType.Play.Server.ENTITY_METADATA);
 
-      // entity id & metadata
+      // entity id
       container.getIntegers().write(0, npc.entityId());
-      container.getWatchableCollectionModifier().write(0, watchableObjects);
+
+      // since 1.19.3 the metadata is wrapped in a specified object, we therefore need to convert all values
+      if (MinecraftVersion.FEATURE_PREVIEW_UPDATE.atOrAbove()) {
+        // convert the given values
+        List<WrappedDataValue> wrappedDataValues = new ArrayList<>(watchableObjects.size());
+        for (WrappedWatchableObject object : watchableObjects) {
+          WrappedDataValue dataValue = new WrappedDataValue(
+            object.getIndex(),
+            object.getWatcherObject().getSerializer(),
+            object.getRawValue());
+          wrappedDataValues.add(dataValue);
+        }
+
+        // write the data values
+        container.getDataValueCollectionModifier().write(0, wrappedDataValues);
+      } else {
+        // entity id & metadata
+        container.getWatchableCollectionModifier().write(0, watchableObjects);
+      }
 
       // send the packet without notifying any bound packet listeners
       PROTOCOL_MANAGER.sendServerPacket(player, container, false);

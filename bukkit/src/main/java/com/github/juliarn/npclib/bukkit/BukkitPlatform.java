@@ -86,6 +86,7 @@ public final class BukkitPlatform extends CommonPlatformBuilder<World, Player, I
       NpcActionController.Builder builder = BukkitActionController.actionControllerBuilder(
         this.extension,
         this.eventBus,
+        this.versionAccessor,
         this.npcTracker);
       this.actionControllerDecorator.accept(builder);
       actionController = builder.build();
