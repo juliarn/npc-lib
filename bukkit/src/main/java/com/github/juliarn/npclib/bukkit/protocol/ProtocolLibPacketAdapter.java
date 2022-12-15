@@ -325,8 +325,10 @@ final class ProtocolLibPacketAdapter implements PlatformPacketAdapter<World, Pla
       PacketContainer container = new PacketContainer(PacketType.Play.Server.PLAYER_INFO);
 
       // action
+      int playerInfoDataIndex = 0;
       if (MinecraftVersion.FEATURE_PREVIEW_UPDATE.atOrAbove()) {
         // at this point the only way this could be called is because we want to register a new player
+        playerInfoDataIndex = 1;
         container.getPlayerInfoActions().write(0, ADD_ACTIONS);
       } else {
         // old system, just add the translated action
@@ -350,7 +352,7 @@ final class ProtocolLibPacketAdapter implements PlatformPacketAdapter<World, Pla
         wrappedGameProfile,
         null,
         null);
-      container.getPlayerInfoDataLists().write(0, Lists.newArrayList(playerInfoData));
+      container.getPlayerInfoDataLists().write(playerInfoDataIndex, Lists.newArrayList(playerInfoData));
 
       // send the packet without notifying any bound packet listeners
       PROTOCOL_MANAGER.sendServerPacket(player, container, false);
