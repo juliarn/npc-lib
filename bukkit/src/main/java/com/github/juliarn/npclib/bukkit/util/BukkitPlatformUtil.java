@@ -28,6 +28,7 @@ import static org.bukkit.util.NumberConversions.square;
 
 import com.github.juliarn.npclib.api.Npc;
 import com.github.juliarn.npclib.api.Position;
+import io.papermc.lib.PaperLib;
 import org.bukkit.Location;
 import org.jetbrains.annotations.NotNull;
 
@@ -43,12 +44,18 @@ public final class BukkitPlatformUtil {
   }
 
   public static @NotNull Position positionFromBukkit(@NotNull Location loc) {
+    String worldId = loc.getWorld().getName();
+
+    if (PaperLib.isPaper() && PaperLib.isVersion(16, 5)) {
+      worldId = loc.getWorld().getKey().asString();
+    }
+
     return Position.position(
       loc.getX(),
       loc.getY(),
       loc.getZ(),
       loc.getYaw(),
       loc.getPitch(),
-      loc.getWorld().getName());
+      worldId);
   }
 }
