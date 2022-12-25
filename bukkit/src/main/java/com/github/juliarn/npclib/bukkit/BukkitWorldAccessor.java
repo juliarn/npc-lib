@@ -76,7 +76,7 @@ public final class BukkitWorldAccessor {
 
     @Override
     public @NotNull String extractWorldIdentifier(@NotNull World world) {
-      return world.getKey().asString();
+      return world.getKey().toString();
     }
 
     @Override

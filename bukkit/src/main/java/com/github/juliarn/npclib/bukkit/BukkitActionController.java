@@ -152,7 +152,7 @@ public final class BukkitActionController extends CommonNpcActionController impl
           && npc.tracksPlayer(player)
           && distance <= this.imitateDistance
           && npc.flagValueOrDefault(Npc.LOOK_AT_PLAYER)) {
-          npc.lookAt(BukkitPlatformUtil.positionFromBukkit(to)).schedule(player);
+          npc.lookAt(BukkitPlatformUtil.positionFromBukkitLegacy(to)).schedule(player);
         }
       }
     }

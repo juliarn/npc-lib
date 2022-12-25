@@ -42,7 +42,7 @@ public final class BukkitPlatformUtil {
     return square(location.getX() - pos.x()) + square(location.getY() - pos.y()) + square(location.getZ() - pos.z());
   }
 
-  public static @NotNull Position positionFromBukkit(@NotNull Location loc) {
+  public static @NotNull Position positionFromBukkitLegacy(@NotNull Location loc) {
     return Position.position(
       loc.getX(),
       loc.getY(),
@@ -50,5 +50,15 @@ public final class BukkitPlatformUtil {
       loc.getYaw(),
       loc.getPitch(),
       loc.getWorld().getName());
+  }
+
+  public static @NotNull Position positionFromBukkitModern(@NotNull Location loc) {
+    return Position.position(
+      loc.getX(),
+      loc.getY(),
+      loc.getZ(),
+      loc.getYaw(),
+      loc.getPitch(),
+      loc.getWorld().getKey().toString());
   }
 }
