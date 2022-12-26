@@ -1,0 +1,4 @@
+before_install:
+  - sdk update
+  - sdk install java 17.0.5-zulu
+  - sdk use java 17.0.5-zulu
