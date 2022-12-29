@@ -36,7 +36,5 @@ tasks.withType<JavaCompile> {
 
 tasks.withType<ShadowJar> {
   dependsOn(":common:shadowJar")
-
-  minimize()
   relocate("com.google.gson", "com.github.juliarn.npclib.relocate.gson")
 }
