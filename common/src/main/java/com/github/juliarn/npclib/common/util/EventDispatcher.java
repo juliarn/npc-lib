@@ -46,18 +46,41 @@ public final class EventDispatcher {
 
     // check if we need to print out if something failed during execution
     Map<EventSubscriber<?>, Throwable> exceptions = result.exceptions();
-    if (platform.debug() && !exceptions.isEmpty()) {
+    if (!exceptions.isEmpty()) {
       // print all exceptions
       for (Map.Entry<EventSubscriber<?>, Throwable> entry : exceptions.entrySet()) {
-        platform.logger().error(String.format(
-            "Subscriber %s was unable to handle %s:",
-            entry.getKey().getClass().getName(),
-            event.getClass().getSimpleName()),
-          entry.getValue());
+        // rethrow fatal exceptions instantly
+        Throwable thrown = entry.getValue();
+        if (isFatal(thrown)) {
+          throwUnchecked(thrown);
+        }
+
+        // sanely log the thrown exception if debug is enabled
+        if (platform.debug()) {
+          platform.logger().error(String.format(
+              "Subscriber %s was unable to handle %s:",
+              entry.getKey().getClass().getName(),
+              event.getClass().getSimpleName()),
+            thrown);
+        }
       }
     }
 
     // the same event instance, for chaining
     return event;
+  }
+
+  private static boolean isFatal(@NotNull Throwable throwable) {
+    // this includes the most fatal errors that can occur on a thread which we should not
+    // silently ignore and rethrow
+    return throwable instanceof InterruptedException
+      || throwable instanceof LinkageError
+      || throwable instanceof ThreadDeath
+      || throwable instanceof VirtualMachineError;
+  }
+
+  @SuppressWarnings("unchecked")
+  private static <T extends Throwable> void throwUnchecked(@NotNull Throwable throwable) throws T {
+    throw (T) throwable;
   }
 }
