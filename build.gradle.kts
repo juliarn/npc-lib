@@ -79,6 +79,11 @@ subprojects {
 
   tasks.withType<ShadowJar> {
     archiveClassifier.set(null as String?)
+    dependencies {
+      // excludes the META-INF directory, module infos & html files of all dependencies
+      // this includes for example maven lib files & multi-release module-json files
+      exclude("META-INF/**", "**/*.html", "module-info.*")
+    }
   }
 
   tasks.withType<JavaCompile>().configureEach {

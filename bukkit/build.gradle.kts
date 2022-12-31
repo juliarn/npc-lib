@@ -43,7 +43,7 @@ tasks.withType<ShadowJar> {
   relocate("io.github.retrooper", "com.github.juliarn.npclib.relocate.io.packetevents")
   relocate("com.github.retrooper", "com.github.juliarn.npclib.relocate.com.packetevents")
 
-  exclude {
-    it.name == "plugin.yml"
+  dependencies {
+    exclude("plugin.yml")
   }
 }
