@@ -1,5 +1,3 @@
-metadata.format.version = "1.1"
-
 [versions]
 
 # plugins
@@ -16,7 +14,6 @@ event = "5.0.0-SNAPSHOT"
 # platform api versions
 sponge = "10.0.0"
 minestom = "42195c536b"
-nukkitX = "1.0-SNAPSHOT"
 paper = "1.19.3-R0.1-SNAPSHOT"
 
 # platform extensions
@@ -34,7 +31,6 @@ gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
 annotations = { group = "org.jetbrains", name = "annotations", version.ref = "annotations" }
 
 # platform api
-nukkitX = { group = "cn.nukkit", name = "nukkit", version.ref = "nukkitX" }
 paper = { group = "io.papermc.paper", name = "paper-api", version.ref = "paper" }
 sponge = { group = "org.spongepowered", name = "spongeapi", version.ref = "sponge" }
 minestom = { group = "com.github.Minestom", name = "Minestom", version.ref = "minestom" }
