@@ -115,155 +115,6 @@ final class PacketEventsPacketAdapter implements PlatformPacketAdapter<World, Pl
     net.kyori.adventure.text.Component.class
   ).getType();
 
-  private static final EnumMap<ItemSlot, EquipmentSlot> ITEM_SLOT_CONVERTER;
-  private static final EnumMap<InteractionHand, InteractNpcEvent.Hand> HAND_CONVERTER;
-  private static final EnumMap<PlayerInfoAction, WrapperPlayServerPlayerInfo.Action> PLAYER_INFO_ACTION_CONVERTER;
-  private static final EnumMap<EntityAnimation, WrapperPlayServerEntityAnimation.EntityAnimationType> ENTITY_ANIMATION_CONVERTER;
-  private static final EnumMap<EntityPose, com.github.retrooper.packetevents.protocol.entity.pose.EntityPose> ENTITY_POSE_CONVERTER;
-
-  // serializer converters for metadata
-  private static final Map<Type, EntityDataType<?>> ENTITY_DATA_TYPE_LOOKUP;
-  private static final Map<Type, BiFunction<PlatformVersionAccessor, Object, Map.Entry<Type, Object>>> SERIALIZER_CONVERTERS;
-
-  // static actions we need to send out for all player updates (since 1.19.3)
-  private static final EnumSet<WrapperPlayServerPlayerInfoUpdate.Action> ADD_ACTIONS = EnumSet.of(
-    WrapperPlayServerPlayerInfoUpdate.Action.ADD_PLAYER,
-    WrapperPlayServerPlayerInfoUpdate.Action.UPDATE_LISTED,
-    WrapperPlayServerPlayerInfoUpdate.Action.UPDATE_LATENCY,
-    WrapperPlayServerPlayerInfoUpdate.Action.UPDATE_GAME_MODE,
-    WrapperPlayServerPlayerInfoUpdate.Action.UPDATE_DISPLAY_NAME);
-
-  static {
-    // associate item slots actions with their respective packet events enum
-    ITEM_SLOT_CONVERTER = new EnumMap<>(ItemSlot.class);
-    ITEM_SLOT_CONVERTER.put(ItemSlot.MAIN_HAND, EquipmentSlot.MAIN_HAND);
-    ITEM_SLOT_CONVERTER.put(ItemSlot.OFF_HAND, EquipmentSlot.OFF_HAND);
-    ITEM_SLOT_CONVERTER.put(ItemSlot.FEET, EquipmentSlot.BOOTS);
-    ITEM_SLOT_CONVERTER.put(ItemSlot.LEGS, EquipmentSlot.LEGGINGS);
-    ITEM_SLOT_CONVERTER.put(ItemSlot.CHEST, EquipmentSlot.CHEST_PLATE);
-    ITEM_SLOT_CONVERTER.put(ItemSlot.HEAD, EquipmentSlot.HELMET);
-
-    // associate hand actions with their respective packet events enum
-    HAND_CONVERTER = new EnumMap<>(InteractionHand.class);
-    HAND_CONVERTER.put(InteractionHand.MAIN_HAND, InteractNpcEvent.Hand.MAIN_HAND);
-    HAND_CONVERTER.put(InteractionHand.OFF_HAND, InteractNpcEvent.Hand.OFF_HAND);
-
-    // associate player info actions with their respective packet events enum
-    PLAYER_INFO_ACTION_CONVERTER = new EnumMap<>(PlayerInfoAction.class);
-    PLAYER_INFO_ACTION_CONVERTER.put(PlayerInfoAction.ADD_PLAYER, WrapperPlayServerPlayerInfo.Action.ADD_PLAYER);
-    PLAYER_INFO_ACTION_CONVERTER.put(PlayerInfoAction.REMOVE_PLAYER, WrapperPlayServerPlayerInfo.Action.REMOVE_PLAYER);
-
-    // associate entity animations with their respective packet events enum
-    ENTITY_ANIMATION_CONVERTER = new EnumMap<>(EntityAnimation.class);
-    ENTITY_ANIMATION_CONVERTER.put(
-      EntityAnimation.SWING_MAIN_ARM,
-      WrapperPlayServerEntityAnimation.EntityAnimationType.SWING_MAIN_ARM);
-    ENTITY_ANIMATION_CONVERTER.put(
-      EntityAnimation.TAKE_DAMAGE,
-      WrapperPlayServerEntityAnimation.EntityAnimationType.HURT);
-    ENTITY_ANIMATION_CONVERTER.put(
-      EntityAnimation.LEAVE_BED,
-      WrapperPlayServerEntityAnimation.EntityAnimationType.WAKE_UP);
-    ENTITY_ANIMATION_CONVERTER.put(
-      EntityAnimation.SWING_OFF_HAND,
-      WrapperPlayServerEntityAnimation.EntityAnimationType.SWING_OFF_HAND);
-    ENTITY_ANIMATION_CONVERTER.put(
-      EntityAnimation.CRITICAL_EFFECT,
-      WrapperPlayServerEntityAnimation.EntityAnimationType.CRITICAL_HIT);
-    ENTITY_ANIMATION_CONVERTER.put(
-      EntityAnimation.MAGIC_CRITICAL_EFFECT,
-      WrapperPlayServerEntityAnimation.EntityAnimationType.MAGIC_CRITICAL_HIT);
-
-    // associate entity poses with their respective packet events enum
-    ENTITY_POSE_CONVERTER = new EnumMap<>(EntityPose.class);
-    ENTITY_POSE_CONVERTER.put(
-      EntityPose.STANDING,
-      com.github.retrooper.packetevents.protocol.entity.pose.EntityPose.STANDING);
-    ENTITY_POSE_CONVERTER.put(
-      EntityPose.FALL_FLYING,
-      com.github.retrooper.packetevents.protocol.entity.pose.EntityPose.FALL_FLYING);
-    ENTITY_POSE_CONVERTER.put(
-      EntityPose.SLEEPING,
-      com.github.retrooper.packetevents.protocol.entity.pose.EntityPose.SLEEPING);
-    ENTITY_POSE_CONVERTER.put(
-      EntityPose.SWIMMING,
-      com.github.retrooper.packetevents.protocol.entity.pose.EntityPose.SWIMMING);
-    ENTITY_POSE_CONVERTER.put(
-      EntityPose.SPIN_ATTACK,
-      com.github.retrooper.packetevents.protocol.entity.pose.EntityPose.SPIN_ATTACK);
-    ENTITY_POSE_CONVERTER.put(
-      EntityPose.CROUCHING,
-      com.github.retrooper.packetevents.protocol.entity.pose.EntityPose.CROUCHING);
-    ENTITY_POSE_CONVERTER.put(
-      EntityPose.LONG_JUMPING,
-      com.github.retrooper.packetevents.protocol.entity.pose.EntityPose.LONG_JUMPING);
-    ENTITY_POSE_CONVERTER.put(
-      EntityPose.DYING,
-      com.github.retrooper.packetevents.protocol.entity.pose.EntityPose.DYING);
-    ENTITY_POSE_CONVERTER.put(
-      EntityPose.CROAKING,
-      com.github.retrooper.packetevents.protocol.entity.pose.EntityPose.CROAKING);
-    ENTITY_POSE_CONVERTER.put(
-      EntityPose.USING_TONGUE,
-      com.github.retrooper.packetevents.protocol.entity.pose.EntityPose.USING_TONGUE);
-    ENTITY_POSE_CONVERTER.put(
-      EntityPose.ROARING,
-      com.github.retrooper.packetevents.protocol.entity.pose.EntityPose.ROARING);
-    ENTITY_POSE_CONVERTER.put(
-      EntityPose.SNIFFING,
-      com.github.retrooper.packetevents.protocol.entity.pose.EntityPose.SNIFFING);
-    ENTITY_POSE_CONVERTER.put(
-      EntityPose.EMERGING,
-      com.github.retrooper.packetevents.protocol.entity.pose.EntityPose.EMERGING);
-    ENTITY_POSE_CONVERTER.put(
-      EntityPose.DIGGING,
-      com.github.retrooper.packetevents.protocol.entity.pose.EntityPose.DIGGING);
-
-    // meta serializers
-    //noinspection SuspiciousMethodCalls
-    SERIALIZER_CONVERTERS = ImmutableMap.<Type, BiFunction<PlatformVersionAccessor, Object, Map.Entry<Type, Object>>>builder()
-      .put(EntityPose.class, ($, value) -> new AbstractMap.SimpleImmutableEntry<>(
-        com.github.retrooper.packetevents.protocol.entity.pose.EntityPose.class,
-        ENTITY_POSE_CONVERTER.get(value)))
-      .put(
-        TypeToken.getParameterized(Optional.class, Component.class).getType(),
-        (versionAccessor, value) -> {
-          //noinspection unchecked
-          Optional<Component> optionalComponent = (Optional<Component>) value;
-          // check if the display name is wrapped in a component
-          if (versionAccessor.atLeast(1, 13, 0)) {
-            // construct the entry
-            return new AbstractMap.SimpleImmutableEntry<>(
-              OPTIONAL_CHAT_COMPONENT_TYPE,
-              optionalComponent.map(component -> {
-                // build the component based on the given input
-                if (component.rawMessage() != null) {
-                  return AdventureSerializer.fromLegacyFormat(component.rawMessage());
-                } else {
-                  return AdventureSerializer.getGsonSerializer().deserializeOrNull(component.encodedJsonMessage());
-                }
-              }));
-          } else {
-            return new AbstractMap.SimpleImmutableEntry<>(String.class, optionalComponent
-              .map(component -> Objects.requireNonNull(
-                component.rawMessage(),
-                "Versions older than 1.13 don't support json component"))
-              .orElse(null));
-          }
-        })
-      .build();
-
-    ENTITY_DATA_TYPE_LOOKUP = ImmutableMap.<Type, EntityDataType<?>>builder()
-      .put(Byte.class, EntityDataTypes.BYTE)
-      .put(Integer.class, EntityDataTypes.INT)
-      .put(Float.class, EntityDataTypes.FLOAT)
-      .put(Boolean.class, EntityDataTypes.BOOLEAN)
-      .put(String.class, EntityDataTypes.STRING)
-      .put(OPTIONAL_CHAT_COMPONENT_TYPE, EntityDataTypes.OPTIONAL_COMPONENT)
-      .put(com.github.retrooper.packetevents.protocol.entity.pose.EntityPose.class, EntityDataTypes.ENTITY_POSE)
-      .build();
-  }
-
   // lazy initialized, then never null again
   private ServerVersion serverVersion;
   private PlayerManager packetPlayerManager;
@@ -280,7 +131,8 @@ final class PacketEventsPacketAdapter implements PlatformPacketAdapter<World, Pl
     @NotNull PlatformVersionAccessor versionAccessor
   ) {
     // pre-convert the value if needed
-    BiFunction<PlatformVersionAccessor, Object, Map.Entry<Type, Object>> converter = SERIALIZER_CONVERTERS.get(type);
+    BiFunction<PlatformVersionAccessor, Object, Map.Entry<Type, Object>> converter
+      = Lazy.SERIALIZER_CONVERTERS.get(type);
     if (converter != null) {
       Map.Entry<Type, Object> converted = converter.apply(versionAccessor, value);
       // re-assign the type and value
@@ -288,7 +140,7 @@ final class PacketEventsPacketAdapter implements PlatformPacketAdapter<World, Pl
       value = converted.getValue();
     }
 
-    return new EntityData(index, ENTITY_DATA_TYPE_LOOKUP.get(type), value);
+    return new EntityData(index, Lazy.ENTITY_DATA_TYPE_LOOKUP.get(type), value);
   }
 
   @Override
@@ -346,7 +198,7 @@ final class PacketEventsPacketAdapter implements PlatformPacketAdapter<World, Pl
             null);
 
           // PlayerInfo (https://wiki.vg/Protocol#Player_Info)
-          wrapper = new WrapperPlayServerPlayerInfoUpdate(ADD_ACTIONS, Collections.singletonList(playerInfo));
+          wrapper = new WrapperPlayServerPlayerInfoUpdate(Lazy.ADD_ACTIONS, Collections.singletonList(playerInfo));
         }
       } else {
         // create the player profile data
@@ -357,7 +209,7 @@ final class PacketEventsPacketAdapter implements PlatformPacketAdapter<World, Pl
           20);
 
         // PlayerInfo (https://wiki.vg/Protocol#Player_Info)
-        WrapperPlayServerPlayerInfo.Action playerInfoAction = PLAYER_INFO_ACTION_CONVERTER.get(action);
+        WrapperPlayServerPlayerInfo.Action playerInfoAction = Lazy.PLAYER_INFO_ACTION_CONVERTER.get(action);
         wrapper = new WrapperPlayServerPlayerInfo(playerInfoAction, playerData);
       }
 
@@ -396,7 +248,8 @@ final class PacketEventsPacketAdapter implements PlatformPacketAdapter<World, Pl
   ) {
     return (player, npc) -> {
       // EntityAnimation (https://wiki.vg/Protocol#Entity_Animation_.28clientbound.29)
-      WrapperPlayServerEntityAnimation.EntityAnimationType animationType = ENTITY_ANIMATION_CONVERTER.get(animation);
+      WrapperPlayServerEntityAnimation.EntityAnimationType animationType
+        = Lazy.ENTITY_ANIMATION_CONVERTER.get(animation);
       PacketWrapper<?> wrapper = new WrapperPlayServerEntityAnimation(npc.entityId(), animationType);
 
       // send the packet without notifying any listeners
@@ -410,7 +263,7 @@ final class PacketEventsPacketAdapter implements PlatformPacketAdapter<World, Pl
     @NotNull ItemStack item
   ) {
     return (player, npc) -> {
-      EquipmentSlot equipmentSlot = ITEM_SLOT_CONVERTER.get(slot);
+      EquipmentSlot equipmentSlot = Lazy.ITEM_SLOT_CONVERTER.get(slot);
       com.github.retrooper.packetevents.protocol.item.ItemStack is = SpigotReflectionUtil.decodeBukkitItemStack(item);
 
       // EntityEquipment (https://wiki.vg/Protocol#Entity_Equipment)
@@ -475,17 +328,19 @@ final class PacketEventsPacketAdapter implements PlatformPacketAdapter<World, Pl
 
   @Override
   public void initialize(@NotNull Platform<World, Player, ItemStack, Plugin> platform) {
-    // build and initialize the packet events api
+    // build the packet events api
     PacketEventsAPI<Plugin> packetEventsApi = SpigotPacketEventsBuilder.buildNoCache(
       platform.extension(),
       PACKET_EVENTS_SETTINGS);
-    packetEventsApi.init();
 
     // while I am not the biggest fan of that, it looks like
     // that packet events is using the instance internally everywhere
     // instead of passing the created instance around, which leaves us
     // no choice than setting it as well :/
     PacketEvents.setAPI(packetEventsApi);
+
+    // ensure that our api instance is initialized
+    packetEventsApi.init();
 
     // store the packet player manager & server version
     this.packetPlayerManager = packetEventsApi.getPlayerManager();
@@ -520,7 +375,7 @@ final class PacketEventsPacketAdapter implements PlatformPacketAdapter<World, Pl
               EventDispatcher.dispatch(this.platform, DefaultAttackNpcEvent.attackNpc(npc, player));
               break;
             case INTERACT:
-              InteractNpcEvent.Hand hand = HAND_CONVERTER.get(packet.getHand());
+              InteractNpcEvent.Hand hand = Lazy.HAND_CONVERTER.get(packet.getHand());
               EventDispatcher.dispatch(this.platform, DefaultInteractNpcEvent.interactNpc(npc, player, hand));
               break;
             default:
@@ -532,6 +387,159 @@ final class PacketEventsPacketAdapter implements PlatformPacketAdapter<World, Pl
           event.setCancelled(true);
         }
       }
+    }
+  }
+
+  private static final class Lazy {
+
+    private static final EnumMap<ItemSlot, EquipmentSlot> ITEM_SLOT_CONVERTER;
+    private static final EnumMap<InteractionHand, InteractNpcEvent.Hand> HAND_CONVERTER;
+    private static final EnumMap<PlayerInfoAction, WrapperPlayServerPlayerInfo.Action> PLAYER_INFO_ACTION_CONVERTER;
+    private static final EnumMap<EntityAnimation, WrapperPlayServerEntityAnimation.EntityAnimationType> ENTITY_ANIMATION_CONVERTER;
+    private static final EnumMap<EntityPose, com.github.retrooper.packetevents.protocol.entity.pose.EntityPose> ENTITY_POSE_CONVERTER;
+
+    // serializer converters for metadata
+    private static final Map<Type, EntityDataType<?>> ENTITY_DATA_TYPE_LOOKUP;
+    private static final Map<Type, BiFunction<PlatformVersionAccessor, Object, Map.Entry<Type, Object>>> SERIALIZER_CONVERTERS;
+
+    // static actions we need to send out for all player updates (since 1.19.3)
+    private static final EnumSet<WrapperPlayServerPlayerInfoUpdate.Action> ADD_ACTIONS = EnumSet.of(
+      WrapperPlayServerPlayerInfoUpdate.Action.ADD_PLAYER,
+      WrapperPlayServerPlayerInfoUpdate.Action.UPDATE_LISTED,
+      WrapperPlayServerPlayerInfoUpdate.Action.UPDATE_LATENCY,
+      WrapperPlayServerPlayerInfoUpdate.Action.UPDATE_GAME_MODE,
+      WrapperPlayServerPlayerInfoUpdate.Action.UPDATE_DISPLAY_NAME);
+
+    static {
+      // associate item slots actions with their respective packet events enum
+      ITEM_SLOT_CONVERTER = new EnumMap<>(ItemSlot.class);
+      ITEM_SLOT_CONVERTER.put(ItemSlot.MAIN_HAND, EquipmentSlot.MAIN_HAND);
+      ITEM_SLOT_CONVERTER.put(ItemSlot.OFF_HAND, EquipmentSlot.OFF_HAND);
+      ITEM_SLOT_CONVERTER.put(ItemSlot.FEET, EquipmentSlot.BOOTS);
+      ITEM_SLOT_CONVERTER.put(ItemSlot.LEGS, EquipmentSlot.LEGGINGS);
+      ITEM_SLOT_CONVERTER.put(ItemSlot.CHEST, EquipmentSlot.CHEST_PLATE);
+      ITEM_SLOT_CONVERTER.put(ItemSlot.HEAD, EquipmentSlot.HELMET);
+
+      // associate hand actions with their respective packet events enum
+      HAND_CONVERTER = new EnumMap<>(InteractionHand.class);
+      HAND_CONVERTER.put(InteractionHand.MAIN_HAND, InteractNpcEvent.Hand.MAIN_HAND);
+      HAND_CONVERTER.put(InteractionHand.OFF_HAND, InteractNpcEvent.Hand.OFF_HAND);
+
+      // associate player info actions with their respective packet events enum
+      PLAYER_INFO_ACTION_CONVERTER = new EnumMap<>(PlayerInfoAction.class);
+      PLAYER_INFO_ACTION_CONVERTER.put(PlayerInfoAction.ADD_PLAYER, WrapperPlayServerPlayerInfo.Action.ADD_PLAYER);
+      PLAYER_INFO_ACTION_CONVERTER.put(PlayerInfoAction.REMOVE_PLAYER,
+        WrapperPlayServerPlayerInfo.Action.REMOVE_PLAYER);
+
+      // associate entity animations with their respective packet events enum
+      ENTITY_ANIMATION_CONVERTER = new EnumMap<>(EntityAnimation.class);
+      ENTITY_ANIMATION_CONVERTER.put(
+        EntityAnimation.SWING_MAIN_ARM,
+        WrapperPlayServerEntityAnimation.EntityAnimationType.SWING_MAIN_ARM);
+      ENTITY_ANIMATION_CONVERTER.put(
+        EntityAnimation.TAKE_DAMAGE,
+        WrapperPlayServerEntityAnimation.EntityAnimationType.HURT);
+      ENTITY_ANIMATION_CONVERTER.put(
+        EntityAnimation.LEAVE_BED,
+        WrapperPlayServerEntityAnimation.EntityAnimationType.WAKE_UP);
+      ENTITY_ANIMATION_CONVERTER.put(
+        EntityAnimation.SWING_OFF_HAND,
+        WrapperPlayServerEntityAnimation.EntityAnimationType.SWING_OFF_HAND);
+      ENTITY_ANIMATION_CONVERTER.put(
+        EntityAnimation.CRITICAL_EFFECT,
+        WrapperPlayServerEntityAnimation.EntityAnimationType.CRITICAL_HIT);
+      ENTITY_ANIMATION_CONVERTER.put(
+        EntityAnimation.MAGIC_CRITICAL_EFFECT,
+        WrapperPlayServerEntityAnimation.EntityAnimationType.MAGIC_CRITICAL_HIT);
+
+      // associate entity poses with their respective packet events enum
+      ENTITY_POSE_CONVERTER = new EnumMap<>(EntityPose.class);
+      ENTITY_POSE_CONVERTER.put(
+        EntityPose.STANDING,
+        com.github.retrooper.packetevents.protocol.entity.pose.EntityPose.STANDING);
+      ENTITY_POSE_CONVERTER.put(
+        EntityPose.FALL_FLYING,
+        com.github.retrooper.packetevents.protocol.entity.pose.EntityPose.FALL_FLYING);
+      ENTITY_POSE_CONVERTER.put(
+        EntityPose.SLEEPING,
+        com.github.retrooper.packetevents.protocol.entity.pose.EntityPose.SLEEPING);
+      ENTITY_POSE_CONVERTER.put(
+        EntityPose.SWIMMING,
+        com.github.retrooper.packetevents.protocol.entity.pose.EntityPose.SWIMMING);
+      ENTITY_POSE_CONVERTER.put(
+        EntityPose.SPIN_ATTACK,
+        com.github.retrooper.packetevents.protocol.entity.pose.EntityPose.SPIN_ATTACK);
+      ENTITY_POSE_CONVERTER.put(
+        EntityPose.CROUCHING,
+        com.github.retrooper.packetevents.protocol.entity.pose.EntityPose.CROUCHING);
+      ENTITY_POSE_CONVERTER.put(
+        EntityPose.LONG_JUMPING,
+        com.github.retrooper.packetevents.protocol.entity.pose.EntityPose.LONG_JUMPING);
+      ENTITY_POSE_CONVERTER.put(
+        EntityPose.DYING,
+        com.github.retrooper.packetevents.protocol.entity.pose.EntityPose.DYING);
+      ENTITY_POSE_CONVERTER.put(
+        EntityPose.CROAKING,
+        com.github.retrooper.packetevents.protocol.entity.pose.EntityPose.CROAKING);
+      ENTITY_POSE_CONVERTER.put(
+        EntityPose.USING_TONGUE,
+        com.github.retrooper.packetevents.protocol.entity.pose.EntityPose.USING_TONGUE);
+      ENTITY_POSE_CONVERTER.put(
+        EntityPose.ROARING,
+        com.github.retrooper.packetevents.protocol.entity.pose.EntityPose.ROARING);
+      ENTITY_POSE_CONVERTER.put(
+        EntityPose.SNIFFING,
+        com.github.retrooper.packetevents.protocol.entity.pose.EntityPose.SNIFFING);
+      ENTITY_POSE_CONVERTER.put(
+        EntityPose.EMERGING,
+        com.github.retrooper.packetevents.protocol.entity.pose.EntityPose.EMERGING);
+      ENTITY_POSE_CONVERTER.put(
+        EntityPose.DIGGING,
+        com.github.retrooper.packetevents.protocol.entity.pose.EntityPose.DIGGING);
+
+      // meta serializers
+      //noinspection SuspiciousMethodCalls
+      SERIALIZER_CONVERTERS = ImmutableMap.<Type, BiFunction<PlatformVersionAccessor, Object, Map.Entry<Type, Object>>>builder()
+        .put(EntityPose.class, ($, value) -> new AbstractMap.SimpleImmutableEntry<>(
+          com.github.retrooper.packetevents.protocol.entity.pose.EntityPose.class,
+          ENTITY_POSE_CONVERTER.get(value)))
+        .put(
+          TypeToken.getParameterized(Optional.class, Component.class).getType(),
+          (versionAccessor, value) -> {
+            //noinspection unchecked
+            Optional<Component> optionalComponent = (Optional<Component>) value;
+            // check if the display name is wrapped in a component
+            if (versionAccessor.atLeast(1, 13, 0)) {
+              // construct the entry
+              return new AbstractMap.SimpleImmutableEntry<>(
+                OPTIONAL_CHAT_COMPONENT_TYPE,
+                optionalComponent.map(component -> {
+                  // build the component based on the given input
+                  if (component.rawMessage() != null) {
+                    return AdventureSerializer.fromLegacyFormat(component.rawMessage());
+                  } else {
+                    return AdventureSerializer.getGsonSerializer().deserializeOrNull(component.encodedJsonMessage());
+                  }
+                }));
+            } else {
+              return new AbstractMap.SimpleImmutableEntry<>(String.class, optionalComponent
+                .map(component -> Objects.requireNonNull(
+                  component.rawMessage(),
+                  "Versions older than 1.13 don't support json component"))
+                .orElse(null));
+            }
+          })
+        .build();
+
+      ENTITY_DATA_TYPE_LOOKUP = ImmutableMap.<Type, EntityDataType<?>>builder()
+        .put(Byte.class, EntityDataTypes.BYTE)
+        .put(Integer.class, EntityDataTypes.INT)
+        .put(Float.class, EntityDataTypes.FLOAT)
+        .put(Boolean.class, EntityDataTypes.BOOLEAN)
+        .put(String.class, EntityDataTypes.STRING)
+        .put(OPTIONAL_CHAT_COMPONENT_TYPE, EntityDataTypes.OPTIONAL_COMPONENT)
+        .put(com.github.retrooper.packetevents.protocol.entity.pose.EntityPose.class, EntityDataTypes.ENTITY_POSE)
+        .build();
     }
   }
 }
