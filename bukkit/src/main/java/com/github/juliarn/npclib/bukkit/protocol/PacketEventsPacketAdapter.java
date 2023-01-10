@@ -120,8 +120,12 @@ final class PacketEventsPacketAdapter implements PlatformPacketAdapter<World, Pl
   private PlayerManager packetPlayerManager;
 
   private static @NotNull Location npcLocation(@NotNull Npc<?, ?, ?, ?> npc) {
+    return npcLocation(npc, npc.position().yaw(), npc.position().pitch());
+  }
+
+  private static @NotNull Location npcLocation(@NotNull Npc<?, ?, ?, ?> npc, float yaw, float pitch) {
     Position pos = npc.position();
-    return new Location(pos.x(), pos.y(), pos.z(), pos.yaw(), pos.pitch());
+    return new Location(pos.x(), pos.y(), pos.z(), yaw, pitch);
   }
 
   private static @NotNull EntityData createEntityData(
@@ -221,19 +225,17 @@ final class PacketEventsPacketAdapter implements PlatformPacketAdapter<World, Pl
   @Override
   public @NotNull OutboundPacket<World, Player, ItemStack, Plugin> createRotationPacket(float yaw, float pitch) {
     return (player, npc) -> {
-      Position pos = npc.position();
-
       // head rotation (https://wiki.vg/Protocol#Entity_Head_Look)
-      PacketWrapper<?> headRotation = new WrapperPlayServerEntityHeadLook(npc.entityId(), pos.yaw());
+      PacketWrapper<?> headRotation = new WrapperPlayServerEntityHeadLook(npc.entityId(), yaw);
 
       // entity teleport (https://wiki.vg/Protocol#Entity_Teleport) or Player Rotation (https://wiki.vg/Protocol#Player_Rotation)
       PacketWrapper<?> rotation;
       if (this.serverVersion.isNewerThanOrEquals(ServerVersion.V_1_9)) {
         // mc 1.9: player rotation
-        rotation = new WrapperPlayServerEntityRotation(npc.entityId(), pos.yaw(), pos.pitch(), true);
+        rotation = new WrapperPlayServerEntityRotation(npc.entityId(), yaw, pitch, true);
       } else {
         // mc 1.8: entity teleport
-        rotation = new WrapperPlayServerEntityTeleport(npc.entityId(), npcLocation(npc), true);
+        rotation = new WrapperPlayServerEntityTeleport(npc.entityId(), npcLocation(npc, yaw, pitch), true);
       }
 
       // send the packet without notifying any listeners
