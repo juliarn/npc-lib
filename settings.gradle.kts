@@ -25,7 +25,7 @@
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 enableFeaturePreview("STABLE_CONFIGURATION_CACHE")
 
-rootProject.name = "npc-lib2"
+rootProject.name = "npc-lib"
 include(":api", ":common", ":bukkit", ":minestom", ":ext")
 
 // external modules
