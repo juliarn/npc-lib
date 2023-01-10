@@ -25,9 +25,10 @@
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
 dependencies {
-  api(projects.api)
+  api(projects.npcLibApi)
+  implementation(projects.npcLibCommon)
+
   implementation(libs.paperLib)
-  implementation(projects.common)
   implementation(libs.packetEvents)
 
   compileOnly(libs.netty)
@@ -36,7 +37,7 @@ dependencies {
 }
 
 tasks.withType<ShadowJar> {
-  dependsOn(":common:shadowJar")
+  dependsOn(":npc-lib-common:shadowJar")
 
   relocate("com.google.gson", "com.github.juliarn.npclib.relocate.gson")
   relocate("io.papermc.lib", "com.github.juliarn.npclib.relocate.paperlib")

@@ -25,9 +25,9 @@
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
 dependencies {
-  api(projects.api)
+  api(projects.npcLibApi)
   compileOnly(libs.minestom)
-  implementation(projects.common)
+  implementation(projects.npcLibCommon)
 }
 
 tasks.withType<JavaCompile> {
@@ -35,6 +35,6 @@ tasks.withType<JavaCompile> {
 }
 
 tasks.withType<ShadowJar> {
-  dependsOn(":common:shadowJar")
+  dependsOn(":npc-lib-common:shadowJar")
   relocate("com.google.gson", "com.github.juliarn.npclib.relocate.gson")
 }

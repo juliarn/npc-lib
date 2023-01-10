@@ -30,3 +30,9 @@ include(":api", ":common", ":bukkit", ":minestom", ":ext")
 
 // external modules
 include(":ext:labymod")
+
+// prefix all submodules with the name of the root project
+val modulePrefix = rootProject.name
+rootProject.children.forEach {
+  it.name = "${modulePrefix}-${it.name}"
+}

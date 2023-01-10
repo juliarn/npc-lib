@@ -25,9 +25,9 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
  */
 
 dependencies {
-  api(projects.api)
+  api(projects.npcLibApi)
 }
 
 tasks.withType<ShadowJar> {
-  dependsOn(":api:shadowJar")
+  dependsOn(":npc-lib-api:shadowJar")
 }

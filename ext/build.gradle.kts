@@ -24,6 +24,6 @@
 
 subprojects {
   dependencies {
-    compileOnly(rootProject.projects.api)
+    compileOnly(rootProject.projects.npcLibApi)
   }
 }
