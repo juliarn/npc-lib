@@ -30,10 +30,8 @@ import com.comphenix.protocol.ProtocolManager;
 import com.comphenix.protocol.events.PacketAdapter;
 import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.events.PacketEvent;
-import com.comphenix.protocol.reflect.EquivalentConverter;
 import com.comphenix.protocol.utility.MinecraftReflection;
 import com.comphenix.protocol.utility.MinecraftVersion;
-import com.comphenix.protocol.wrappers.Converters;
 import com.comphenix.protocol.wrappers.EnumWrappers;
 import com.comphenix.protocol.wrappers.MinecraftKey;
 import com.comphenix.protocol.wrappers.Pair;
@@ -107,9 +105,6 @@ final class ProtocolLibPacketAdapter implements PlatformPacketAdapter<World, Pla
 
   // serializer converters for metadata
   private static final Map<Type, BiFunction<PlatformVersionAccessor, Object, Map.Entry<Type, Object>>> SERIALIZER_CONVERTERS;
-
-  // converter for uuid lists
-  private static final EquivalentConverter<UUID> UUID_PASSTHROUGH_CONVERTER = Converters.passthrough(UUID.class);
 
   // static actions we need to send out for all player updates (since 1.19.3)
   private static final EnumSet<EnumWrappers.PlayerInfoAction> ADD_ACTIONS = EnumSet.of(
@@ -312,7 +307,7 @@ final class ProtocolLibPacketAdapter implements PlatformPacketAdapter<World, Pla
 
         // write the npc uuid to remove
         List<UUID> uuidsToRemove = Collections.singletonList(profile.uniqueId());
-        container.getLists(UUID_PASSTHROUGH_CONVERTER).write(0, uuidsToRemove);
+        container.getUUIDLists().write(0, uuidsToRemove);
 
         // send the packet without notifying any bound packet listeners
         PROTOCOL_MANAGER.sendServerPacket(player, container, false);
