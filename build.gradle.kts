@@ -52,6 +52,16 @@ allprojects {
         snapshotsOnly()
       }
     }
+    maven(url = "https://repo.codemc.io/repository/maven-public/") {
+      mavenContent {
+        releasesOnly()
+      }
+    }
+    maven(url = "https://repo.codemc.io/repository/maven-snapshots/") {
+      mavenContent {
+        snapshotsOnly()
+      }
+    }
   }
 }
 
