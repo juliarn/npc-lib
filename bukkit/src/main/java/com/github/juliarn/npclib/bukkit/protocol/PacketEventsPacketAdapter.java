@@ -184,8 +184,7 @@ final class PacketEventsPacketAdapter implements PlatformPacketAdapter<World, Pl
       PacketWrapper<?> wrapper;
 
       // check if we need to apply the old handling or new handling
-      ServerVersion serverVersion = PacketEvents.getAPI().getServerManager().getVersion();
-      if (serverVersion.isNewerThanOrEquals(ServerVersion.V_1_19_3)) {
+      if (this.serverVersion.isNewerThanOrEquals(ServerVersion.V_1_19_3)) {
         if (action == PlayerInfoAction.REMOVE_PLAYER) {
           // PlayerRemove (https://wiki.vg/Protocol#Player_Remove)
           List<UUID> uuidsToRemove = Collections.singletonList(profile.uniqueId());
