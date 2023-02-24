@@ -30,7 +30,9 @@ import com.github.juliarn.npclib.api.flag.NpcFlaggedObject;
 import com.github.juliarn.npclib.api.profile.Profile;
 import com.github.juliarn.npclib.api.profile.ProfileResolver;
 import com.github.juliarn.npclib.api.protocol.NpcSpecificOutboundPacket;
+import com.github.juliarn.npclib.api.protocol.enums.EntityAnimation;
 import com.github.juliarn.npclib.api.protocol.enums.ItemSlot;
+import com.github.juliarn.npclib.api.protocol.meta.EntityMetadataFactory;
 import com.github.juliarn.npclib.api.settings.NpcSettings;
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
@@ -85,7 +87,13 @@ public interface Npc<W, P, I, E> extends NpcFlaggedObject {
 
   @NotNull NpcSpecificOutboundPacket<W, P, I, E> lookAt(@NotNull Position position);
 
+  @NotNull NpcSpecificOutboundPacket<W, P, I, E> playAnimation(@NotNull EntityAnimation animation);
+
   @NotNull NpcSpecificOutboundPacket<W, P, I, E> changeItem(@NotNull ItemSlot slot, @NotNull I item);
+
+  @NotNull <T, O> NpcSpecificOutboundPacket<W, P, I, E> changeMetadata(
+    @NotNull EntityMetadataFactory<T, O> metadata,
+    @NotNull T value);
 
   interface Builder<W, P, I, E> extends NpcFlaggedBuilder<Builder<W, P, I, E>> {
 

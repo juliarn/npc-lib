@@ -31,8 +31,10 @@ import com.github.juliarn.npclib.api.Position;
 import com.github.juliarn.npclib.api.flag.NpcFlag;
 import com.github.juliarn.npclib.api.profile.Profile;
 import com.github.juliarn.npclib.api.protocol.NpcSpecificOutboundPacket;
+import com.github.juliarn.npclib.api.protocol.enums.EntityAnimation;
 import com.github.juliarn.npclib.api.protocol.enums.ItemSlot;
 import com.github.juliarn.npclib.api.protocol.enums.PlayerInfoAction;
+import com.github.juliarn.npclib.api.protocol.meta.EntityMetadataFactory;
 import com.github.juliarn.npclib.api.settings.NpcSettings;
 import com.github.juliarn.npclib.api.util.Util;
 import com.github.juliarn.npclib.common.event.DefaultHideNpcEvent;
@@ -248,8 +250,21 @@ public class CommonNpc<W, P, I, E> extends CommonNpcFlaggedObject implements Npc
   }
 
   @Override
+  public @NotNull NpcSpecificOutboundPacket<W, P, I, E> playAnimation(@NotNull EntityAnimation animation) {
+    return this.platform.packetFactory().createAnimationPacket(animation).toSpecific(this);
+  }
+
+  @Override
   public @NotNull NpcSpecificOutboundPacket<W, P, I, E> changeItem(@NotNull ItemSlot slot, @NotNull I item) {
     return this.platform.packetFactory().createEquipmentPacket(slot, item).toSpecific(this);
+  }
+
+  @Override
+  public @NotNull <T, O> NpcSpecificOutboundPacket<W, P, I, E> changeMetadata(
+    @NotNull EntityMetadataFactory<T, O> metadata,
+    @NotNull T value
+  ) {
+    return this.platform.packetFactory().createEntityMetaPacket(value, metadata).toSpecific(this);
   }
 
   @Override
