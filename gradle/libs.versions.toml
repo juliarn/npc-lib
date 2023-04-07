@@ -4,6 +4,7 @@
 shadow = "7.1.2"
 blossom = "1.3.1"
 spotless = "6.12.1"
+checkstyleTools = "10.9.3"
 
 # general
 gson = "2.10.1"
@@ -40,6 +41,8 @@ paperLib = { group = "io.papermc", name = "paperlib", version.ref = "paperLib" }
 protocolLib = { group = "com.github.dmulloy2", name = "ProtocolLib", version.ref = "protocolLib" }
 packetEvents = { group = "com.github.retrooper.packetevents", name = "spigot", version.ref = "packetEvents" }
 
+# dummy version, just here for renovate to detect that there is something to update
+checkstyleTools = { group = "com.puppycrawl.tools", name = "checkstyle", version.ref = "checkstyleTools" }
 
 [plugins]
 
