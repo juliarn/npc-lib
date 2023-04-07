@@ -22,51 +22,23 @@
  * THE SOFTWARE.
  */
 
-package com.github.juliarn.npclib.bukkit.util;
+package com.github.juliarn.npclib.common.util;
 
-import static org.bukkit.util.NumberConversions.square;
-
-import com.github.juliarn.npclib.api.Npc;
-import com.github.juliarn.npclib.api.Position;
-import com.github.juliarn.npclib.common.util.ClassHelper;
-import org.bukkit.Location;
 import org.jetbrains.annotations.NotNull;
 
-public final class BukkitPlatformUtil {
+public final class ClassHelper {
 
-  private static final boolean FOLIA =
-    ClassHelper.classExists("io.papermc.paper.threadedregions.RegionizedServerInitEvent");
-
-  private BukkitPlatformUtil() {
+  private ClassHelper() {
     throw new UnsupportedOperationException();
   }
 
-  public static boolean runsOnFolia() {
-    return FOLIA;
-  }
-
-  public static double distance(@NotNull Npc<?, ?, ?, ?> npc, @NotNull Location location) {
-    Position pos = npc.position();
-    return square(location.getX() - pos.x()) + square(location.getY() - pos.y()) + square(location.getZ() - pos.z());
-  }
-
-  public static @NotNull Position positionFromBukkitLegacy(@NotNull Location loc) {
-    return Position.position(
-      loc.getX(),
-      loc.getY(),
-      loc.getZ(),
-      loc.getYaw(),
-      loc.getPitch(),
-      loc.getWorld().getName());
-  }
-
-  public static @NotNull Position positionFromBukkitModern(@NotNull Location loc) {
-    return Position.position(
-      loc.getX(),
-      loc.getY(),
-      loc.getZ(),
-      loc.getYaw(),
-      loc.getPitch(),
-      loc.getWorld().getKey().toString());
+  public static boolean classExists(@NotNull String className) {
+    try {
+      ClassLoader classLoader = ClassHelper.class.getClassLoader();
+      Class.forName(className, false, classLoader);
+      return true;
+    } catch (ClassNotFoundException exception) {
+      return false;
+    }
   }
 }

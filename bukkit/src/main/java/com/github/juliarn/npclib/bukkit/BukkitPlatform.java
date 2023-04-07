@@ -28,8 +28,10 @@ import com.github.juliarn.npclib.api.NpcActionController;
 import com.github.juliarn.npclib.api.Platform;
 import com.github.juliarn.npclib.api.log.PlatformLogger;
 import com.github.juliarn.npclib.bukkit.protocol.BukkitProtocolAdapter;
+import com.github.juliarn.npclib.bukkit.util.BukkitPlatformUtil;
 import com.github.juliarn.npclib.common.platform.CommonPlatform;
 import com.github.juliarn.npclib.common.platform.CommonPlatformBuilder;
+import com.github.juliarn.npclib.common.task.AsyncPlatformTaskManager;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -54,7 +56,11 @@ public final class BukkitPlatform extends CommonPlatformBuilder<World, Player, I
 
     // set the default task manager
     if (this.taskManager == null) {
-      this.taskManager = BukkitPlatformTaskManager.taskManager(this.extension);
+      if (BukkitPlatformUtil.runsOnFolia()) {
+        this.taskManager = AsyncPlatformTaskManager.taskManager(this.extension.getName());
+      } else {
+        this.taskManager = BukkitPlatformTaskManager.taskManager(this.extension);
+      }
     }
 
     // set the default version accessor
