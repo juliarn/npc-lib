@@ -107,7 +107,7 @@ final class PacketEventsPacketAdapter implements PlatformPacketAdapter<World, Pl
     .debug(false)
     .bStats(true)
     .checkForUpdates(false)
-    .readOnlyListeners(true)
+    .reEncodeByDefault(false)
     .timeStampMode(TimeStampMode.NONE);
 
   private static final Type OPTIONAL_CHAT_COMPONENT_TYPE = TypeToken.getParameterized(
@@ -192,7 +192,6 @@ final class PacketEventsPacketAdapter implements PlatformPacketAdapter<World, Pl
         } else {
           // create the player
           WrapperPlayServerPlayerInfoUpdate.PlayerInfo playerInfo = new WrapperPlayServerPlayerInfoUpdate.PlayerInfo(
-            profile.uniqueId(),
             userProfile,
             false,
             20,

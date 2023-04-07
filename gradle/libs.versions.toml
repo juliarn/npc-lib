@@ -14,7 +14,7 @@ event = "5.0.0-SNAPSHOT"
 # platform api versions
 sponge = "10.0.0"
 minestom = "24cc458659"
-paper = "1.19.3-R0.1-SNAPSHOT"
+paper = "1.19.4-R0.1-SNAPSHOT"
 
 # platform extensions
 paperLib = "1.0.8"
