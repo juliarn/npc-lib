@@ -264,7 +264,7 @@ public class CommonNpc<W, P, I, E> extends CommonNpcFlaggedObject implements Npc
     @NotNull EntityMetadataFactory<T, O> metadata,
     @NotNull T value
   ) {
-    return this.platform.packetFactory().createEntityMetaPacket(value, metadata).toSpecific(this);
+    return this.platform.packetFactory().createEntityMetaPacket(metadata, value).toSpecific(this);
   }
 
   @Override

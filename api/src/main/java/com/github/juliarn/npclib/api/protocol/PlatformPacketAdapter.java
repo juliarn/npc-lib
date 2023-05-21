@@ -48,8 +48,7 @@ public interface PlatformPacketAdapter<W, P, I, E> {
   @NotNull OutboundPacket<W, P, I, E> createCustomPayloadPacket(@NotNull String channelId, byte[] payload);
 
   @NotNull <T, O> OutboundPacket<W, P, I, E> createEntityMetaPacket(
-    @NotNull T value,
-    @NotNull EntityMetadataFactory<T, O> metadata);
+    @NotNull EntityMetadataFactory<T, O> metadata, @NotNull T value);
 
   void initialize(@NotNull Platform<W, P, I, E> platform);
 }

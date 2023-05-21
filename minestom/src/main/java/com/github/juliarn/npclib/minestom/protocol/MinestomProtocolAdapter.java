@@ -286,8 +286,8 @@ public final class MinestomProtocolAdapter implements PlatformPacketAdapter<Inst
 
   @Override
   public @NotNull <T, O> OutboundPacket<Instance, Player, ItemStack, Extension> createEntityMetaPacket(
-    @NotNull T value,
-    @NotNull EntityMetadataFactory<T, O> metadata
+    @NotNull EntityMetadataFactory<T, O> metadata,
+    @NotNull T value
   ) {
     return (player, npc) -> {
       // create the entity meta

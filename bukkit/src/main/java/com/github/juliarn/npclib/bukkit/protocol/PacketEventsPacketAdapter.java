@@ -61,8 +61,8 @@ import com.github.retrooper.packetevents.protocol.player.TextureProperty;
 import com.github.retrooper.packetevents.protocol.player.UserProfile;
 import com.github.retrooper.packetevents.protocol.world.Location;
 import com.github.retrooper.packetevents.settings.PacketEventsSettings;
-import com.github.retrooper.packetevents.util.AdventureSerializer;
 import com.github.retrooper.packetevents.util.TimeStampMode;
+import com.github.retrooper.packetevents.util.adventure.AdventureSerializer;
 import com.github.retrooper.packetevents.wrapper.PacketWrapper;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientInteractEntity;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerDestroyEntities;
@@ -291,8 +291,8 @@ final class PacketEventsPacketAdapter implements PlatformPacketAdapter<World, Pl
 
   @Override
   public @NotNull <T, O> OutboundPacket<World, Player, ItemStack, Plugin> createEntityMetaPacket(
-    @NotNull T value,
-    @NotNull EntityMetadataFactory<T, O> metadata
+    @NotNull EntityMetadataFactory<T, O> metadata,
+    @NotNull T value
   ) {
     return (player, npc) -> {
       // create the entity meta

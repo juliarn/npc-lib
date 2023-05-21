@@ -199,7 +199,7 @@ public final class MinestomActionController extends CommonNpcActionController {
         && npc.flagValueOrDefault(Npc.SNEAK_WHEN_PLAYER_SNEAKS)) {
         // let the npc sneak as well
         npc.platform().packetFactory()
-          .createEntityMetaPacket(sneakActive, EntityMetadataFactory.sneakingMetaFactory())
+          .createEntityMetaPacket(EntityMetadataFactory.sneakingMetaFactory(), sneakActive)
           .schedule(player, npc);
       }
     }

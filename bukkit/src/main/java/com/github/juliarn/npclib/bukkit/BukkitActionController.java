@@ -171,7 +171,7 @@ public final class BukkitActionController extends CommonNpcActionController impl
         && npc.flagValueOrDefault(Npc.SNEAK_WHEN_PLAYER_SNEAKS)) {
         // let the npc sneak as well
         npc.platform().packetFactory()
-          .createEntityMetaPacket(event.isSneaking(), EntityMetadataFactory.sneakingMetaFactory())
+          .createEntityMetaPacket(EntityMetadataFactory.sneakingMetaFactory(), event.isSneaking())
           .schedule(player, npc);
       }
     }
