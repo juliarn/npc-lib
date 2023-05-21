@@ -46,6 +46,23 @@ final class DefaultCachedProfileResolver implements ProfileResolver.Cached {
     this.delegate = delegate;
   }
 
+  private static @Nullable <K, V> V findCacheEntry(@NotNull Map<K, CacheEntry<V>> cache, @NotNull K key) {
+    // check if an entry is associated with the given key
+    CacheEntry<V> entry = cache.get(key);
+    if (entry == null) {
+      return null;
+    }
+
+    // check if the entry is outdated
+    if (entry.timeoutTime <= System.currentTimeMillis()) {
+      cache.remove(key);
+      return null;
+    }
+
+    // all fine
+    return entry.value;
+  }
+
   @Override
   public @NotNull CompletableFuture<Profile.Resolved> resolveProfile(@NotNull Profile profile) {
     // check if we can get the profile instantly from the cache
@@ -99,23 +116,6 @@ final class DefaultCachedProfileResolver implements ProfileResolver.Cached {
 
     // unable to resolve with any possible method
     return null;
-  }
-
-  private static @Nullable <K, V> V findCacheEntry(@NotNull Map<K, CacheEntry<V>> cache, @NotNull K key) {
-    // check if an entry is associated with the given key
-    CacheEntry<V> entry = cache.get(key);
-    if (entry == null) {
-      return null;
-    }
-
-    // check if the entry is outdated
-    if (entry.timeoutTime <= System.currentTimeMillis()) {
-      cache.remove(key);
-      return null;
-    }
-
-    // all fine
-    return entry.value;
   }
 
   private static final class CacheEntry<T> {

@@ -70,34 +70,6 @@ final class MojangProfileResolver implements ProfileResolver {
   private static final String NAME_TO_UUID_ENDPOINT = "https://api.mojang.com/users/profiles/minecraft/%s";
   private static final String UUID_TO_PROFILE_ENDPOINT = "https://sessionserver.mojang.com/session/minecraft/profile/%s";
 
-  @Override
-  public @NotNull CompletableFuture<Profile.Resolved> resolveProfile(@NotNull Profile profile) {
-    return CompletableFuture.supplyAsync(Util.callableToSupplier(() -> {
-      // check if we need to resolve the uuid of the profile
-      UUID uniqueId = profile.uniqueId();
-      if (uniqueId == null) {
-        // this will give us either a valid object or throw an exception
-        JsonObject responseData = makeRequest(String.format(NAME_TO_UUID_ENDPOINT, profile.name()));
-        String rawUniqueId = responseData.get("id").getAsString();
-
-        // insert dashes into the unique id string we get to parse it
-        String dashedId = UUID_DASHER_PATTERN.matcher(rawUniqueId).replaceAll("$1-$2-$3-$4-$5");
-        uniqueId = UUID.fromString(dashedId);
-      }
-
-      // now as the unique id is present we can send the request to get the all the other information about the profile
-      String profileId = UUID_NO_DASH_PATTERN.matcher(uniqueId.toString()).replaceAll("");
-      JsonObject responseData = makeRequest(String.format(UUID_TO_PROFILE_ENDPOINT, profileId));
-
-      // get the name of the player
-      String name = responseData.get("name").getAsString();
-      Set<ProfileProperty> properties = GSON.fromJson(responseData.get("properties"), PROFILE_PROPERTIES_TYPE);
-
-      // create the profile from the received data
-      return Profile.resolved(name, uniqueId, properties);
-    }));
-  }
-
   private static @NotNull JsonObject makeRequest(@NotNull String endpoint) throws IOException {
     HttpURLConnection connection = createBaseConnection(endpoint);
 
@@ -158,6 +130,34 @@ final class MojangProfileResolver implements ProfileResolver {
     connection.setInstanceFollowRedirects(true);
 
     return connection;
+  }
+
+  @Override
+  public @NotNull CompletableFuture<Profile.Resolved> resolveProfile(@NotNull Profile profile) {
+    return CompletableFuture.supplyAsync(Util.callableToSupplier(() -> {
+      // check if we need to resolve the uuid of the profile
+      UUID uniqueId = profile.uniqueId();
+      if (uniqueId == null) {
+        // this will give us either a valid object or throw an exception
+        JsonObject responseData = makeRequest(String.format(NAME_TO_UUID_ENDPOINT, profile.name()));
+        String rawUniqueId = responseData.get("id").getAsString();
+
+        // insert dashes into the unique id string we get to parse it
+        String dashedId = UUID_DASHER_PATTERN.matcher(rawUniqueId).replaceAll("$1-$2-$3-$4-$5");
+        uniqueId = UUID.fromString(dashedId);
+      }
+
+      // now as the unique id is present we can send the request to get the all the other information about the profile
+      String profileId = UUID_NO_DASH_PATTERN.matcher(uniqueId.toString()).replaceAll("");
+      JsonObject responseData = makeRequest(String.format(UUID_TO_PROFILE_ENDPOINT, profileId));
+
+      // get the name of the player
+      String name = responseData.get("name").getAsString();
+      Set<ProfileProperty> properties = GSON.fromJson(responseData.get("properties"), PROFILE_PROPERTIES_TYPE);
+
+      // create the profile from the received data
+      return Profile.resolved(name, uniqueId, properties);
+    }));
   }
 
   private static final class ProfilePropertyTypeAdapter extends TypeAdapter<ProfileProperty> {
