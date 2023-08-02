@@ -148,7 +148,7 @@ public final class BukkitActionController extends CommonNpcActionController impl
         }
 
         // check if we should rotate the npc towards the player
-        if ((changedOrientation || changedPosition)
+        if (changedPosition
           && npc.tracksPlayer(player)
           && distance <= this.imitateDistance
           && npc.flagValueOrDefault(Npc.LOOK_AT_PLAYER)) {
