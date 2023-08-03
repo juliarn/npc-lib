@@ -101,14 +101,17 @@ public final class BukkitActionController extends CommonNpcActionController impl
     this.imitateDistance = imitateDistance * imitateDistance;
 
     // register listener to update the npc rotation after it is tracked
-    eventBus.subscribe(ShowNpcEvent.Post.class, event -> {
-      Player player = event.player();
-      Location to = player.getLocation();
-      double distance = BukkitPlatformUtil.distance(event.npc(), to);
-      if(distance<this.imitateDistance&&event.npc().flagValueOrDefault(Npc.LOOK_AT_PLAYER)){
-        event.npc().lookAt(BukkitPlatformUtil.positionFromBukkitLegacy(to)).schedule(player);
-      }
-    });
+    if (this.flagValueOrDefault(NpcActionController.AUTO_SYNC_POSITION_ON_SPAWN)) {
+      eventBus.subscribe(ShowNpcEvent.Post.class, event -> {
+        Player player = event.player();
+        Location to = player.getLocation();
+
+        double distance = BukkitPlatformUtil.distance(event.npc(), to);
+        if (distance <= this.imitateDistance && event.npc().flagValueOrDefault(Npc.LOOK_AT_PLAYER)) {
+          event.npc().lookAt(BukkitPlatformUtil.positionFromBukkitLegacy(to)).schedule(player);
+        }
+      });
+    }
   }
 
   static @NotNull NpcActionController.Builder actionControllerBuilder(
