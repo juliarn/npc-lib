@@ -94,6 +94,22 @@ public final class MinestomActionController extends CommonNpcActionController {
     int imitateDistance = this.flagValueOrDefault(IMITATE_DISTANCE);
     this.imitateDistance = imitateDistance * imitateDistance;
 
+    // register listener to update the npc rotation after it is tracked
+    eventBus.subscribe(ShowNpcEvent.Post.class, event -> {
+
+      Player player = event.player();
+
+      Pos to = player.getPosition();
+      Instance instance = player.getInstance();
+      if (instance == null) {
+        return;
+      }
+      double distance = MinestomUtil.distance(event.npc(), to);
+      if (distance < this.imitateDistance && event.npc().flagValueOrDefault(Npc.LOOK_AT_PLAYER)) {
+        event.npc().lookAt(MinestomUtil.positionFromMinestom(to, instance)).schedule(player);
+      }
+    });
+
     // add all listeners we need
     this.registerListeners();
   }
