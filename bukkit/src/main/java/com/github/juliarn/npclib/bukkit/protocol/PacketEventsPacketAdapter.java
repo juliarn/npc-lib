@@ -41,7 +41,6 @@ import com.github.juliarn.npclib.api.protocol.meta.EntityMetadata;
 import com.github.juliarn.npclib.api.protocol.meta.EntityMetadataFactory;
 import com.github.juliarn.npclib.common.event.DefaultAttackNpcEvent;
 import com.github.juliarn.npclib.common.event.DefaultInteractNpcEvent;
-import com.github.juliarn.npclib.common.util.EventDispatcher;
 import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.PacketEventsAPI;
 import com.github.retrooper.packetevents.event.PacketListenerPriority;
@@ -372,11 +371,11 @@ final class PacketEventsPacketAdapter implements PlatformPacketAdapter<World, Pl
           // call the event
           switch (packet.getAction()) {
             case ATTACK:
-              EventDispatcher.dispatch(this.platform, DefaultAttackNpcEvent.attackNpc(npc, player));
+              this.platform.eventManager().post(DefaultAttackNpcEvent.attackNpc(npc, player));
               break;
             case INTERACT:
               InteractNpcEvent.Hand hand = Lazy.HAND_CONVERTER.get(packet.getHand());
-              EventDispatcher.dispatch(this.platform, DefaultInteractNpcEvent.interactNpc(npc, player, hand));
+              this.platform.eventManager().post(DefaultInteractNpcEvent.interactNpc(npc, player, hand));
               break;
             default:
               // we don't handle INTERACT_AT as the client sends it alongside the interact packet (duplicate event call)

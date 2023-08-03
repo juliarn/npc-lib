@@ -28,6 +28,7 @@ import com.github.juliarn.npclib.api.Npc;
 import com.github.juliarn.npclib.api.Platform;
 import com.github.juliarn.npclib.api.PlatformVersionAccessor;
 import com.github.juliarn.npclib.api.event.InteractNpcEvent;
+import com.github.juliarn.npclib.api.profile.ProfileProperty;
 import com.github.juliarn.npclib.api.protocol.OutboundPacket;
 import com.github.juliarn.npclib.api.protocol.PlatformPacketAdapter;
 import com.github.juliarn.npclib.api.protocol.chat.Component;
@@ -39,14 +40,16 @@ import com.github.juliarn.npclib.api.protocol.meta.EntityMetadata;
 import com.github.juliarn.npclib.api.protocol.meta.EntityMetadataFactory;
 import com.github.juliarn.npclib.common.event.DefaultAttackNpcEvent;
 import com.github.juliarn.npclib.common.event.DefaultInteractNpcEvent;
-import com.github.juliarn.npclib.common.util.EventDispatcher;
 import com.github.juliarn.npclib.minestom.util.MinestomUtil;
 import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
 import java.util.AbstractMap;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
+import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
@@ -56,6 +59,7 @@ import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import net.minestom.server.MinecraftServer;
 import net.minestom.server.entity.Entity;
 import net.minestom.server.entity.EquipmentSlot;
+import net.minestom.server.entity.GameMode;
 import net.minestom.server.entity.Metadata;
 import net.minestom.server.entity.Player;
 import net.minestom.server.event.player.PlayerPacketEvent;
@@ -69,7 +73,8 @@ import net.minestom.server.network.packet.server.play.EntityEquipmentPacket;
 import net.minestom.server.network.packet.server.play.EntityHeadLookPacket;
 import net.minestom.server.network.packet.server.play.EntityMetaDataPacket;
 import net.minestom.server.network.packet.server.play.EntityRotationPacket;
-import net.minestom.server.network.packet.server.play.PlayerInfoPacket;
+import net.minestom.server.network.packet.server.play.PlayerInfoRemovePacket;
+import net.minestom.server.network.packet.server.play.PlayerInfoUpdatePacket;
 import net.minestom.server.network.packet.server.play.PluginMessagePacket;
 import net.minestom.server.network.packet.server.play.SpawnPlayerPacket;
 import org.jetbrains.annotations.NotNull;
@@ -88,10 +93,17 @@ public final class MinestomProtocolAdapter implements PlatformPacketAdapter<Inst
   private static final EnumMap<EntityPose, Entity.Pose> ENTITY_POSE_CONVERTER;
   private static final EnumMap<Player.Hand, InteractNpcEvent.Hand> HAND_CONVERTER;
   private static final EnumMap<EntityAnimation, EntityAnimationPacket.Animation> ANIMATION_CONVERTER;
-  private static final Map<PlayerInfoAction, PlayerInfoActionFactory> ACTION_FACTORY;
 
   private static final Map<Type, Function<Object, Metadata.Entry<?>>> META_ENTRY_FACTORY;
   private static final Map<Type, Map.Entry<Type, UnaryOperator<Object>>> SERIALIZER_CONVERTERS;
+
+  private static final EnumSet<PlayerInfoUpdatePacket.Action> ADD_ACTIONS = EnumSet.of(
+    PlayerInfoUpdatePacket.Action.ADD_PLAYER,
+    PlayerInfoUpdatePacket.Action.UPDATE_LISTED,
+    PlayerInfoUpdatePacket.Action.UPDATE_LATENCY,
+    PlayerInfoUpdatePacket.Action.UPDATE_GAME_MODE,
+    PlayerInfoUpdatePacket.Action.UPDATE_DISPLAY_NAME
+  );
 
   static {
     // associate item slots with their respective minestom lib enum
@@ -136,11 +148,6 @@ public final class MinestomProtocolAdapter implements PlatformPacketAdapter<Inst
       EntityAnimation.MAGIC_CRITICAL_EFFECT,
       EntityAnimationPacket.Animation.MAGICAL_CRITICAL_EFFECT);
 
-    // init the factory for player info actions
-    ACTION_FACTORY = new HashMap<>(3);
-    ACTION_FACTORY.put(PlayerInfoAction.ADD_PLAYER, new PlayerInfoActionFactories.AddPlayerFactory());
-    ACTION_FACTORY.put(PlayerInfoAction.REMOVE_PLAYER, new PlayerInfoActionFactories.RemovePlayerFactory());
-
     // init the meta value converter
     SERIALIZER_CONVERTERS = new HashMap<>(1);
     //noinspection SuspiciousMethodCalls
@@ -156,8 +163,9 @@ public final class MinestomProtocolAdapter implements PlatformPacketAdapter<Inst
           Optional<Component> optionalComponent = (Optional<Component>) value;
           return optionalComponent.map(component -> {
             // build the component based on the given input
-            if (component.rawMessage() != null) {
-              return LegacyComponentSerializer.legacySection().deserialize(component.rawMessage());
+            String rawMessage = component.rawMessage();
+            if (rawMessage != null) {
+              return LegacyComponentSerializer.legacySection().deserialize(rawMessage);
             } else {
               return GsonComponentSerializer.gson().deserializeOrNull(component.encodedJsonMessage());
             }
@@ -228,9 +236,38 @@ public final class MinestomProtocolAdapter implements PlatformPacketAdapter<Inst
   public @NotNull OutboundPacket<Instance, Player, ItemStack, Extension> createPlayerInfoPacket(
     @NotNull PlayerInfoAction action
   ) {
-    return (player, npc) -> ACTION_FACTORY.get(action).buildAction(npc, player).thenAcceptAsync(actionEntry -> {
-      PlayerInfoPacket packet = new PlayerInfoPacket(actionEntry.getKey(), actionEntry.getValue());
-      player.sendPacket(packet);
+    return (player, npc) -> npc.settings().profileResolver().resolveNpcProfile(player, npc).thenAcceptAsync(profile -> {
+      if (action == PlayerInfoAction.REMOVE_PLAYER) {
+        // just remove the player from the tablist
+        PlayerInfoRemovePacket removePacket = new PlayerInfoRemovePacket(profile.uniqueId());
+        player.sendPacket(removePacket);
+        return;
+      }
+
+      // convert the profile properties
+      List<PlayerInfoUpdatePacket.Property> properties = new ArrayList<>();
+      for (ProfileProperty property : profile.properties()) {
+        PlayerInfoUpdatePacket.Property prop = new PlayerInfoUpdatePacket.Property(
+          property.name(),
+          property.value(),
+          property.signature());
+        properties.add(prop);
+      }
+
+      // build the action
+      PlayerInfoUpdatePacket updatePacket = new PlayerInfoUpdatePacket(
+        ADD_ACTIONS,
+        Collections.singletonList(new PlayerInfoUpdatePacket.Entry(
+          profile.uniqueId(),
+          profile.name(),
+          properties,
+          false,
+          20,
+          GameMode.CREATIVE,
+          null,
+          null
+        )));
+      player.sendPacket(updatePacket);
     });
   }
 
@@ -326,13 +363,13 @@ public final class MinestomProtocolAdapter implements PlatformPacketAdapter<Inst
         if (npc != null) {
           // call the correct event based on the taken action
           if (packet.type() instanceof ClientInteractEntityPacket.Attack) {
-            EventDispatcher.dispatch(platform, DefaultAttackNpcEvent.attackNpc(npc, event.getPlayer()));
+            platform.eventManager().post(DefaultAttackNpcEvent.attackNpc(npc, event.getPlayer()));
           } else if (packet.type() instanceof ClientInteractEntityPacket.Interact interact) {
             // extract the used hand from the packet
             InteractNpcEvent.Hand hand = HAND_CONVERTER.get(interact.hand());
 
             // call the event
-            EventDispatcher.dispatch(platform, DefaultInteractNpcEvent.interactNpc(npc, event.getPlayer(), hand));
+            platform.eventManager().post(DefaultInteractNpcEvent.interactNpc(npc, event.getPlayer(), hand));
           }
 
           // don't pass the packet to the server

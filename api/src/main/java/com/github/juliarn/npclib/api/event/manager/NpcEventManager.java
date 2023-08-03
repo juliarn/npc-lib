@@ -22,17 +22,30 @@
  * THE SOFTWARE.
  */
 
-package com.github.juliarn.npclib.api.event;
+package com.github.juliarn.npclib.api.event.manager;
 
+import com.github.juliarn.npclib.api.event.NpcEvent;
+import com.github.juliarn.npclib.api.log.PlatformLogger;
+import java.util.Objects;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
-public interface InteractNpcEvent extends PlayerNpcEvent, CancellableNpcEvent {
+public interface NpcEventManager {
 
-  @NotNull Hand hand();
-
-  enum Hand {
-
-    MAIN_HAND,
-    OFF_HAND
+  @Contract("_, _ -> new")
+  static @NotNull NpcEventManager createDefault(boolean debugEnabled, @NotNull PlatformLogger logger) {
+    Objects.requireNonNull(logger, "logger");
+    return new DefaultNpcEventManager(debugEnabled, logger);
   }
+
+  <E extends NpcEvent> @NotNull E post(@NotNull E event);
+
+  <E extends NpcEvent> @NotNull NpcEventManager registerEventHandler(
+    @NotNull Class<E> eventType,
+    @NotNull NpcEventConsumer<E> consumer);
+
+  <E extends NpcEvent> @NotNull NpcEventManager registerEventHandler(
+    @NotNull Class<E> eventType,
+    @NotNull NpcEventConsumer<E> consumer,
+    int eventHandlerPriority);
 }

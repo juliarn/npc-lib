@@ -3,30 +3,30 @@
 # plugins
 shadow = "8.1.1"
 blossom = "1.3.1"
-spotless = "6.18.0"
-checkstyleTools = "10.11.0"
+spotless = "6.20.0"
+checkstyleTools = "10.12.2"
 
 # general
 gson = "2.10.1"
-netty = "4.1.92.Final"
+netty = "4.1.96.Final"
 annotations = "24.0.1"
-event = "5.0.0-SNAPSHOT"
+event = "1.0.0-SNAPSHOT"
 
 # platform api versions
 sponge = "10.0.0"
-minestom = "e0427a36f3"
-paper = "1.19.4-R0.1-SNAPSHOT"
+minestom = "c5047b8037"
+paper = "1.20.1-R0.1-SNAPSHOT"
 
 # platform extensions
 paperLib = "1.0.8"
-protocolLib = "339b2ef923"
-packetEvents = "e1e057eabb"
+protocolLib = "02e917cd08"
+packetEvents = "800ffafb96"
 
 
 [libraries]
 
 # general
-event = { group = "net.kyori", name = "event-api", version.ref = "event" }
+event = { group = "com.seiama", name = "event-api", version.ref = "event" }
 netty = { group = "io.netty", name = "netty-buffer", version.ref = "netty" }
 gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
 annotations = { group = "org.jetbrains", name = "annotations", version.ref = "annotations" }

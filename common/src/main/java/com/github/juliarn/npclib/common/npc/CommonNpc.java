@@ -40,7 +40,6 @@ import com.github.juliarn.npclib.api.util.Util;
 import com.github.juliarn.npclib.common.event.DefaultHideNpcEvent;
 import com.github.juliarn.npclib.common.event.DefaultShowNpcEvent;
 import com.github.juliarn.npclib.common.flag.CommonNpcFlaggedObject;
-import com.github.juliarn.npclib.common.util.EventDispatcher;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -186,7 +185,7 @@ public class CommonNpc<W, P, I, E> extends CommonNpcFlaggedObject implements Npc
     // check if the player is not already tracked
     if (this.trackedPlayers.add(player)) {
       // break early if the add is not wanted by plugin
-      if (EventDispatcher.dispatch(this.platform, DefaultShowNpcEvent.pre(this, player)).cancelled()) {
+      if (this.platform.eventManager().post(DefaultShowNpcEvent.pre(this, player)).cancelled()) {
         return this;
       }
 
@@ -199,7 +198,7 @@ public class CommonNpc<W, P, I, E> extends CommonNpcFlaggedObject implements Npc
         this.platform.packetFactory().createEntitySpawnPacket().schedule(player, this);
 
         // post the finish of the add to all plugins
-        EventDispatcher.dispatch(this.platform, DefaultShowNpcEvent.post(this, player));
+        this.platform.eventManager().post(DefaultShowNpcEvent.post(this, player));
       }, 10);
     }
 
@@ -212,7 +211,7 @@ public class CommonNpc<W, P, I, E> extends CommonNpcFlaggedObject implements Npc
     // check if the player was previously tracked
     if (this.trackedPlayers.remove(player)) {
       // break early if the removal is not wanted by plugin
-      if (EventDispatcher.dispatch(this.platform, DefaultHideNpcEvent.pre(this, player)).cancelled()) {
+      if (this.platform.eventManager().post(DefaultHideNpcEvent.pre(this, player)).cancelled()) {
         return this;
       }
 
@@ -221,7 +220,7 @@ public class CommonNpc<W, P, I, E> extends CommonNpcFlaggedObject implements Npc
       this.platform.packetFactory().createPlayerInfoPacket(PlayerInfoAction.REMOVE_PLAYER).schedule(player, this);
 
       // post the finish of the removal to all plugins
-      EventDispatcher.dispatch(this.platform, DefaultHideNpcEvent.post(this, player));
+      this.platform.eventManager().post(DefaultHideNpcEvent.post(this, player));
     }
 
     // for chaining

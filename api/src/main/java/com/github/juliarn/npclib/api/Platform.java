@@ -24,13 +24,12 @@
 
 package com.github.juliarn.npclib.api;
 
-import com.github.juliarn.npclib.api.event.NpcEvent;
+import com.github.juliarn.npclib.api.event.manager.NpcEventManager;
 import com.github.juliarn.npclib.api.log.PlatformLogger;
 import com.github.juliarn.npclib.api.profile.ProfileResolver;
 import com.github.juliarn.npclib.api.protocol.PlatformPacketAdapter;
 import java.util.Optional;
 import java.util.function.Consumer;
-import net.kyori.event.EventBus;
 import org.jetbrains.annotations.NotNull;
 
 public interface Platform<W, P, I, E> {
@@ -41,7 +40,7 @@ public interface Platform<W, P, I, E> {
 
   @NotNull PlatformLogger logger();
 
-  @NotNull EventBus<NpcEvent> eventBus();
+  @NotNull NpcEventManager eventManager();
 
   @NotNull NpcTracker<W, P, I, E> npcTracker();
 
@@ -67,7 +66,7 @@ public interface Platform<W, P, I, E> {
 
     @NotNull Builder<W, P, I, E> logger(@NotNull PlatformLogger logger);
 
-    @NotNull Builder<W, P, I, E> eventBus(@NotNull EventBus<NpcEvent> eventBus);
+    @NotNull Builder<W, P, I, E> eventManager(@NotNull NpcEventManager eventManager);
 
     @NotNull Builder<W, P, I, E> npcTracker(@NotNull NpcTracker<W, P, I, E> npcTracker);
 
