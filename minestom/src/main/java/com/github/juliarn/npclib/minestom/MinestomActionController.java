@@ -28,6 +28,7 @@ import com.github.juliarn.npclib.api.Npc;
 import com.github.juliarn.npclib.api.NpcActionController;
 import com.github.juliarn.npclib.api.NpcTracker;
 import com.github.juliarn.npclib.api.Position;
+import com.github.juliarn.npclib.api.event.ShowNpcEvent;
 import com.github.juliarn.npclib.api.event.manager.NpcEventManager;
 import com.github.juliarn.npclib.api.flag.NpcFlag;
 import com.github.juliarn.npclib.api.protocol.enums.EntityAnimation;
@@ -78,7 +79,7 @@ public final class MinestomActionController extends CommonNpcActionController {
 
     // register listener to update the npc rotation after it is tracked
     if (this.flagValueOrDefault(NpcActionController.AUTO_SYNC_POSITION_ON_SPAWN)) {
-      eventBus.subscribe(ShowNpcEvent.Post.class, event -> {
+      eventManager.registerEventHandler(ShowNpcEvent.Post.class, event -> {
         Player player = event.player();
         Pos to = player.getPosition();
         Instance instance = player.getInstance();

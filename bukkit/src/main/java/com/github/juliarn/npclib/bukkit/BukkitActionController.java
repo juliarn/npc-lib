@@ -101,7 +101,7 @@ public final class BukkitActionController extends CommonNpcActionController impl
 
     // register listener to update the npc rotation after it is tracked
     if (this.flagValueOrDefault(NpcActionController.AUTO_SYNC_POSITION_ON_SPAWN)) {
-      eventBus.subscribe(ShowNpcEvent.Post.class, event -> {
+      eventManager.registerEventHandler(ShowNpcEvent.Post.class, event -> {
         Player player = event.player();
         Location to = player.getLocation();
 
