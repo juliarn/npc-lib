@@ -22,21 +22,10 @@
  * THE SOFTWARE.
  */
 
-package com.github.juliarn.npclib.minestom.protocol;
+package com.github.juliarn.npclib.api.event;
 
-import com.github.juliarn.npclib.api.Npc;
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import net.minestom.server.entity.Player;
-import net.minestom.server.extensions.Extension;
-import net.minestom.server.instance.Instance;
-import net.minestom.server.item.ItemStack;
-import net.minestom.server.network.packet.server.play.PlayerInfoPacket;
-import org.jetbrains.annotations.NotNull;
+import com.seiama.event.Cancellable;
 
-interface PlayerInfoActionFactory {
+public interface CancellableNpcEvent extends Cancellable {
 
-  @NotNull CompletableFuture<Map.Entry<PlayerInfoPacket.Action, PlayerInfoPacket.Entry>> buildAction(
-    @NotNull Npc<Instance, Player, ItemStack, Extension> npc,
-    @NotNull Player player);
 }

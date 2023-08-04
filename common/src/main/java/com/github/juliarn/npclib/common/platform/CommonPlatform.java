@@ -31,13 +31,12 @@ import com.github.juliarn.npclib.api.Platform;
 import com.github.juliarn.npclib.api.PlatformTaskManager;
 import com.github.juliarn.npclib.api.PlatformVersionAccessor;
 import com.github.juliarn.npclib.api.PlatformWorldAccessor;
-import com.github.juliarn.npclib.api.event.NpcEvent;
+import com.github.juliarn.npclib.api.event.manager.NpcEventManager;
 import com.github.juliarn.npclib.api.log.PlatformLogger;
 import com.github.juliarn.npclib.api.profile.ProfileResolver;
 import com.github.juliarn.npclib.api.protocol.PlatformPacketAdapter;
 import com.github.juliarn.npclib.common.npc.CommonNpcBuilder;
 import java.util.Optional;
-import net.kyori.event.EventBus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,7 +45,7 @@ public class CommonPlatform<W, P, I, E> implements Platform<W, P, I, E> {
   protected final E extension;
   protected final boolean debug;
   protected final PlatformLogger logger;
-  protected final EventBus<NpcEvent> eventBus;
+  protected final NpcEventManager eventManager;
   protected final NpcTracker<W, P, I, E> npcTracker;
   protected final ProfileResolver profileResolver;
   protected final PlatformTaskManager taskManager;
@@ -64,7 +63,7 @@ public class CommonPlatform<W, P, I, E> implements Platform<W, P, I, E> {
     @NotNull PlatformTaskManager taskManager,
     @Nullable NpcActionController actionController,
     @NotNull PlatformVersionAccessor versionAccessor,
-    @NotNull EventBus<NpcEvent> eventBus,
+    @NotNull NpcEventManager eventManager,
     @NotNull PlatformWorldAccessor<W> worldAccessor,
     @NotNull PlatformPacketAdapter<W, P, I, E> packetAdapter
   ) {
@@ -76,7 +75,7 @@ public class CommonPlatform<W, P, I, E> implements Platform<W, P, I, E> {
     this.taskManager = taskManager;
     this.actionController = actionController;
     this.versionAccessor = versionAccessor;
-    this.eventBus = eventBus;
+    this.eventManager = eventManager;
     this.worldAccessor = worldAccessor;
     this.packetAdapter = packetAdapter;
 
@@ -125,8 +124,8 @@ public class CommonPlatform<W, P, I, E> implements Platform<W, P, I, E> {
   }
 
   @Override
-  public @NotNull EventBus<NpcEvent> eventBus() {
-    return this.eventBus;
+  public @NotNull NpcEventManager eventManager() {
+    return this.eventManager;
   }
 
   @Override

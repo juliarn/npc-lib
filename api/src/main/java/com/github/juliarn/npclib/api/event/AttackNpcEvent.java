@@ -24,8 +24,6 @@
 
 package com.github.juliarn.npclib.api.event;
 
-import net.kyori.event.Cancellable;
-
-public interface AttackNpcEvent extends PlayerNpcEvent, Cancellable {
+public interface AttackNpcEvent extends PlayerNpcEvent, CancellableNpcEvent {
 
 }

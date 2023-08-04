@@ -59,7 +59,6 @@ import com.github.juliarn.npclib.api.protocol.meta.EntityMetadata;
 import com.github.juliarn.npclib.api.protocol.meta.EntityMetadataFactory;
 import com.github.juliarn.npclib.common.event.DefaultAttackNpcEvent;
 import com.github.juliarn.npclib.common.event.DefaultInteractNpcEvent;
-import com.github.juliarn.npclib.common.util.EventDispatcher;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.gson.reflect.TypeToken;
@@ -604,11 +603,11 @@ final class ProtocolLibPacketAdapter implements PlatformPacketAdapter<World, Pla
         // call the event
         switch (action) {
           case ATTACK:
-            EventDispatcher.dispatch(this.platform, DefaultAttackNpcEvent.attackNpc(npc, player));
+            this.platform.eventManager().post(DefaultAttackNpcEvent.attackNpc(npc, player));
             break;
           case INTERACT:
             InteractNpcEvent.Hand usedHand = HAND_CONVERTER.get(hand);
-            EventDispatcher.dispatch(this.platform, DefaultInteractNpcEvent.interactNpc(npc, player, usedHand));
+            this.platform.eventManager().post(DefaultInteractNpcEvent.interactNpc(npc, player, usedHand));
             break;
           default:
             // we don't handle INTERACT_AT as the client sends it alongside the interact packet (duplicate event call)

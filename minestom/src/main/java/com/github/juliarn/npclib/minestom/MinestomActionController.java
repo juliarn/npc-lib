@@ -28,11 +28,9 @@ import com.github.juliarn.npclib.api.Npc;
 import com.github.juliarn.npclib.api.NpcActionController;
 import com.github.juliarn.npclib.api.NpcTracker;
 import com.github.juliarn.npclib.api.Position;
-import com.github.juliarn.npclib.api.event.NpcEvent;
-import com.github.juliarn.npclib.api.event.ShowNpcEvent;
+import com.github.juliarn.npclib.api.event.manager.NpcEventManager;
 import com.github.juliarn.npclib.api.flag.NpcFlag;
 import com.github.juliarn.npclib.api.protocol.enums.EntityAnimation;
-import com.github.juliarn.npclib.api.protocol.enums.PlayerInfoAction;
 import com.github.juliarn.npclib.api.protocol.meta.EntityMetadataFactory;
 import com.github.juliarn.npclib.common.CommonNpcActionController;
 import com.github.juliarn.npclib.common.flag.CommonNpcFlaggedBuilder;
@@ -40,7 +38,6 @@ import com.github.juliarn.npclib.minestom.util.MinestomUtil;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import net.kyori.event.EventBus;
 import net.minestom.server.MinecraftServer;
 import net.minestom.server.coordinate.Pos;
 import net.minestom.server.entity.Player;
@@ -53,8 +50,6 @@ import net.minestom.server.event.player.PlayerStopSneakingEvent;
 import net.minestom.server.extensions.Extension;
 import net.minestom.server.instance.Instance;
 import net.minestom.server.item.ItemStack;
-import net.minestom.server.timer.ExecutionType;
-import net.minestom.server.timer.TaskSchedule;
 import org.jetbrains.annotations.NotNull;
 
 @SuppressWarnings("UnstableApiUsage")
@@ -68,24 +63,11 @@ public final class MinestomActionController extends CommonNpcActionController {
 
   public MinestomActionController(
     @NotNull Map<NpcFlag<?>, Optional<?>> flags,
-    @NotNull EventBus<NpcEvent> eventBus,
+    @NotNull NpcEventManager eventManager,
     @NotNull NpcTracker<Instance, Player, ItemStack, Extension> tracker
   ) {
     super(flags);
     this.npcTracker = tracker;
-
-    // add all listeners
-    eventBus.subscribe(ShowNpcEvent.Post.class, event -> {
-      // remove the npc from the tab list after the given amount of time (never smaller than 0 because of validation)
-      int tabRemovalTicks = this.flagValueOrDefault(TAB_REMOVAL_TICKS);
-      MinecraftServer.getSchedulerManager().scheduleTask(() -> {
-        // schedule the removal of the player from the tab list, can be done async
-        Player player = event.player();
-        event.npc().platform().packetFactory()
-          .createPlayerInfoPacket(PlayerInfoAction.REMOVE_PLAYER)
-          .schedule(player, event.npc());
-      }, TaskSchedule.tick(tabRemovalTicks), TaskSchedule.stop(), ExecutionType.ASYNC);
-    });
 
     // pre-calculate flag values
     int spawnDistance = this.flagValueOrDefault(SPAWN_DISTANCE);
@@ -117,13 +99,13 @@ public final class MinestomActionController extends CommonNpcActionController {
   }
 
   static @NotNull NpcActionController.Builder actionControllerBuilder(
-    @NotNull EventBus<NpcEvent> eventBus,
+    @NotNull NpcEventManager eventManager,
     @NotNull NpcTracker<Instance, Player, ItemStack, Extension> npcTracker
   ) {
-    Objects.requireNonNull(eventBus, "eventBus");
+    Objects.requireNonNull(eventManager, "eventManager");
     Objects.requireNonNull(npcTracker, "npcTracker");
 
-    return new MinestomActionControllerBuilder(eventBus, npcTracker);
+    return new MinestomActionControllerBuilder(eventManager, npcTracker);
   }
 
   private void registerListeners() {
@@ -251,20 +233,20 @@ public final class MinestomActionController extends CommonNpcActionController {
     extends CommonNpcFlaggedBuilder<Builder>
     implements NpcActionController.Builder {
 
-    private final EventBus<NpcEvent> eventBus;
+    private final NpcEventManager eventManager;
     private final NpcTracker<Instance, Player, ItemStack, Extension> npcTracker;
 
     public MinestomActionControllerBuilder(
-      @NotNull EventBus<NpcEvent> eventBus,
+      @NotNull NpcEventManager eventManager,
       @NotNull NpcTracker<Instance, Player, ItemStack, Extension> npcTracker
     ) {
-      this.eventBus = eventBus;
+      this.eventManager = eventManager;
       this.npcTracker = npcTracker;
     }
 
     @Override
     public @NotNull NpcActionController build() {
-      return new MinestomActionController(this.flags, this.eventBus, this.npcTracker);
+      return new MinestomActionController(this.flags, this.eventManager, this.npcTracker);
     }
   }
 }

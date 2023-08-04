@@ -30,14 +30,13 @@ import com.github.juliarn.npclib.api.Platform;
 import com.github.juliarn.npclib.api.PlatformTaskManager;
 import com.github.juliarn.npclib.api.PlatformVersionAccessor;
 import com.github.juliarn.npclib.api.PlatformWorldAccessor;
-import com.github.juliarn.npclib.api.event.NpcEvent;
+import com.github.juliarn.npclib.api.event.manager.NpcEventManager;
 import com.github.juliarn.npclib.api.log.PlatformLogger;
 import com.github.juliarn.npclib.api.profile.ProfileResolver;
 import com.github.juliarn.npclib.api.protocol.PlatformPacketAdapter;
 import com.github.juliarn.npclib.common.CommonNpcTracker;
 import java.util.Objects;
 import java.util.function.Consumer;
-import net.kyori.event.EventBus;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class CommonPlatformBuilder<W, P, I, E> implements Platform.Builder<W, P, I, E> {
@@ -51,7 +50,7 @@ public abstract class CommonPlatformBuilder<W, P, I, E> implements Platform.Buil
   protected E extension;
   protected PlatformLogger logger;
   protected boolean debug = DEFAULT_DEBUG;
-  protected EventBus<NpcEvent> eventBus;
+  protected NpcEventManager eventManager;
   protected NpcTracker<W, P, I, E> npcTracker;
   protected ProfileResolver profileResolver;
   protected PlatformTaskManager taskManager;
@@ -79,8 +78,8 @@ public abstract class CommonPlatformBuilder<W, P, I, E> implements Platform.Buil
   }
 
   @Override
-  public @NotNull Platform.Builder<W, P, I, E> eventBus(@NotNull EventBus<NpcEvent> eventBus) {
-    this.eventBus = Objects.requireNonNull(eventBus, "eventBus");
+  public @NotNull Platform.Builder<W, P, I, E> eventManager(@NotNull NpcEventManager eventManager) {
+    this.eventManager = Objects.requireNonNull(eventManager, "eventManager");
     return this;
   }
 
@@ -144,8 +143,8 @@ public abstract class CommonPlatformBuilder<W, P, I, E> implements Platform.Buil
     }
 
     // use a new event bus if no specific one was specified
-    if (this.eventBus == null) {
-      this.eventBus = EventBus.create(NpcEvent.class);
+    if (this.eventManager == null) {
+      this.eventManager = NpcEventManager.createDefault(this.debug, this.logger);
     }
 
     // use a new npc tracker if none is given

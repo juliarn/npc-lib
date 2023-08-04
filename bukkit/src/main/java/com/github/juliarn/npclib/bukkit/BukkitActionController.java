@@ -29,8 +29,8 @@ import com.github.juliarn.npclib.api.NpcActionController;
 import com.github.juliarn.npclib.api.NpcTracker;
 import com.github.juliarn.npclib.api.PlatformVersionAccessor;
 import com.github.juliarn.npclib.api.Position;
-import com.github.juliarn.npclib.api.event.NpcEvent;
 import com.github.juliarn.npclib.api.event.ShowNpcEvent;
+import com.github.juliarn.npclib.api.event.manager.NpcEventManager;
 import com.github.juliarn.npclib.api.flag.NpcFlag;
 import com.github.juliarn.npclib.api.protocol.enums.EntityAnimation;
 import com.github.juliarn.npclib.api.protocol.enums.PlayerInfoAction;
@@ -41,7 +41,6 @@ import com.github.juliarn.npclib.common.flag.CommonNpcFlaggedBuilder;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import net.kyori.event.EventBus;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
@@ -68,7 +67,7 @@ public final class BukkitActionController extends CommonNpcActionController impl
   public BukkitActionController(
     @NotNull Map<NpcFlag<?>, Optional<?>> flags,
     @NotNull Plugin plugin,
-    @NotNull EventBus<NpcEvent> eventBus,
+    @NotNull NpcEventManager eventManager,
     @NotNull PlatformVersionAccessor versionAccessor,
     @NotNull NpcTracker<World, Player, ItemStack, Plugin> tracker
   ) {
@@ -80,7 +79,7 @@ public final class BukkitActionController extends CommonNpcActionController impl
 
     // register a listener for the post spawn event if we need to send out an update to remove the spawned player
     if (!versionAccessor.atLeast(1, 19, 3)) {
-      eventBus.subscribe(ShowNpcEvent.Post.class, event -> {
+      eventManager.registerEventHandler(ShowNpcEvent.Post.class, event -> {
         // remove the npc from the tab list after the given amount of time (never smaller than 0 because of validation)
         int tabRemovalTicks = this.flagValueOrDefault(TAB_REMOVAL_TICKS);
         plugin.getServer().getScheduler().runTaskLaterAsynchronously(plugin, () -> {
@@ -116,16 +115,16 @@ public final class BukkitActionController extends CommonNpcActionController impl
 
   static @NotNull NpcActionController.Builder actionControllerBuilder(
     @NotNull Plugin plugin,
-    @NotNull EventBus<NpcEvent> eventBus,
+    @NotNull NpcEventManager eventManager,
     @NotNull PlatformVersionAccessor versionAccessor,
     @NotNull NpcTracker<World, Player, ItemStack, Plugin> npcTracker
   ) {
     Objects.requireNonNull(plugin, "plugin");
-    Objects.requireNonNull(eventBus, "eventBus");
+    Objects.requireNonNull(eventManager, "eventManager");
     Objects.requireNonNull(npcTracker, "npcTracker");
     Objects.requireNonNull(versionAccessor, "versionAccessor");
 
-    return new BukkitActionControllerBuilder(plugin, eventBus, versionAccessor, npcTracker);
+    return new BukkitActionControllerBuilder(plugin, eventManager, versionAccessor, npcTracker);
   }
 
   @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
@@ -222,25 +221,30 @@ public final class BukkitActionController extends CommonNpcActionController impl
     implements NpcActionController.Builder {
 
     private final Plugin plugin;
-    private final EventBus<NpcEvent> eventBus;
+    private final NpcEventManager eventManager;
     private final PlatformVersionAccessor versionAccessor;
     private final NpcTracker<World, Player, ItemStack, Plugin> npcTracker;
 
     public BukkitActionControllerBuilder(
       @NotNull Plugin plugin,
-      @NotNull EventBus<NpcEvent> eventBus,
+      @NotNull NpcEventManager eventManager,
       @NotNull PlatformVersionAccessor versionAccessor,
       @NotNull NpcTracker<World, Player, ItemStack, Plugin> npcTracker
     ) {
       this.plugin = plugin;
-      this.eventBus = eventBus;
+      this.eventManager = eventManager;
       this.npcTracker = npcTracker;
       this.versionAccessor = versionAccessor;
     }
 
     @Override
     public @NotNull NpcActionController build() {
-      return new BukkitActionController(this.flags, this.plugin, this.eventBus, this.versionAccessor, this.npcTracker);
+      return new BukkitActionController(
+        this.flags,
+        this.plugin,
+        this.eventManager,
+        this.versionAccessor,
+        this.npcTracker);
     }
   }
 }

@@ -79,7 +79,7 @@ public final class MinestomPlatform extends CommonPlatformBuilder<Instance, Play
     NpcActionController actionController = null;
     if (this.actionControllerDecorator != null) {
       NpcActionController.Builder builder = MinestomActionController.actionControllerBuilder(
-        this.eventBus,
+        this.eventManager,
         this.npcTracker);
       this.actionControllerDecorator.accept(builder);
       actionController = builder.build();
@@ -95,7 +95,7 @@ public final class MinestomPlatform extends CommonPlatformBuilder<Instance, Play
       this.taskManager,
       actionController,
       this.versionAccessor,
-      this.eventBus,
+      this.eventManager,
       this.worldAccessor,
       this.packetAdapter);
   }

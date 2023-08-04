@@ -91,7 +91,7 @@ public final class BukkitPlatform extends CommonPlatformBuilder<World, Player, I
     if (this.actionControllerDecorator != null) {
       NpcActionController.Builder builder = BukkitActionController.actionControllerBuilder(
         this.extension,
-        this.eventBus,
+        this.eventManager,
         this.versionAccessor,
         this.npcTracker);
       this.actionControllerDecorator.accept(builder);
@@ -108,7 +108,7 @@ public final class BukkitPlatform extends CommonPlatformBuilder<World, Player, I
       this.taskManager,
       actionController,
       this.versionAccessor,
-      this.eventBus,
+      this.eventManager,
       this.worldAccessor,
       this.packetAdapter);
   }

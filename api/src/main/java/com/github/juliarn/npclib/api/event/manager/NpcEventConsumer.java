@@ -22,17 +22,12 @@
  * THE SOFTWARE.
  */
 
-package com.github.juliarn.npclib.api.event;
+package com.github.juliarn.npclib.api.event.manager;
 
-import org.jetbrains.annotations.NotNull;
+import com.github.juliarn.npclib.api.event.NpcEvent;
+import java.util.function.Consumer;
 
-public interface InteractNpcEvent extends PlayerNpcEvent, CancellableNpcEvent {
+@FunctionalInterface
+public interface NpcEventConsumer<E extends NpcEvent> extends Consumer<E> {
 
-  @NotNull Hand hand();
-
-  enum Hand {
-
-    MAIN_HAND,
-    OFF_HAND
-  }
 }
