@@ -31,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 
 public interface NpcActionController extends NpcFlaggedObject {
 
+  NpcFlag<Boolean> AUTO_SYNC_POSITION_ON_SPAWN = NpcFlag.flag("auto_sync_position_on_spawn", true);
   NpcFlag<Integer> SPAWN_DISTANCE = NpcFlag.flag("action_spawn_distance", 50, value -> value >= 0);
   NpcFlag<Integer> TAB_REMOVAL_TICKS = NpcFlag.flag("action_tab_removal", 30, value -> value >= 0);
   NpcFlag<Integer> IMITATE_DISTANCE = NpcFlag.flag("action_imitate_distance", 20, value -> value >= 0);

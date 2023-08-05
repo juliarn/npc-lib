@@ -28,6 +28,7 @@ import com.github.juliarn.npclib.api.Npc;
 import com.github.juliarn.npclib.api.NpcActionController;
 import com.github.juliarn.npclib.api.NpcTracker;
 import com.github.juliarn.npclib.api.Position;
+import com.github.juliarn.npclib.api.event.ShowNpcEvent;
 import com.github.juliarn.npclib.api.event.manager.NpcEventManager;
 import com.github.juliarn.npclib.api.flag.NpcFlag;
 import com.github.juliarn.npclib.api.protocol.enums.EntityAnimation;
@@ -75,6 +76,24 @@ public final class MinestomActionController extends CommonNpcActionController {
 
     int imitateDistance = this.flagValueOrDefault(IMITATE_DISTANCE);
     this.imitateDistance = imitateDistance * imitateDistance;
+
+    // register listener to update the npc rotation after it is tracked
+    if (this.flagValueOrDefault(NpcActionController.AUTO_SYNC_POSITION_ON_SPAWN)) {
+      eventManager.registerEventHandler(ShowNpcEvent.Post.class, event -> {
+        Player player = event.player();
+        Pos to = player.getPosition();
+        Instance instance = player.getInstance();
+
+        // check if the player is within the imitate distance and spawned into an instance
+        // in normal cases the instance check should no evaluate to false at this point
+        double distance = MinestomUtil.distance(event.npc(), to);
+        if (instance != null
+          && distance <= this.imitateDistance
+          && event.npc().flagValueOrDefault(Npc.LOOK_AT_PLAYER)) {
+          event.npc().lookAt(MinestomUtil.positionFromMinestom(to, instance)).schedule(player);
+        }
+      });
+    }
 
     // add all listeners we need
     this.registerListeners();
@@ -141,22 +160,19 @@ public final class MinestomActionController extends CommonNpcActionController {
   }
 
   private void handlePlayerInstanceSpawn(@NotNull PlayerSpawnEvent event) {
-    // no need to do that on the first spawn - no npc should track the player
-    if (!event.isFirstSpawn()) {
-      // ensure that we stop tracking the player on NPCs which are not in the same world as the player
-      String instanceId = event.getSpawnInstance().getUniqueId().toString();
-      for (Npc<Instance, Player, ItemStack, Extension> npc : this.npcTracker.trackedNpcs()) {
-        if (!npc.position().worldId().equals(instanceId)) {
-          // the player is no longer in the same world, stop tracking
-          npc.stopTrackingPlayer(event.getPlayer());
-          continue;
-        }
+    // ensure that we stop tracking the player on NPCs which are not in the same world as the player
+    String instanceId = event.getSpawnInstance().getUniqueId().toString();
+    for (Npc<Instance, Player, ItemStack, Extension> npc : this.npcTracker.trackedNpcs()) {
+      if (!npc.position().worldId().equals(instanceId)) {
+        // the player is no longer in the same world, stop tracking
+        npc.stopTrackingPlayer(event.getPlayer());
+        continue;
+      }
 
-        // the player is now in the same instance as the npc, check if we should track him
-        double distance = MinestomUtil.distance(npc, event.getPlayer().getPosition());
-        if (this.spawnDistance >= distance) {
-          npc.trackPlayer(event.getPlayer());
-        }
+      // the player is now in the same instance as the npc, check if we should track him
+      double distance = MinestomUtil.distance(npc, event.getPlayer().getPosition());
+      if (this.spawnDistance >= distance) {
+        npc.trackPlayer(event.getPlayer());
       }
     }
   }
