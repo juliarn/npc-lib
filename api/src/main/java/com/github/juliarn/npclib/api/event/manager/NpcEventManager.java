@@ -27,6 +27,7 @@ package com.github.juliarn.npclib.api.event.manager;
 import com.github.juliarn.npclib.api.event.NpcEvent;
 import com.github.juliarn.npclib.api.log.PlatformLogger;
 import java.util.Objects;
+import java.util.function.Predicate;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,14 +39,17 @@ public interface NpcEventManager {
     return new DefaultNpcEventManager(debugEnabled, logger);
   }
 
+  @Contract("_ -> param1")
   <E extends NpcEvent> @NotNull E post(@NotNull E event);
 
-  <E extends NpcEvent> @NotNull NpcEventManager registerEventHandler(
+  <E extends NpcEvent> @NotNull NpcEventSubscription<? super E> registerEventHandler(
     @NotNull Class<E> eventType,
     @NotNull NpcEventConsumer<E> consumer);
 
-  <E extends NpcEvent> @NotNull NpcEventManager registerEventHandler(
+  <E extends NpcEvent> @NotNull NpcEventSubscription<? super E> registerEventHandler(
     @NotNull Class<E> eventType,
     @NotNull NpcEventConsumer<E> consumer,
     int eventHandlerPriority);
+
+  void unregisterEventHandlerIf(@NotNull Predicate<NpcEventSubscription<? super NpcEvent>> subscriptionFilter);
 }

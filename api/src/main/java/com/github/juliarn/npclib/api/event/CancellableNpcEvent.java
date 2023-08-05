@@ -24,8 +24,9 @@
 
 package com.github.juliarn.npclib.api.event;
 
-import com.seiama.event.Cancellable;
+public interface CancellableNpcEvent extends NpcEvent {
 
-public interface CancellableNpcEvent extends Cancellable {
+  boolean cancelled();
 
+  void cancelled(boolean cancelled);
 }
