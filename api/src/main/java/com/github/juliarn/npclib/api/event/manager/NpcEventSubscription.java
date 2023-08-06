@@ -27,8 +27,13 @@ package com.github.juliarn.npclib.api.event.manager;
 import com.github.juliarn.npclib.api.event.NpcEvent;
 import org.jetbrains.annotations.NotNull;
 
-@FunctionalInterface
-public interface NpcEventConsumer<E extends NpcEvent> {
+public interface NpcEventSubscription<E extends NpcEvent> {
 
-  void handle(@NotNull E event) throws Exception;
+  int order();
+
+  @NotNull Class<E> eventType();
+
+  @NotNull NpcEventConsumer<E> eventConsumer();
+
+  void dispose();
 }

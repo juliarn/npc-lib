@@ -25,7 +25,6 @@
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
 dependencies {
-  api(libs.event)
   implementation(libs.gson)
 }
 

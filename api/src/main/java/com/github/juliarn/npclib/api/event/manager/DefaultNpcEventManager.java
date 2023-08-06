@@ -24,93 +24,117 @@
 
 package com.github.juliarn.npclib.api.event.manager;
 
+import com.github.juliarn.npclib.api.event.CancellableNpcEvent;
 import com.github.juliarn.npclib.api.event.NpcEvent;
 import com.github.juliarn.npclib.api.log.PlatformLogger;
-import com.seiama.event.EventConfig;
-import com.seiama.event.EventSubscription;
-import com.seiama.event.bus.EventBus;
-import com.seiama.event.bus.SimpleEventBus;
-import com.seiama.event.registry.EventRegistry;
-import com.seiama.event.registry.SimpleEventRegistry;
-import java.util.OptionalInt;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Predicate;
 import org.jetbrains.annotations.NotNull;
 
 final class DefaultNpcEventManager implements NpcEventManager {
 
-  private final EventBus<NpcEvent> eventBus;
-  private final EventRegistry<NpcEvent> eventRegistry;
+  private static final Comparator<NpcEventSubscription<? super NpcEvent>> SUBSCRIPTION_COMPARABLE =
+    Comparator.comparingInt(NpcEventSubscription::order);
+
+  private final boolean debugEnabled;
+  private final PlatformLogger platformLogger;
+
+  private final Map<Class<?>, List<NpcEventSubscription<? super NpcEvent>>> registeredSubscribers =
+    new ConcurrentHashMap<>(16, 0.9f, 1);
 
   public DefaultNpcEventManager(boolean debugEnabled, @NotNull PlatformLogger logger) {
-    this.eventRegistry = new SimpleEventRegistry<>(NpcEvent.class);
-    this.eventBus = new SimpleEventBus<>(this.eventRegistry, new LoggingEventExceptionHandler(debugEnabled, logger));
+    this.debugEnabled = debugEnabled;
+    this.platformLogger = logger;
+  }
+
+  private static boolean isEventCancelled(@NotNull NpcEvent event) {
+    return event instanceof CancellableNpcEvent && ((CancellableNpcEvent) event).cancelled();
   }
 
   @Override
   public <E extends NpcEvent> @NotNull E post(@NotNull E event) {
-    this.eventBus.post(event, OptionalInt.empty());
+    Objects.requireNonNull(event, "event");
+
+    for (Map.Entry<Class<?>, List<NpcEventSubscription<? super NpcEvent>>> entry : this.registeredSubscribers.entrySet()) {
+      Class<?> subscribedEventType = entry.getKey();
+      List<NpcEventSubscription<? super NpcEvent>> subscriptions = entry.getValue();
+
+      if (subscribedEventType.isInstance(event) && !subscriptions.isEmpty()) {
+        for (NpcEventSubscription<? super E> subscription : subscriptions) {
+          // once the event was cancelled we don't want to post it to any further subscribers
+          boolean eventWasCancelled = isEventCancelled(event);
+          if (eventWasCancelled) {
+            break;
+          }
+
+          try {
+            subscription.eventConsumer().handle(event);
+          } catch (Throwable throwable) {
+            EventExceptionHandler.rethrowFatalException(throwable);
+            if (this.debugEnabled) {
+              // not a fatal exception but debug is enabled to we log it anyway
+              this.platformLogger.error(
+                String.format(
+                  "Subscriber %s was unable to handle %s",
+                  subscription.eventConsumer().getClass().getName(),
+                  event.getClass().getSimpleName()),
+                throwable);
+            }
+          }
+        }
+      }
+    }
+
     return event;
   }
 
   @Override
-  public <E extends NpcEvent> @NotNull NpcEventManager registerEventHandler(
+  public <E extends NpcEvent> @NotNull NpcEventSubscription<? super E> registerEventHandler(
     @NotNull Class<E> eventType,
     @NotNull NpcEventConsumer<E> consumer
   ) {
-    return this.registerEventHandler(eventType, consumer, EventConfig.DEFAULT_ORDER);
+    return this.registerEventHandler(eventType, consumer, 0);
   }
 
   @Override
-  public <E extends NpcEvent> @NotNull NpcEventManager registerEventHandler(
+  @SuppressWarnings("unchecked")
+  public <E extends NpcEvent> @NotNull NpcEventSubscription<? super E> registerEventHandler(
     @NotNull Class<E> eventType,
     @NotNull NpcEventConsumer<E> consumer,
     int eventHandlerPriority
   ) {
-    EventConfig eventConfig = EventConfig.defaults().acceptsCancelled(false).order(eventHandlerPriority);
-    this.eventRegistry.subscribe(eventType, eventConfig, consumer::accept);
-    return this;
+    NpcEventSubscription<? super E> subscription = new DefaultNpcEventSubscription<>(
+      eventHandlerPriority,
+      eventType,
+      consumer,
+      this);
+
+    List<NpcEventSubscription<? super NpcEvent>> eventSubscriptions = this.registeredSubscribers.computeIfAbsent(
+      eventType,
+      __ -> new CopyOnWriteArrayList<>());
+    eventSubscriptions.add((NpcEventSubscription<? super NpcEvent>) subscription);
+
+    eventSubscriptions.sort(SUBSCRIPTION_COMPARABLE);
+    return subscription;
   }
 
-  private static final class LoggingEventExceptionHandler implements EventBus.EventExceptionHandler {
-
-    private final boolean debugEnabled;
-    private final PlatformLogger logger;
-
-    public LoggingEventExceptionHandler(boolean debugEnabled, @NotNull PlatformLogger logger) {
-      this.debugEnabled = debugEnabled;
-      this.logger = logger;
+  @Override
+  public void unregisterEventHandlerIf(@NotNull Predicate<NpcEventSubscription<? super NpcEvent>> subscriptionFilter) {
+    for (List<NpcEventSubscription<? super NpcEvent>> subscriptions : this.registeredSubscribers.values()) {
+      subscriptions.removeIf(subscriptionFilter);
     }
+  }
 
-    private static boolean isFatal(@NotNull Throwable throwable) {
-      // this includes the most fatal errors that can occur on a thread which we should not silently ignore and rethrow
-      return throwable instanceof InterruptedException
-        || throwable instanceof LinkageError
-        || throwable instanceof ThreadDeath
-        || throwable instanceof VirtualMachineError;
-    }
-
-    @SuppressWarnings("unchecked")
-    private static <T extends Throwable> void throwUnchecked(@NotNull Throwable throwable) throws T {
-      throw (T) throwable;
-    }
-
-    @Override
-    public <E> void eventExceptionCaught(
-      @NotNull EventSubscription<? super E> subscription,
-      @NotNull E event,
-      @NotNull Throwable throwable
-    ) {
-      if (isFatal(throwable)) {
-        // rethrow fatal exceptions instantly
-        throwUnchecked(throwable);
-      } else if (this.debugEnabled) {
-        // just log that we received an exception from the event handler
-        this.logger.error(
-          String.format(
-            "Subscriber %s was unable to handle %s:",
-            subscription.subscriber().getClass().getName(),
-            event.getClass().getSimpleName()),
-          throwable);
-      }
+  void removeSubscription(@NotNull NpcEventSubscription<?> subscription) {
+    List<NpcEventSubscription<? super NpcEvent>> subscriptions = this.registeredSubscribers.get(
+      subscription.eventType());
+    if (subscriptions != null) {
+      subscriptions.remove(subscription);
     }
   }
 }

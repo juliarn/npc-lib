@@ -27,8 +27,43 @@ package com.github.juliarn.npclib.api.event.manager;
 import com.github.juliarn.npclib.api.event.NpcEvent;
 import org.jetbrains.annotations.NotNull;
 
-@FunctionalInterface
-public interface NpcEventConsumer<E extends NpcEvent> {
+final class DefaultNpcEventSubscription<E extends NpcEvent> implements NpcEventSubscription<E> {
 
-  void handle(@NotNull E event) throws Exception;
+  private final int order;
+  private final Class<E> eventType;
+  private final NpcEventConsumer<E> consumer;
+
+  private final DefaultNpcEventManager eventManager;
+
+  public DefaultNpcEventSubscription(
+    int order,
+    @NotNull Class<E> eventType,
+    @NotNull NpcEventConsumer<E> consumer,
+    @NotNull DefaultNpcEventManager eventManager
+  ) {
+    this.order = order;
+    this.eventType = eventType;
+    this.consumer = consumer;
+    this.eventManager = eventManager;
+  }
+
+  @Override
+  public int order() {
+    return this.order;
+  }
+
+  @Override
+  public @NotNull Class<E> eventType() {
+    return this.eventType;
+  }
+
+  @Override
+  public @NotNull NpcEventConsumer<E> eventConsumer() {
+    return this.consumer;
+  }
+
+  @Override
+  public void dispose() {
+    this.eventManager.removeSubscription(this);
+  }
 }

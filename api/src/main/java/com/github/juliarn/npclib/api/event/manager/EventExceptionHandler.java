@@ -24,11 +24,30 @@
 
 package com.github.juliarn.npclib.api.event.manager;
 
-import com.github.juliarn.npclib.api.event.NpcEvent;
 import org.jetbrains.annotations.NotNull;
 
-@FunctionalInterface
-public interface NpcEventConsumer<E extends NpcEvent> {
+final class EventExceptionHandler {
 
-  void handle(@NotNull E event) throws Exception;
+  private EventExceptionHandler() {
+    throw new UnsupportedOperationException();
+  }
+
+  public static void rethrowFatalException(@NotNull Throwable throwable) {
+    if (isFatal(throwable)) {
+      throwUnchecked(throwable);
+    }
+  }
+
+  private static boolean isFatal(@NotNull Throwable throwable) {
+    // this includes the most fatal errors that can occur on a thread which we should not silently ignore and rethrow
+    return throwable instanceof InterruptedException
+      || throwable instanceof LinkageError
+      || throwable instanceof ThreadDeath
+      || throwable instanceof VirtualMachineError;
+  }
+
+  @SuppressWarnings("unchecked")
+  private static <T extends Throwable> void throwUnchecked(@NotNull Throwable throwable) throws T {
+    throw (T) throwable;
+  }
 }

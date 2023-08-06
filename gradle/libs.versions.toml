@@ -10,7 +10,6 @@ checkstyleTools = "10.12.2"
 gson = "2.10.1"
 netty = "4.1.96.Final"
 annotations = "24.0.1"
-event = "1.0.0-SNAPSHOT"
 
 # platform api versions
 sponge = "10.0.0"
@@ -26,7 +25,6 @@ packetEvents = "800ffafb96"
 [libraries]
 
 # general
-event = { group = "com.seiama", name = "event-api", version.ref = "event" }
 netty = { group = "io.netty", name = "netty-buffer", version.ref = "netty" }
 gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
 annotations = { group = "org.jetbrains", name = "annotations", version.ref = "annotations" }
