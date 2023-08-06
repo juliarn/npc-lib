@@ -111,6 +111,13 @@ public final class BukkitProfileResolver {
       // create the profile and fill in the empty values
       org.bukkit.profile.PlayerProfile playerProfile = Bukkit.createPlayerProfile(profile.uniqueId(), profile.name());
       return playerProfile.update().thenApplyAsync(resolvedProfile -> {
+        // validate that the profile was actually completed
+        UUID profileId = resolvedProfile.getUniqueId();
+        String profileName = resolvedProfile.getName();
+        if (profileId == null || profileName == null) {
+          throw new IllegalStateException("Could not resolve profile using spigot resolver");
+        }
+
         // hack to get the data from the profile as it's not exposed directly
         //noinspection unchecked
         List<Map<String, Object>> props = (List<Map<String, Object>>) resolvedProfile.serialize().get("properties");
@@ -131,8 +138,7 @@ public final class BukkitProfileResolver {
         }
 
         // build the profile from the given data
-        //noinspection ConstantConditions
-        return Profile.resolved(resolvedProfile.getName(), resolvedProfile.getUniqueId(), properties);
+        return Profile.resolved(profileName, profileId, properties);
       });
     }
   }
