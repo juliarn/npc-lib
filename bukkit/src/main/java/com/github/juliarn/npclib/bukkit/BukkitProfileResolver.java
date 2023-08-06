@@ -33,6 +33,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import org.bukkit.Bukkit;
@@ -76,9 +77,26 @@ public final class BukkitProfileResolver {
           .map(prop -> ProfileProperty.property(prop.getName(), prop.getValue(), prop.getSignature()))
           .collect(Collectors.toSet());
 
+        // validate that the profile id is present - when resolving by name only the id will be missing
+        // see below for further details
+        UUID profileId = playerProfile.getId();
+        if (profileId == null) {
+          throw new IllegalStateException("Could not resolve profile uuid using paper resolver");
+        }
+
+        // in case the player is not online, the complete method will not actually fill in the profile details.
+        // the documentation states it will be, but it is not - even the update() method (added from the bukkit
+        // api in 1.18) will not do this on a paper profile.
+        // to work around this we just insert a random generated name in this case.
+        // see https://github.com/PaperMC/Paper/issues/8927
+        String profileName = playerProfile.getName();
+        if (profileName == null) {
+          String randomId = UUID.randomUUID().toString();
+          profileName = randomId.replace("-", "").substring(0, 16);
+        }
+
         // create the resolved profile
-        //noinspection ConstantConditions
-        return Profile.resolved(playerProfile.getName(), playerProfile.getId(), properties);
+        return Profile.resolved(profileName, profileId, properties);
       });
     }
   }
