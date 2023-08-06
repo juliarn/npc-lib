@@ -60,27 +60,31 @@ final class DefaultNpcEventManager implements NpcEventManager {
   public <E extends NpcEvent> @NotNull E post(@NotNull E event) {
     Objects.requireNonNull(event, "event");
 
-    List<NpcEventSubscription<? super NpcEvent>> subscriptions = this.registeredSubscribers.get(event.getClass());
-    if (!subscriptions.isEmpty()) {
-      for (NpcEventSubscription<? super E> subscription : subscriptions) {
-        // once the event was cancelled we don't want to post it to any further subscribers
-        boolean eventWasCancelled = isEventCancelled(event);
-        if (eventWasCancelled) {
-          break;
-        }
+    for (Map.Entry<Class<?>, List<NpcEventSubscription<? super NpcEvent>>> entry : this.registeredSubscribers.entrySet()) {
+      Class<?> subscribedEventType = entry.getKey();
+      List<NpcEventSubscription<? super NpcEvent>> subscriptions = entry.getValue();
 
-        try {
-          subscription.eventConsumer().handle(event);
-        } catch (Throwable throwable) {
-          EventExceptionHandler.rethrowFatalException(throwable);
-          if (this.debugEnabled) {
-            // not a fatal exception but debug is enabled to we log it anyway
-            this.platformLogger.error(
-              String.format(
-                "Subscriber %s was unable to handle %s",
-                subscription.eventConsumer().getClass().getName(),
-                event.getClass().getSimpleName()),
-              throwable);
+      if (subscribedEventType.isInstance(event) && !subscriptions.isEmpty()) {
+        for (NpcEventSubscription<? super E> subscription : subscriptions) {
+          // once the event was cancelled we don't want to post it to any further subscribers
+          boolean eventWasCancelled = isEventCancelled(event);
+          if (eventWasCancelled) {
+            break;
+          }
+
+          try {
+            subscription.eventConsumer().handle(event);
+          } catch (Throwable throwable) {
+            EventExceptionHandler.rethrowFatalException(throwable);
+            if (this.debugEnabled) {
+              // not a fatal exception but debug is enabled to we log it anyway
+              this.platformLogger.error(
+                String.format(
+                  "Subscriber %s was unable to handle %s",
+                  subscription.eventConsumer().getClass().getName(),
+                  event.getClass().getSimpleName()),
+                throwable);
+            }
           }
         }
       }
