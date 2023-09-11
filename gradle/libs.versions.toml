@@ -4,6 +4,7 @@
 shadow = "8.1.1"
 blossom = "1.3.1"
 spotless = "6.20.0"
+nexusPublish = "2.0.0-rc-1"
 checkstyleTools = "10.12.2"
 
 # general
@@ -47,3 +48,4 @@ checkstyleTools = { group = "com.puppycrawl.tools", name = "checkstyle", version
 blossom = { id = "net.kyori.blossom", version.ref = "blossom" }
 spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
 shadow = { id = "com.github.johnrengelman.shadow", version.ref = "shadow" }
+nexusPublish = { id = "io.github.gradle-nexus.publish-plugin", version.ref = "nexusPublish" }

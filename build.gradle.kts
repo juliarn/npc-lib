@@ -27,6 +27,7 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
 plugins {
   alias(libs.plugins.spotless)
+  alias(libs.plugins.nexusPublish)
   alias(libs.plugins.shadow) apply false
 }
 
@@ -34,7 +35,7 @@ defaultTasks("build", "shadowJar")
 
 allprojects {
   version = "3.0.0-SNAPSHOT"
-  group = "com.github.juliarn"
+  group = "io.github.juliarn"
 
   repositories {
     mavenCentral()
@@ -57,6 +58,7 @@ allprojects {
 
 subprojects {
   // apply all plugins only to subprojects
+  apply(plugin = "signing")
   apply(plugin = "checkstyle")
   apply(plugin = "java-library")
   apply(plugin = "maven-publish")
@@ -126,10 +128,25 @@ subprojects {
     options.addBooleanOption("Xdoclint:-missing", true)
   }
 
+  tasks.register<org.gradle.jvm.tasks.Jar>("javadocJar") {
+    archiveClassifier.set("javadoc")
+    from(tasks.getByName("javadoc"))
+  }
+
+  tasks.register<org.gradle.jvm.tasks.Jar>("sourcesJar") {
+    archiveClassifier.set("sources")
+    from(project.the<SourceSetContainer>()["main"].allJava)
+  }
+
   extensions.configure<PublishingExtension> {
     publications.apply {
       create("maven", MavenPublication::class.java).apply {
+        // main output to publish
         from(components.getByName("java"))
+
+        // additional artifacts
+        artifact(tasks.getByName("sourcesJar"))
+        artifact(tasks.getByName("javadocJar"))
 
         pom {
           name.set(project.name)
@@ -160,6 +177,15 @@ subprojects {
             url.set("https://github.com/juliarn/NPC-Lib/actions")
           }
 
+          developers {
+            developer {
+              id.set("derklaro")
+              email.set("git@derklaro.dev")
+              timezone.set("Europe/Berlin")
+              name.set("Pasqual Koschmieder")
+            }
+          }
+
           withXml {
             val repositories = asNode().appendNode("repositories")
             project.repositories.forEach {
@@ -174,4 +200,29 @@ subprojects {
       }
     }
   }
+
+  tasks.withType<Sign> {
+    onlyIf {
+      !rootProject.version.toString().endsWith("-SNAPSHOT")
+    }
+  }
+
+  extensions.configure<SigningExtension> {
+    useGpgCmd()
+    sign(extensions.getByType(PublishingExtension::class.java).publications.getByName("maven"))
+  }
+}
+
+nexusPublishing {
+  repositories.run {
+    sonatype {
+      nexusUrl.set(uri("https://s01.oss.sonatype.org/service/local/"))
+      snapshotRepositoryUrl.set(uri("https://s01.oss.sonatype.org/content/repositories/snapshots/"))
+
+      username.set(project.findProperty("ossrhUsername") as? String ?: "")
+      password.set(project.findProperty("ossrhPassword") as? String ?: "")
+    }
+  }
+
+  useStaging.set(!project.version.toString().endsWith("-SNAPSHOT"))
 }
