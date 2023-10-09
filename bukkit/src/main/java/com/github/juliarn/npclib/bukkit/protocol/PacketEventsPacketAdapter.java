@@ -51,6 +51,7 @@ import com.github.retrooper.packetevents.manager.server.ServerVersion;
 import com.github.retrooper.packetevents.protocol.entity.data.EntityData;
 import com.github.retrooper.packetevents.protocol.entity.data.EntityDataType;
 import com.github.retrooper.packetevents.protocol.entity.data.EntityDataTypes;
+import com.github.retrooper.packetevents.protocol.entity.type.EntityTypes;
 import com.github.retrooper.packetevents.protocol.packettype.PacketType;
 import com.github.retrooper.packetevents.protocol.player.Equipment;
 import com.github.retrooper.packetevents.protocol.player.EquipmentSlot;
@@ -63,6 +64,7 @@ import com.github.retrooper.packetevents.settings.PacketEventsSettings;
 import com.github.retrooper.packetevents.util.TimeStampMode;
 import com.github.retrooper.packetevents.util.adventure.AdventureSerializer;
 import com.github.retrooper.packetevents.wrapper.PacketWrapper;
+import com.github.retrooper.packetevents.wrapper.configuration.client.WrapperConfigClientPluginMessage;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientInteractEntity;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerDestroyEntities;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityAnimation;
@@ -75,6 +77,7 @@ import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPl
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPlayerInfoRemove;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPlayerInfoUpdate;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPluginMessage;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSpawnEntity;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSpawnPlayer;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.reflect.TypeToken;
@@ -151,7 +154,22 @@ final class PacketEventsPacketAdapter implements PlatformPacketAdapter<World, Pl
     return (player, npc) -> {
       // SpawnPlayer (https://wiki.vg/Protocol#Spawn_Player)
       Location location = npcLocation(npc);
-      PacketWrapper<?> wrapper = new WrapperPlayServerSpawnPlayer(npc.entityId(), npc.profile().uniqueId(), location);
+
+      PacketWrapper<?> wrapper;
+      if (this.serverVersion.isNewerThanOrEquals(ServerVersion.V_1_20_2)) {
+        wrapper = new WrapperPlayServerSpawnEntity(
+          npc.entityId(),
+          Optional.of(npc.profile().uniqueId()),
+          EntityTypes.PLAYER,
+          location.getPosition(),
+          location.getPitch(),
+          location.getYaw(),
+          0,
+          0,
+          Optional.empty());
+      } else {
+        wrapper = new WrapperPlayServerSpawnPlayer(npc.entityId(), npc.profile().uniqueId(), location);
+      }
 
       // send the packet without notifying any listeners
       this.packetPlayerManager.sendPacketSilently(player, wrapper);
@@ -283,7 +301,14 @@ final class PacketEventsPacketAdapter implements PlatformPacketAdapter<World, Pl
   ) {
     return (player, npc) -> {
       // CustomPayload (https://wiki.vg/Protocol#Custom_Payload)
-      PacketWrapper<?> wrapper = new WrapperPlayServerPluginMessage(channelId, payload);
+
+      PacketWrapper<?> wrapper;
+      if (this.serverVersion.isNewerThanOrEquals(ServerVersion.V_1_20_2)) {
+        wrapper = new WrapperConfigClientPluginMessage(channelId, payload);
+      } else {
+        wrapper = new WrapperPlayServerPluginMessage(channelId, payload);
+      }
+
       this.packetPlayerManager.sendPacketSilently(player, wrapper);
     };
   }
