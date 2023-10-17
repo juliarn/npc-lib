@@ -112,10 +112,9 @@ final class PacketEventsPacketAdapter implements PlatformPacketAdapter<World, Pl
     .reEncodeByDefault(false)
     .timeStampMode(TimeStampMode.NONE);
 
-  private static final Type OPTIONAL_CHAT_COMPONENT_TYPE = TypeToken.getParameterized(
-    Optional.class,
-    net.kyori.adventure.text.Component.class
-  ).getType();
+  private static final Type OPTIONAL_CHAT_COMPONENT_TYPE = new TypeToken<Optional<net.kyori.adventure.text.Component>>() {
+  }.getType();
+
 
   // lazy initialized, then never null again
   private ServerVersion serverVersion;
@@ -528,7 +527,8 @@ final class PacketEventsPacketAdapter implements PlatformPacketAdapter<World, Pl
           com.github.retrooper.packetevents.protocol.entity.pose.EntityPose.class,
           ENTITY_POSE_CONVERTER.get(value)))
         .put(
-          TypeToken.getParameterized(Optional.class, Component.class).getType(),
+          new TypeToken<Optional<Component>>() {
+          }.getType(),
           (versionAccessor, value) -> {
             //noinspection unchecked
             Optional<Component> optionalComponent = (Optional<Component>) value;

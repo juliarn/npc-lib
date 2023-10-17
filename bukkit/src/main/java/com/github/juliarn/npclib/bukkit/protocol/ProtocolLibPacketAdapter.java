@@ -62,6 +62,7 @@ import com.github.juliarn.npclib.common.event.DefaultAttackNpcEvent;
 import com.github.juliarn.npclib.common.event.DefaultInteractNpcEvent;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import com.google.gson.internal.$Gson$Types;
 import com.google.gson.reflect.TypeToken;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -91,10 +92,11 @@ final class ProtocolLibPacketAdapter implements PlatformPacketAdapter<World, Pla
 
   static final ProtocolLibPacketAdapter INSTANCE = new ProtocolLibPacketAdapter();
 
-  private static final Type OPTIONAL_COMPONENT_TYPE = TypeToken.getParameterized(
+  private static final Class<?> CHAT_COMPONENT_CLASS = MinecraftReflection.getIChatBaseComponentClass();
+  private static final Type OPTIONAL_COMPONENT_TYPE = $Gson$Types.newParameterizedTypeWithOwner(
+    null,
     Optional.class,
-    MinecraftReflection.getIChatBaseComponentClass()
-  ).getType();
+    CHAT_COMPONENT_CLASS);
 
   private static final ProtocolManager PROTOCOL_MANAGER = ProtocolLibrary.getProtocolManager();
   private static final MinecraftVersion SERVER_VERSION = MinecraftVersion.fromServerVersion(Bukkit.getVersion());
@@ -175,7 +177,8 @@ final class ProtocolLibPacketAdapter implements PlatformPacketAdapter<World, Pla
           EnumWrappers.getEntityPoseClass(),
           ENTITY_POSE_CONVERTER.get(value)))
       .put(
-        TypeToken.getParameterized(Optional.class, Component.class).getType(),
+        new TypeToken<Optional<Component>>() {
+        }.getType(),
         (versionAccess, value) -> {
           //noinspection unchecked
           Optional<Component> optionalComponent = (Optional<Component>) value;

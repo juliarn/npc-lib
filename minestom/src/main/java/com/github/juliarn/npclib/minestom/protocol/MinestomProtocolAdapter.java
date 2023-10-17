@@ -84,10 +84,8 @@ public final class MinestomProtocolAdapter implements PlatformPacketAdapter<Inst
 
   private static final MinestomProtocolAdapter INSTANCE = new MinestomProtocolAdapter();
 
-  private static final Type OPTIONAL_CHAT_COMPONENT_TYPE = TypeToken.getParameterized(
-    Optional.class,
-    net.kyori.adventure.text.Component.class
-  ).getType();
+  private static final Type OPTIONAL_CHAT_COMPONENT_TYPE = new TypeToken<Optional<net.kyori.adventure.text.Component>>() {
+  }.getType();
 
   private static final EnumMap<ItemSlot, EquipmentSlot> ITEM_SLOT_CONVERTER;
   private static final EnumMap<EntityPose, Entity.Pose> ENTITY_POSE_CONVERTER;
@@ -155,7 +153,8 @@ public final class MinestomProtocolAdapter implements PlatformPacketAdapter<Inst
       Entity.Pose.class,
       ENTITY_POSE_CONVERTER::get));
     SERIALIZER_CONVERTERS.put(
-      TypeToken.getParameterized(Optional.class, Component.class).getType(),
+      new TypeToken<Optional<Component>>() {
+      }.getType(),
       new AbstractMap.SimpleImmutableEntry<>(
         OPTIONAL_CHAT_COMPONENT_TYPE,
         value -> {
