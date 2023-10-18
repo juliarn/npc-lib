@@ -39,6 +39,5 @@ tasks.withType<JavaCompile> {
 tasks.withType<ShadowJar> {
   dependsOn(":npc-lib-common:shadowJar")
 
-  relocate("com.google.gson", "com.github.juliarn.npclib.relocate.gson")
   relocate("io.leangen.geantyref", "com.github.juliarn.npclib.relocate.geantyref")
 }
