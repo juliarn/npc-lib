@@ -1,3 +1,5 @@
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+
 /*
  * This file is part of npc-lib, licensed under the MIT License (MIT).
  *
@@ -24,4 +26,9 @@
 
 dependencies {
   compileOnly(libs.gson)
+  implementation(libs.geantyref)
+}
+
+tasks.withType<ShadowJar> {
+  relocate("io.leangen.geantyref", "com.github.juliarn.npclib.relocate.geantyref")
 }

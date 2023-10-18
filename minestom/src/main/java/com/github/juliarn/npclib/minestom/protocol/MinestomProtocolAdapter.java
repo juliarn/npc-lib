@@ -41,7 +41,7 @@ import com.github.juliarn.npclib.api.protocol.meta.EntityMetadataFactory;
 import com.github.juliarn.npclib.common.event.DefaultAttackNpcEvent;
 import com.github.juliarn.npclib.common.event.DefaultInteractNpcEvent;
 import com.github.juliarn.npclib.minestom.util.MinestomUtil;
-import com.google.gson.reflect.TypeToken;
+import io.leangen.geantyref.TypeFactory;
 import java.lang.reflect.Type;
 import java.util.AbstractMap;
 import java.util.ArrayList;
@@ -84,8 +84,9 @@ public final class MinestomProtocolAdapter implements PlatformPacketAdapter<Inst
 
   private static final MinestomProtocolAdapter INSTANCE = new MinestomProtocolAdapter();
 
-  private static final Type OPTIONAL_CHAT_COMPONENT_TYPE = new TypeToken<Optional<net.kyori.adventure.text.Component>>() {
-  }.getType();
+  private static final Type OPTIONAL_CHAT_COMPONENT_TYPE = TypeFactory.parameterizedClass(
+    Optional.class,
+    net.kyori.adventure.text.Component.class);
 
   private static final EnumMap<ItemSlot, EquipmentSlot> ITEM_SLOT_CONVERTER;
   private static final EnumMap<EntityPose, Entity.Pose> ENTITY_POSE_CONVERTER;
@@ -153,8 +154,7 @@ public final class MinestomProtocolAdapter implements PlatformPacketAdapter<Inst
       Entity.Pose.class,
       ENTITY_POSE_CONVERTER::get));
     SERIALIZER_CONVERTERS.put(
-      new TypeToken<Optional<Component>>() {
-      }.getType(),
+      TypeFactory.parameterizedClass(Optional.class, Component.class),
       new AbstractMap.SimpleImmutableEntry<>(
         OPTIONAL_CHAT_COMPONENT_TYPE,
         value -> {

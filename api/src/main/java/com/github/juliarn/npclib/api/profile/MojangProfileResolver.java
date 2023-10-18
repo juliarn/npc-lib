@@ -30,10 +30,10 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.TypeAdapter;
-import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
+import io.leangen.geantyref.TypeFactory;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
@@ -55,7 +55,7 @@ final class MojangProfileResolver implements ProfileResolver {
 
   private static final int DEFAULT_TIMEOUT = (int) TimeUnit.SECONDS.toMillis(10);
 
-  private static final Type PROFILE_PROPERTIES_TYPE = new TypeToken<Set<ProfileProperty>>(){}.getType();
+  private static final Type PROFILE_PROPERTIES_TYPE = TypeFactory.parameterizedClass(Set.class, ProfileProperty.class);
   private static final Gson GSON = new GsonBuilder()
     .disableHtmlEscaping()
     .registerTypeAdapter(ProfileProperty.class, new ProfilePropertyTypeAdapter())

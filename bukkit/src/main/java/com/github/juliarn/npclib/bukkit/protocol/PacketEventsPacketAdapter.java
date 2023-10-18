@@ -80,9 +80,9 @@ import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPl
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSpawnEntity;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSpawnPlayer;
 import com.google.common.collect.ImmutableMap;
-import com.google.gson.reflect.TypeToken;
 import io.github.retrooper.packetevents.factory.spigot.SpigotPacketEventsBuilder;
 import io.github.retrooper.packetevents.util.SpigotReflectionUtil;
+import io.leangen.geantyref.TypeFactory;
 import java.lang.reflect.Type;
 import java.util.AbstractMap;
 import java.util.ArrayList;
@@ -112,8 +112,9 @@ final class PacketEventsPacketAdapter implements PlatformPacketAdapter<World, Pl
     .reEncodeByDefault(false)
     .timeStampMode(TimeStampMode.NONE);
 
-  private static final Type OPTIONAL_CHAT_COMPONENT_TYPE = new TypeToken<Optional<net.kyori.adventure.text.Component>>() {
-  }.getType();
+  private static final Type OPTIONAL_CHAT_COMPONENT_TYPE = TypeFactory.parameterizedClass(
+    Optional.class,
+    net.kyori.adventure.text.Component.class);
 
 
   // lazy initialized, then never null again
@@ -527,8 +528,7 @@ final class PacketEventsPacketAdapter implements PlatformPacketAdapter<World, Pl
           com.github.retrooper.packetevents.protocol.entity.pose.EntityPose.class,
           ENTITY_POSE_CONVERTER.get(value)))
         .put(
-          new TypeToken<Optional<Component>>() {
-          }.getType(),
+          TypeFactory.parameterizedClass(Optional.class, Component.class),
           (versionAccessor, value) -> {
             //noinspection unchecked
             Optional<Component> optionalComponent = (Optional<Component>) value;

@@ -26,8 +26,10 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
 dependencies {
   api(projects.npcLibApi)
-  compileOnly(libs.minestom)
   implementation(projects.npcLibCommon)
+
+  compileOnly(libs.minestom)
+  implementation(libs.geantyref)
 }
 
 tasks.withType<JavaCompile> {
@@ -36,5 +38,7 @@ tasks.withType<JavaCompile> {
 
 tasks.withType<ShadowJar> {
   dependsOn(":npc-lib-common:shadowJar")
+
   relocate("com.google.gson", "com.github.juliarn.npclib.relocate.gson")
+  relocate("io.leangen.geantyref", "com.github.juliarn.npclib.relocate.geantyref")
 }
