@@ -478,10 +478,11 @@ final class ProtocolLibPacketAdapter implements PlatformPacketAdapter<World, Pla
         MinecraftKey key = parts.length == 1 ? new MinecraftKey(channelId) : new MinecraftKey(parts[0], parts[1]);
 
         if (MinecraftVersion.CONFIG_PHASE_PROTOCOL_UPDATE.atOrAbove()) {
-          // mc 1.20.2:
+          // mc 1.20.2: custom payload info is in a wrapper object
           CustomPacketPayloadWrapper payloadWrapper = new CustomPacketPayloadWrapper(payload, key);
           container.getCustomPacketPayloads().write(0, payloadWrapper);
         } else {
+          // pre 1.20.2: payload key is a plain field
           container.getMinecraftKeys().write(0, key);
         }
       } else {
@@ -490,7 +491,7 @@ final class ProtocolLibPacketAdapter implements PlatformPacketAdapter<World, Pla
       }
 
       if (!MinecraftVersion.CONFIG_PHASE_PROTOCOL_UPDATE.atOrAbove()) {
-        // payload
+        // pre 1.20.2: payload data is a ByteBuf field
         ByteBuf buffer = Unpooled.copiedBuffer(payload);
         Object wrappedSerializableBuffer = MinecraftReflection.getPacketDataSerializer(buffer);
         container.getModifier().withType(ByteBuf.class).write(0, wrappedSerializableBuffer);

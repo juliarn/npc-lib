@@ -151,11 +151,11 @@ final class PacketEventsPacketAdapter implements PlatformPacketAdapter<World, Pl
   @Override
   public @NotNull OutboundPacket<World, Player, ItemStack, Plugin> createEntitySpawnPacket() {
     return (player, npc) -> {
-      // SpawnPlayer (https://wiki.vg/Protocol#Spawn_Player)
       Location location = npcLocation(npc);
 
       PacketWrapper<?> wrapper;
       if (this.serverVersion.isNewerThanOrEquals(ServerVersion.V_1_20_2)) {
+        // SpawnEntity (https://wiki.vg/Protocol#Spawn_Entity)
         wrapper = new WrapperPlayServerSpawnEntity(
           npc.entityId(),
           Optional.of(npc.profile().uniqueId()),
@@ -167,6 +167,7 @@ final class PacketEventsPacketAdapter implements PlatformPacketAdapter<World, Pl
           0,
           Optional.empty());
       } else {
+        // SpawnPlayer (https://wiki.vg/Protocol#Spawn_Player)
         wrapper = new WrapperPlayServerSpawnPlayer(npc.entityId(), npc.profile().uniqueId(), location);
       }
 
@@ -300,7 +301,6 @@ final class PacketEventsPacketAdapter implements PlatformPacketAdapter<World, Pl
   ) {
     return (player, npc) -> {
       // CustomPayload (https://wiki.vg/Protocol#Custom_Payload)
-
       PacketWrapper<?> wrapper = new WrapperPlayServerPluginMessage(channelId, payload);
       this.packetPlayerManager.sendPacketSilently(player, wrapper);
     };

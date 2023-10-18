@@ -55,11 +55,11 @@ final class MojangProfileResolver implements ProfileResolver {
 
   private static final int DEFAULT_TIMEOUT = (int) TimeUnit.SECONDS.toMillis(10);
 
-  private static final Type PROFILE_PROPERTIES_TYPE = TypeFactory.parameterizedClass(Set.class, ProfileProperty.class);
   private static final Gson GSON = new GsonBuilder()
     .disableHtmlEscaping()
     .registerTypeAdapter(ProfileProperty.class, new ProfilePropertyTypeAdapter())
     .create();
+  private static final Type PROFILE_PROPERTIES_TYPE = TypeFactory.parameterizedClass(Set.class, ProfileProperty.class);
 
   private static final Pattern UUID_NO_DASH_PATTERN = Pattern.compile("-", Pattern.LITERAL);
   private static final Pattern UUID_DASHER_PATTERN = Pattern.compile("(\\w{8})(\\w{4})(\\w{4})(\\w{4})(\\w{12})");
