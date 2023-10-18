@@ -32,6 +32,7 @@ import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.events.PacketEvent;
 import com.comphenix.protocol.utility.MinecraftReflection;
 import com.comphenix.protocol.utility.MinecraftVersion;
+import com.comphenix.protocol.wrappers.CustomPacketPayloadWrapper;
 import com.comphenix.protocol.wrappers.EnumWrappers;
 import com.comphenix.protocol.wrappers.MinecraftKey;
 import com.comphenix.protocol.wrappers.Pair;
@@ -61,7 +62,7 @@ import com.github.juliarn.npclib.common.event.DefaultAttackNpcEvent;
 import com.github.juliarn.npclib.common.event.DefaultInteractNpcEvent;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
-import com.google.gson.reflect.TypeToken;
+import io.leangen.geantyref.TypeFactory;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import java.lang.reflect.ParameterizedType;
@@ -79,6 +80,7 @@ import java.util.UUID;
 import java.util.function.BiFunction;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
@@ -89,10 +91,9 @@ final class ProtocolLibPacketAdapter implements PlatformPacketAdapter<World, Pla
 
   static final ProtocolLibPacketAdapter INSTANCE = new ProtocolLibPacketAdapter();
 
-  private static final Type OPTIONAL_COMPONENT_TYPE = TypeToken.getParameterized(
+  private static final Type OPTIONAL_COMPONENT_TYPE = TypeFactory.parameterizedClass(
     Optional.class,
-    MinecraftReflection.getIChatBaseComponentClass()
-  ).getType();
+    MinecraftReflection.getIChatBaseComponentClass());
 
   private static final ProtocolManager PROTOCOL_MANAGER = ProtocolLibrary.getProtocolManager();
   private static final MinecraftVersion SERVER_VERSION = MinecraftVersion.fromServerVersion(Bukkit.getVersion());
@@ -173,7 +174,7 @@ final class ProtocolLibPacketAdapter implements PlatformPacketAdapter<World, Pla
           EnumWrappers.getEntityPoseClass(),
           ENTITY_POSE_CONVERTER.get(value)))
       .put(
-        TypeToken.getParameterized(Optional.class, Component.class).getType(),
+        TypeFactory.parameterizedClass(Optional.class, Component.class),
         (versionAccess, value) -> {
           //noinspection unchecked
           Optional<Component> optionalComponent = (Optional<Component>) value;
@@ -237,12 +238,22 @@ final class ProtocolLibPacketAdapter implements PlatformPacketAdapter<World, Pla
   @Override
   public @NotNull OutboundPacket<World, Player, ItemStack, Plugin> createEntitySpawnPacket() {
     return (player, npc) -> {
-      // SpawnPlayer (https://wiki.vg/Protocol#Spawn_Player)
-      PacketContainer container = new PacketContainer(PacketType.Play.Server.NAMED_ENTITY_SPAWN);
+      PacketContainer container;
+      if (MinecraftVersion.CONFIG_PHASE_PROTOCOL_UPDATE.atOrAbove()) {
+        // SpawnEntity (https://wiki.vg/Protocol#Spawn_Entity)
+        container = new PacketContainer(PacketType.Play.Server.SPAWN_ENTITY);
+      } else {
+        // SpawnPlayer (https://wiki.vg/Protocol#Spawn_Player)
+        container = new PacketContainer(PacketType.Play.Server.NAMED_ENTITY_SPAWN);
+      }
 
       // base information
       container.getIntegers().write(0, npc.entityId());
       container.getUUIDs().write(0, npc.profile().uniqueId());
+
+      if (MinecraftVersion.CONFIG_PHASE_PROTOCOL_UPDATE.atOrAbove()) {
+        container.getEntityTypeModifier().write(0, EntityType.PLAYER);
+      }
 
       // position
       if (MinecraftVersion.COMBAT_UPDATE.atOrAbove()) {
@@ -461,22 +472,29 @@ final class ProtocolLibPacketAdapter implements PlatformPacketAdapter<World, Pla
       // CustomPayload (https://wiki.vg/Protocol#Custom_Payload)
       PacketContainer container = new PacketContainer(PacketType.Play.Server.CUSTOM_PAYLOAD);
 
-      // channel id
       if (MinecraftVersion.AQUATIC_UPDATE.atOrAbove()) {
         // mc 1.13: channel id is now in the format of a resource location
         String[] parts = channelId.split(":", 2);
         MinecraftKey key = parts.length == 1 ? new MinecraftKey(channelId) : new MinecraftKey(parts[0], parts[1]);
 
-        container.getMinecraftKeys().write(0, key);
+        if (MinecraftVersion.CONFIG_PHASE_PROTOCOL_UPDATE.atOrAbove()) {
+          // mc 1.20.2:
+          CustomPacketPayloadWrapper payloadWrapper = new CustomPacketPayloadWrapper(payload, key);
+          container.getCustomPacketPayloads().write(0, payloadWrapper);
+        } else {
+          container.getMinecraftKeys().write(0, key);
+        }
       } else {
         // mc 1.8: channel id is a string
         container.getStrings().write(0, channelId);
       }
 
-      // payload
-      ByteBuf buffer = Unpooled.copiedBuffer(payload);
-      Object wrappedSerializableBuffer = MinecraftReflection.getPacketDataSerializer(buffer);
-      container.getModifier().withType(ByteBuf.class).write(0, wrappedSerializableBuffer);
+      if (!MinecraftVersion.CONFIG_PHASE_PROTOCOL_UPDATE.atOrAbove()) {
+        // payload
+        ByteBuf buffer = Unpooled.copiedBuffer(payload);
+        Object wrappedSerializableBuffer = MinecraftReflection.getPacketDataSerializer(buffer);
+        container.getModifier().withType(ByteBuf.class).write(0, wrappedSerializableBuffer);
+      }
 
       // send the packet without notifying any bound packet listeners
       PROTOCOL_MANAGER.sendServerPacket(player, container, false);

@@ -25,10 +25,10 @@
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
 dependencies {
-  implementation(libs.gson)
+  compileOnly(libs.gson)
+  implementation(libs.geantyref)
 }
 
 tasks.withType<ShadowJar> {
-  minimize()
-  relocate("com.google.gson", "com.github.juliarn.npclib.relocate.gson")
+  relocate("io.leangen.geantyref", "com.github.juliarn.npclib.relocate.geantyref")
 }

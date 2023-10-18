@@ -51,6 +51,7 @@ import com.github.retrooper.packetevents.manager.server.ServerVersion;
 import com.github.retrooper.packetevents.protocol.entity.data.EntityData;
 import com.github.retrooper.packetevents.protocol.entity.data.EntityDataType;
 import com.github.retrooper.packetevents.protocol.entity.data.EntityDataTypes;
+import com.github.retrooper.packetevents.protocol.entity.type.EntityTypes;
 import com.github.retrooper.packetevents.protocol.packettype.PacketType;
 import com.github.retrooper.packetevents.protocol.player.Equipment;
 import com.github.retrooper.packetevents.protocol.player.EquipmentSlot;
@@ -75,11 +76,12 @@ import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPl
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPlayerInfoRemove;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPlayerInfoUpdate;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPluginMessage;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSpawnEntity;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSpawnPlayer;
 import com.google.common.collect.ImmutableMap;
-import com.google.gson.reflect.TypeToken;
 import io.github.retrooper.packetevents.factory.spigot.SpigotPacketEventsBuilder;
 import io.github.retrooper.packetevents.util.SpigotReflectionUtil;
+import io.leangen.geantyref.TypeFactory;
 import java.lang.reflect.Type;
 import java.util.AbstractMap;
 import java.util.ArrayList;
@@ -109,10 +111,10 @@ final class PacketEventsPacketAdapter implements PlatformPacketAdapter<World, Pl
     .reEncodeByDefault(false)
     .timeStampMode(TimeStampMode.NONE);
 
-  private static final Type OPTIONAL_CHAT_COMPONENT_TYPE = TypeToken.getParameterized(
+  private static final Type OPTIONAL_CHAT_COMPONENT_TYPE = TypeFactory.parameterizedClass(
     Optional.class,
-    net.kyori.adventure.text.Component.class
-  ).getType();
+    net.kyori.adventure.text.Component.class);
+
 
   // lazy initialized, then never null again
   private ServerVersion serverVersion;
@@ -151,7 +153,22 @@ final class PacketEventsPacketAdapter implements PlatformPacketAdapter<World, Pl
     return (player, npc) -> {
       // SpawnPlayer (https://wiki.vg/Protocol#Spawn_Player)
       Location location = npcLocation(npc);
-      PacketWrapper<?> wrapper = new WrapperPlayServerSpawnPlayer(npc.entityId(), npc.profile().uniqueId(), location);
+
+      PacketWrapper<?> wrapper;
+      if (this.serverVersion.isNewerThanOrEquals(ServerVersion.V_1_20_2)) {
+        wrapper = new WrapperPlayServerSpawnEntity(
+          npc.entityId(),
+          Optional.of(npc.profile().uniqueId()),
+          EntityTypes.PLAYER,
+          location.getPosition(),
+          location.getPitch(),
+          location.getYaw(),
+          0,
+          0,
+          Optional.empty());
+      } else {
+        wrapper = new WrapperPlayServerSpawnPlayer(npc.entityId(), npc.profile().uniqueId(), location);
+      }
 
       // send the packet without notifying any listeners
       this.packetPlayerManager.sendPacketSilently(player, wrapper);
@@ -283,6 +300,7 @@ final class PacketEventsPacketAdapter implements PlatformPacketAdapter<World, Pl
   ) {
     return (player, npc) -> {
       // CustomPayload (https://wiki.vg/Protocol#Custom_Payload)
+
       PacketWrapper<?> wrapper = new WrapperPlayServerPluginMessage(channelId, payload);
       this.packetPlayerManager.sendPacketSilently(player, wrapper);
     };
@@ -503,7 +521,7 @@ final class PacketEventsPacketAdapter implements PlatformPacketAdapter<World, Pl
           com.github.retrooper.packetevents.protocol.entity.pose.EntityPose.class,
           ENTITY_POSE_CONVERTER.get(value)))
         .put(
-          TypeToken.getParameterized(Optional.class, Component.class).getType(),
+          TypeFactory.parameterizedClass(Optional.class, Component.class),
           (versionAccessor, value) -> {
             //noinspection unchecked
             Optional<Component> optionalComponent = (Optional<Component>) value;

@@ -27,13 +27,13 @@ package com.github.juliarn.npclib.api.profile;
 import com.github.juliarn.npclib.api.util.Util;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import com.google.gson.TypeAdapter;
-import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
+import io.leangen.geantyref.TypeFactory;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
@@ -55,11 +55,8 @@ final class MojangProfileResolver implements ProfileResolver {
 
   private static final int DEFAULT_TIMEOUT = (int) TimeUnit.SECONDS.toMillis(10);
 
-  private static final Type PROFILE_PROPERTIES_TYPE = TypeToken
-    .getParameterized(Set.class, ProfileProperty.class)
-    .getType();
+  private static final Type PROFILE_PROPERTIES_TYPE = TypeFactory.parameterizedClass(Set.class, ProfileProperty.class);
   private static final Gson GSON = new GsonBuilder()
-    .disableJdkUnsafe()
     .disableHtmlEscaping()
     .registerTypeAdapter(ProfileProperty.class, new ProfilePropertyTypeAdapter())
     .create();
@@ -99,7 +96,7 @@ final class MojangProfileResolver implements ProfileResolver {
         if (status == HttpURLConnection.HTTP_OK) {
           // parse the incoming data
           try (Reader reader = new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8)) {
-            return JsonParser.parseReader(reader).getAsJsonObject();
+            return GSON.fromJson(reader, JsonElement.class).getAsJsonObject();
           }
         } else {
           // rate limit, invalid name/uuid etc.
