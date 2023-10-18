@@ -64,7 +64,6 @@ import com.github.retrooper.packetevents.settings.PacketEventsSettings;
 import com.github.retrooper.packetevents.util.TimeStampMode;
 import com.github.retrooper.packetevents.util.adventure.AdventureSerializer;
 import com.github.retrooper.packetevents.wrapper.PacketWrapper;
-import com.github.retrooper.packetevents.wrapper.configuration.client.WrapperConfigClientPluginMessage;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientInteractEntity;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerDestroyEntities;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityAnimation;
@@ -302,13 +301,7 @@ final class PacketEventsPacketAdapter implements PlatformPacketAdapter<World, Pl
     return (player, npc) -> {
       // CustomPayload (https://wiki.vg/Protocol#Custom_Payload)
 
-      PacketWrapper<?> wrapper;
-      if (this.serverVersion.isNewerThanOrEquals(ServerVersion.V_1_20_2)) {
-        wrapper = new WrapperConfigClientPluginMessage(channelId, payload);
-      } else {
-        wrapper = new WrapperPlayServerPluginMessage(channelId, payload);
-      }
-
+      PacketWrapper<?> wrapper = new WrapperPlayServerPluginMessage(channelId, payload);
       this.packetPlayerManager.sendPacketSilently(player, wrapper);
     };
   }
