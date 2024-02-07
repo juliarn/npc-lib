@@ -186,6 +186,8 @@ public class CommonNpc<W, P, I, E> extends CommonNpcFlaggedObject implements Npc
     if (this.trackedPlayers.add(player)) {
       // break early if the add is not wanted by plugin
       if (this.platform.eventManager().post(DefaultShowNpcEvent.pre(this, player)).cancelled()) {
+        // trackedPlayers should not include this player if tracking it has been cancelled.
+        this.trackedPlayers.remove(player);
         return this;
       }
 
