@@ -30,18 +30,16 @@ import com.github.juliarn.npclib.common.platform.CommonPlatform;
 import com.github.juliarn.npclib.common.platform.CommonPlatformBuilder;
 import com.github.juliarn.npclib.minestom.protocol.MinestomProtocolAdapter;
 import net.minestom.server.entity.Player;
-import net.minestom.server.extensions.Extension;
 import net.minestom.server.instance.Instance;
 import net.minestom.server.item.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
-public final class MinestomPlatform extends CommonPlatformBuilder<Instance, Player, ItemStack, Extension> {
+public final class MinestomPlatform extends CommonPlatformBuilder<Instance, Player, ItemStack, Object> {
 
   private MinestomPlatform() {
-    this.extensionRequired = false;
   }
 
-  public static @NotNull Platform.Builder<Instance, Player, ItemStack, Extension> minestomNpcPlatformBuilder() {
+  public static @NotNull Platform.Builder<Instance, Player, ItemStack, Object> minestomNpcPlatformBuilder() {
     return new MinestomPlatform();
   }
 
@@ -74,7 +72,7 @@ public final class MinestomPlatform extends CommonPlatformBuilder<Instance, Play
   }
 
   @Override
-  protected @NotNull Platform<Instance, Player, ItemStack, Extension> doBuild() {
+  protected @NotNull Platform<Instance, Player, ItemStack, Object> doBuild() {
     // check if we need an action controller
     NpcActionController actionController = null;
     if (this.actionControllerDecorator != null) {

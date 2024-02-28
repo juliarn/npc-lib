@@ -48,7 +48,6 @@ import net.minestom.server.event.player.PlayerMoveEvent;
 import net.minestom.server.event.player.PlayerSpawnEvent;
 import net.minestom.server.event.player.PlayerStartSneakingEvent;
 import net.minestom.server.event.player.PlayerStopSneakingEvent;
-import net.minestom.server.extensions.Extension;
 import net.minestom.server.instance.Instance;
 import net.minestom.server.item.ItemStack;
 import org.jetbrains.annotations.NotNull;
@@ -56,7 +55,7 @@ import org.jetbrains.annotations.NotNull;
 @SuppressWarnings("UnstableApiUsage")
 public final class MinestomActionController extends CommonNpcActionController {
 
-  private final NpcTracker<Instance, Player, ItemStack, Extension> npcTracker;
+  private final NpcTracker<Instance, Player, ItemStack, Object> npcTracker;
 
   // based on the given flags
   private final int spawnDistance;
@@ -65,7 +64,7 @@ public final class MinestomActionController extends CommonNpcActionController {
   public MinestomActionController(
     @NotNull Map<NpcFlag<?>, Optional<?>> flags,
     @NotNull NpcEventManager eventManager,
-    @NotNull NpcTracker<Instance, Player, ItemStack, Extension> tracker
+    @NotNull NpcTracker<Instance, Player, ItemStack, Object> tracker
   ) {
     super(flags);
     this.npcTracker = tracker;
@@ -101,7 +100,7 @@ public final class MinestomActionController extends CommonNpcActionController {
 
   static @NotNull NpcActionController.Builder actionControllerBuilder(
     @NotNull NpcEventManager eventManager,
-    @NotNull NpcTracker<Instance, Player, ItemStack, Extension> npcTracker
+    @NotNull NpcTracker<Instance, Player, ItemStack, Object> npcTracker
   ) {
     Objects.requireNonNull(eventManager, "eventManager");
     Objects.requireNonNull(npcTracker, "npcTracker");
@@ -128,7 +127,7 @@ public final class MinestomActionController extends CommonNpcActionController {
     // check if any movement happened (event is also called when standing still)
     if (changedPosition || changedOrientation) {
       Player player = event.getPlayer();
-      for (Npc<Instance, Player, ItemStack, Extension> npc : this.npcTracker.trackedNpcs()) {
+      for (Npc<Instance, Player, ItemStack, Object> npc : this.npcTracker.trackedNpcs()) {
         // check if the chunk of the npc is still loaded
         Position pos = npc.position();
         if (!npc.world().isChunkLoaded(pos.chunkX(), pos.chunkZ())) {
@@ -162,7 +161,7 @@ public final class MinestomActionController extends CommonNpcActionController {
   private void handlePlayerInstanceSpawn(@NotNull PlayerSpawnEvent event) {
     // ensure that we stop tracking the player on NPCs which are not in the same world as the player
     String instanceId = event.getSpawnInstance().getUniqueId().toString();
-    for (Npc<Instance, Player, ItemStack, Extension> npc : this.npcTracker.trackedNpcs()) {
+    for (Npc<Instance, Player, ItemStack, Object> npc : this.npcTracker.trackedNpcs()) {
       if (!npc.position().worldId().equals(instanceId)) {
         // the player is no longer in the same world, stop tracking
         npc.stopTrackingPlayer(event.getPlayer());
@@ -187,7 +186,7 @@ public final class MinestomActionController extends CommonNpcActionController {
 
   private void handleToggleSneak(@NotNull Player player, @NotNull Instance instance, boolean sneakActive) {
     String instanceId = instance.getUniqueId().toString();
-    for (Npc<Instance, Player, ItemStack, Extension> npc : this.npcTracker.trackedNpcs()) {
+    for (Npc<Instance, Player, ItemStack, Object> npc : this.npcTracker.trackedNpcs()) {
       double distance = MinestomUtil.distance(npc, player.getPosition());
 
       // check if we should imitate the action
@@ -206,7 +205,7 @@ public final class MinestomActionController extends CommonNpcActionController {
   private void handleHandAnimation(@NotNull PlayerHandAnimationEvent event) {
     Player player = event.getPlayer();
     String instanceId = event.getInstance().getUniqueId().toString();
-    for (Npc<Instance, Player, ItemStack, Extension> npc : this.npcTracker.trackedNpcs()) {
+    for (Npc<Instance, Player, ItemStack, Object> npc : this.npcTracker.trackedNpcs()) {
       double distance = MinestomUtil.distance(npc, player.getPosition());
 
       // check if we should imitate the action
@@ -221,7 +220,7 @@ public final class MinestomActionController extends CommonNpcActionController {
   }
 
   private void handleQuit(@NotNull PlayerDisconnectEvent event) {
-    for (Npc<Instance, Player, ItemStack, Extension> npc : this.npcTracker.trackedNpcs()) {
+    for (Npc<Instance, Player, ItemStack, Object> npc : this.npcTracker.trackedNpcs()) {
       // check if the npc tracks the player which disconnected and stop tracking him if so
       npc.stopTrackingPlayer(event.getPlayer());
     }
@@ -232,11 +231,11 @@ public final class MinestomActionController extends CommonNpcActionController {
     implements NpcActionController.Builder {
 
     private final NpcEventManager eventManager;
-    private final NpcTracker<Instance, Player, ItemStack, Extension> npcTracker;
+    private final NpcTracker<Instance, Player, ItemStack, Object> npcTracker;
 
     public MinestomActionControllerBuilder(
       @NotNull NpcEventManager eventManager,
-      @NotNull NpcTracker<Instance, Player, ItemStack, Extension> npcTracker
+      @NotNull NpcTracker<Instance, Player, ItemStack, Object> npcTracker
     ) {
       this.eventManager = eventManager;
       this.npcTracker = npcTracker;

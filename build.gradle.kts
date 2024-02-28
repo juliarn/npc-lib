@@ -54,6 +54,13 @@ allprojects {
         snapshotsOnly()
       }
     }
+
+    // packetevents
+    maven("https://repo.codemc.io/repository/maven-releases/") {
+      mavenContent {
+        includeGroup("com.github.retrooper.packetevents")
+      }
+    }
   }
 }
 

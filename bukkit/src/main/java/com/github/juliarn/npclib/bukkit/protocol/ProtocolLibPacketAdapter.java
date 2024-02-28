@@ -158,6 +158,12 @@ final class ProtocolLibPacketAdapter implements PlatformPacketAdapter<World, Pla
       if (MinecraftVersion.FEATURE_PREVIEW_UPDATE.atOrAbove()) {
         ENTITY_POSE_CONVERTER.put(EntityPose.SITTING, EnumWrappers.EntityPose.SITTING.toNms());
       }
+      // 1.20.4+
+      if (MinecraftVersion.v1_20_4.atOrAbove()) {
+        ENTITY_POSE_CONVERTER.put(EntityPose.SLIDING, EnumWrappers.EntityPose.SLIDING.toNms());
+        ENTITY_POSE_CONVERTER.put(EntityPose.SHOOTING, EnumWrappers.EntityPose.SHOOTING.toNms());
+        ENTITY_POSE_CONVERTER.put(EntityPose.INHALING, EnumWrappers.EntityPose.INHALING.toNms());
+      }
     }
 
     // associate player info actions with their respective protocol lib enum

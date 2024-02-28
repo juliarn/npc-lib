@@ -57,16 +57,18 @@ import java.util.function.UnaryOperator;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import net.minestom.server.MinecraftServer;
+import net.minestom.server.coordinate.Pos;
 import net.minestom.server.entity.Entity;
+import net.minestom.server.entity.EntityType;
 import net.minestom.server.entity.EquipmentSlot;
 import net.minestom.server.entity.GameMode;
 import net.minestom.server.entity.Metadata;
 import net.minestom.server.entity.Player;
 import net.minestom.server.event.player.PlayerPacketEvent;
-import net.minestom.server.extensions.Extension;
 import net.minestom.server.instance.Instance;
 import net.minestom.server.item.ItemStack;
 import net.minestom.server.network.packet.client.play.ClientInteractEntityPacket;
+import net.minestom.server.network.packet.server.common.PluginMessagePacket;
 import net.minestom.server.network.packet.server.play.DestroyEntitiesPacket;
 import net.minestom.server.network.packet.server.play.EntityAnimationPacket;
 import net.minestom.server.network.packet.server.play.EntityEquipmentPacket;
@@ -75,12 +77,11 @@ import net.minestom.server.network.packet.server.play.EntityMetaDataPacket;
 import net.minestom.server.network.packet.server.play.EntityRotationPacket;
 import net.minestom.server.network.packet.server.play.PlayerInfoRemovePacket;
 import net.minestom.server.network.packet.server.play.PlayerInfoUpdatePacket;
-import net.minestom.server.network.packet.server.play.PluginMessagePacket;
-import net.minestom.server.network.packet.server.play.SpawnPlayerPacket;
+import net.minestom.server.network.packet.server.play.SpawnEntityPacket;
 import org.jetbrains.annotations.NotNull;
 
 @SuppressWarnings("UnstableApiUsage")
-public final class MinestomProtocolAdapter implements PlatformPacketAdapter<Instance, Player, ItemStack, Extension> {
+public final class MinestomProtocolAdapter implements PlatformPacketAdapter<Instance, Player, ItemStack, Object> {
 
   private static final MinestomProtocolAdapter INSTANCE = new MinestomProtocolAdapter();
 
@@ -130,6 +131,9 @@ public final class MinestomProtocolAdapter implements PlatformPacketAdapter<Inst
     ENTITY_POSE_CONVERTER.put(EntityPose.SNIFFING, Entity.Pose.SNIFFING);
     ENTITY_POSE_CONVERTER.put(EntityPose.EMERGING, Entity.Pose.EMERGING);
     ENTITY_POSE_CONVERTER.put(EntityPose.DIGGING, Entity.Pose.DIGGING);
+    ENTITY_POSE_CONVERTER.put(EntityPose.SLIDING, Entity.Pose.SLIDING);
+    ENTITY_POSE_CONVERTER.put(EntityPose.SHOOTING, Entity.Pose.SHOOTING);
+    ENTITY_POSE_CONVERTER.put(EntityPose.INHALING, Entity.Pose.INHALING);
 
     // associate hands with their respective minestom lib enum
     HAND_CONVERTER = new EnumMap<>(Player.Hand.class);
@@ -189,7 +193,7 @@ public final class MinestomProtocolAdapter implements PlatformPacketAdapter<Inst
   private MinestomProtocolAdapter() {
   }
 
-  public static @NotNull PlatformPacketAdapter<Instance, Player, ItemStack, Extension> minestomProtocolAdapter() {
+  public static @NotNull PlatformPacketAdapter<Instance, Player, ItemStack, Object> minestomProtocolAdapter() {
     return INSTANCE;
   }
 
@@ -213,18 +217,25 @@ public final class MinestomProtocolAdapter implements PlatformPacketAdapter<Inst
   }
 
   @Override
-  public @NotNull OutboundPacket<Instance, Player, ItemStack, Extension> createEntitySpawnPacket() {
+  public @NotNull OutboundPacket<Instance, Player, ItemStack, Object> createEntitySpawnPacket() {
     return (player, npc) -> {
-      SpawnPlayerPacket packet = new SpawnPlayerPacket(
+      Pos position = MinestomUtil.minestomFromPosition(npc.position());
+      SpawnEntityPacket packet = new SpawnEntityPacket(
         npc.entityId(),
         npc.profile().uniqueId(),
-        MinestomUtil.minestomFromPosition(npc.position()));
+        EntityType.PLAYER.id(),
+        position,
+        0F,
+        0,
+        (short) 0,
+        (short) 0,
+        (short) 0);
       player.sendPacket(packet);
     };
   }
 
   @Override
-  public @NotNull OutboundPacket<Instance, Player, ItemStack, Extension> createEntityRemovePacket() {
+  public @NotNull OutboundPacket<Instance, Player, ItemStack, Object> createEntityRemovePacket() {
     return (player, npc) -> {
       DestroyEntitiesPacket packet = new DestroyEntitiesPacket(npc.entityId());
       player.sendPacket(packet);
@@ -232,7 +243,7 @@ public final class MinestomProtocolAdapter implements PlatformPacketAdapter<Inst
   }
 
   @Override
-  public @NotNull OutboundPacket<Instance, Player, ItemStack, Extension> createPlayerInfoPacket(
+  public @NotNull OutboundPacket<Instance, Player, ItemStack, Object> createPlayerInfoPacket(
     @NotNull PlayerInfoAction action
   ) {
     return (player, npc) -> npc.settings().profileResolver().resolveNpcProfile(player, npc).thenAcceptAsync(profile -> {
@@ -271,7 +282,7 @@ public final class MinestomProtocolAdapter implements PlatformPacketAdapter<Inst
   }
 
   @Override
-  public @NotNull OutboundPacket<Instance, Player, ItemStack, Extension> createRotationPacket(float yaw, float pitch) {
+  public @NotNull OutboundPacket<Instance, Player, ItemStack, Object> createRotationPacket(float yaw, float pitch) {
     return (player, npc) -> {
       // head rotation (https://wiki.vg/Protocol#Entity_Head_Look) & rotation (https://wiki.vg/Protocol#Player_Rotation)
       EntityHeadLookPacket headLookPacket = new EntityHeadLookPacket(npc.entityId(), yaw);
@@ -282,7 +293,7 @@ public final class MinestomProtocolAdapter implements PlatformPacketAdapter<Inst
   }
 
   @Override
-  public @NotNull OutboundPacket<Instance, Player, ItemStack, Extension> createAnimationPacket(
+  public @NotNull OutboundPacket<Instance, Player, ItemStack, Object> createAnimationPacket(
     @NotNull EntityAnimation animation
   ) {
     return (player, npc) -> {
@@ -294,7 +305,7 @@ public final class MinestomProtocolAdapter implements PlatformPacketAdapter<Inst
   }
 
   @Override
-  public @NotNull OutboundPacket<Instance, Player, ItemStack, Extension> createEquipmentPacket(
+  public @NotNull OutboundPacket<Instance, Player, ItemStack, Object> createEquipmentPacket(
     @NotNull ItemSlot slot,
     @NotNull ItemStack item
   ) {
@@ -310,7 +321,7 @@ public final class MinestomProtocolAdapter implements PlatformPacketAdapter<Inst
   }
 
   @Override
-  public @NotNull OutboundPacket<Instance, Player, ItemStack, Extension> createCustomPayloadPacket(
+  public @NotNull OutboundPacket<Instance, Player, ItemStack, Object> createCustomPayloadPacket(
     @NotNull String channelId,
     byte[] payload
   ) {
@@ -321,7 +332,7 @@ public final class MinestomProtocolAdapter implements PlatformPacketAdapter<Inst
   }
 
   @Override
-  public @NotNull <T, O> OutboundPacket<Instance, Player, ItemStack, Extension> createEntityMetaPacket(
+  public @NotNull <T, O> OutboundPacket<Instance, Player, ItemStack, Object> createEntityMetaPacket(
     @NotNull EntityMetadataFactory<T, O> metadata,
     @NotNull T value
   ) {
@@ -353,12 +364,12 @@ public final class MinestomProtocolAdapter implements PlatformPacketAdapter<Inst
   }
 
   @Override
-  public void initialize(@NotNull Platform<Instance, Player, ItemStack, Extension> platform) {
+  public void initialize(@NotNull Platform<Instance, Player, ItemStack, Object> platform) {
     MinecraftServer.getGlobalEventHandler().addListener(PlayerPacketEvent.class, event -> {
       // check if the inbound packet is USE_ENTITY, it's the only interesting for us
       if (event.getPacket() instanceof ClientInteractEntityPacket packet) {
         // get the associated npc from the tracked entities
-        Npc<Instance, Player, ItemStack, Extension> npc = platform.npcTracker().npcById(packet.targetId());
+        Npc<Instance, Player, ItemStack, Object> npc = platform.npcTracker().npcById(packet.targetId());
         if (npc != null) {
           // call the correct event based on the taken action
           if (packet.type() instanceof ClientInteractEntityPacket.Attack) {
