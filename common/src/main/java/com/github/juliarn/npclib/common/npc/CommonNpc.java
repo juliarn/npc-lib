@@ -183,11 +183,14 @@ public class CommonNpc<W, P, I, E> extends CommonNpcFlaggedObject implements Npc
   @Override
   public @NotNull Npc<W, P, I, E> forceTrackPlayer(@NotNull P player) {
     // check if the player is not already tracked
-    if (this.trackedPlayers.add(player)) {
+    if (!this.trackedPlayers.contains(player)) {
       // break early if the add is not wanted by plugin
       if (this.platform.eventManager().post(DefaultShowNpcEvent.pre(this, player)).cancelled()) {
         return this;
       }
+
+      // add the player
+      this.trackedPlayers.add(player);
 
       // send the player info packet
       this.platform.packetFactory().createPlayerInfoPacket(PlayerInfoAction.ADD_PLAYER).schedule(player, this);
