@@ -189,23 +189,21 @@ public class CommonNpc<W, P, I, E> extends CommonNpcFlaggedObject implements Npc
         return this;
       }
 
-      // add the player
-      this.trackedPlayers.add(player);
+      // register the player, prevent duplicate spawns in case the entity was spawned
+      // by a different thread during processing of the pre-track event
+      if (!this.trackedPlayers.add(player)) {
+        return this;
+      }
 
-      // send the player info packet
+      // send the player info packet & schedule the actual add of the
+      // player entity into the target world
       this.platform.packetFactory().createPlayerInfoPacket(PlayerInfoAction.ADD_PLAYER).schedule(player, this);
-
-      // schedule the spawn a bit delayed
       this.platform.taskManager().scheduleDelayedAsync(() -> {
-        // spawn the player entity
         this.platform.packetFactory().createEntitySpawnPacket().schedule(player, this);
-
-        // post the finish of the add to all plugins
         this.platform.eventManager().post(DefaultShowNpcEvent.post(this, player));
       }, 10);
     }
 
-    // for chaining
     return this;
   }
 
