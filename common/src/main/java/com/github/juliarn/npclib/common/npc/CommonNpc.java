@@ -210,9 +210,15 @@ public class CommonNpc<W, P, I, E> extends CommonNpcFlaggedObject implements Npc
   @Override
   public @NotNull Npc<W, P, I, E> stopTrackingPlayer(@NotNull P player) {
     // check if the player was previously tracked
-    if (this.trackedPlayers.remove(player)) {
+    if (this.trackedPlayers.contains(player)) {
       // break early if the removal is not wanted by plugin
       if (this.platform.eventManager().post(DefaultHideNpcEvent.pre(this, player)).cancelled()) {
+        return this;
+      }
+
+      // unregister the player, prevent duplicate remove packets in case the entity
+      // was removed by a different thread during processing of the pre-hide event
+      if (!this.trackedPlayers.remove(player)) {
         return this;
       }
 
