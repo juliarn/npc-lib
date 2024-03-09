@@ -62,6 +62,7 @@ import com.github.juliarn.npclib.common.event.DefaultAttackNpcEvent;
 import com.github.juliarn.npclib.common.event.DefaultInteractNpcEvent;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import io.leangen.geantyref.GenericTypeReflector;
 import io.leangen.geantyref.TypeFactory;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -230,10 +231,20 @@ final class ProtocolLibPacketAdapter implements PlatformPacketAdapter<World, Pla
 
     if (MinecraftVersion.COMBAT_UPDATE.atOrAbove()) {
       // mc 1.9: watchable object now contains a serializer for the type
-      WrappedDataWatcher.Serializer serializer = WrappedDataWatcher.Registry.get(
-        ProtocolUtil.extractRawType(type),
-        type instanceof ParameterizedType);
-      // create the watchable object
+      if (type instanceof ParameterizedType) {
+        ParameterizedType parameterized = (ParameterizedType) type;
+        boolean optional = parameterized.getRawType() == Optional.class;
+        if (optional) {
+          Type serializerType = parameterized.getActualTypeArguments()[0];
+          Class<?> rawSerializerType = GenericTypeReflector.erase(serializerType);
+
+          WrappedDataWatcher.Serializer serializer = WrappedDataWatcher.Registry.get(rawSerializerType, true);
+          return new WrappedWatchableObject(new WrappedDataWatcher.WrappedDataWatcherObject(index, serializer), value);
+        }
+      }
+
+      Class<?> raw = GenericTypeReflector.erase(type);
+      WrappedDataWatcher.Serializer serializer = WrappedDataWatcher.Registry.get(raw, false);
       return new WrappedWatchableObject(new WrappedDataWatcher.WrappedDataWatcherObject(index, serializer), value);
     } else {
       // mc 1.8: watchable object id
