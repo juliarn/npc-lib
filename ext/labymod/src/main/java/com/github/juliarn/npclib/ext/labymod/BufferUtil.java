@@ -25,8 +25,8 @@
 package com.github.juliarn.npclib.ext.labymod;
 
 import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.UUID;
 import org.jetbrains.annotations.NotNull;
 
 final class BufferUtil {
@@ -62,21 +62,11 @@ final class BufferUtil {
     }
   }
 
-  public static @NotNull ByteBuffer putString(@NotNull ByteBuffer buffer, @NotNull String string) {
-    // get the bytes of the buffer to write
-    byte[] bytes = string.getBytes(StandardCharsets.UTF_8);
-
-    // write the content
-    ByteBuffer writeBuffer = putVarInt(buffer, bytes.length);
-    writeBuffer = putBytes(writeBuffer, bytes);
-
+  public static @NotNull ByteBuffer putUUID(@NotNull ByteBuffer buffer, @NotNull UUID uuid) {
+    ByteBuffer writeBuffer = ensureWriteable(buffer, Long.BYTES * 2);
+    writeBuffer.putLong(uuid.getMostSignificantBits());
+    writeBuffer.putLong(uuid.getLeastSignificantBits());
     return writeBuffer;
-  }
-
-  public static @NotNull ByteBuffer putBytes(@NotNull ByteBuffer buffer, byte[] bytes) {
-    // ensure that the target buffer has enough space to fit the bytes and write them
-    ByteBuffer writeBuffer = ensureWriteable(buffer, bytes.length);
-    return writeBuffer.put(bytes);
   }
 
   public static @NotNull ByteBuffer putVarInt(@NotNull ByteBuffer buffer, int value) {

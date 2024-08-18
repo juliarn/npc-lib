@@ -26,77 +26,65 @@ package com.github.juliarn.npclib.ext.labymod;
 
 import com.github.juliarn.npclib.api.protocol.OutboundPacket;
 import com.github.juliarn.npclib.api.protocol.PlatformPacketAdapter;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
 import java.nio.ByteBuffer;
-import java.util.UUID;
+import java.util.function.UnaryOperator;
 import org.jetbrains.annotations.NotNull;
 
 public final class LabyModExtension {
 
-  private static final String EMOTE_ID_PROPERTY = "emote_id";
-  private static final String STICKER_ID_PROPERTY = "sticker_id";
+  // full list of packet ids can be found here:
+  // https://github.com/LabyMod/labymod4-server-api/blob/master/core/src/main/java/net/labymod/serverapi/core/LabyModProtocol.java
+  private static final int EMOTE_PACKET_ID = 16;
+  private static final int SPRAY_PACKET_ID = 17;
+  private static final String LM_PLUGIN_CHANNEL = "labymod:neo";
 
-  private static final String EMOTE_API_MESSAGE_KEY = "emote_api";
-  private static final String STICKER_API_MESSAGE_KEY = "sticker_api";
-
-  private static final String LM_PLUGIN_CHANNEL = "labymod3:main";
-
-  private static final int DEFAULT_BUFFER_ALLOCATION_BYTES = 128;
+  // a sensitive default for users that only send out a single sticker or emote via one packet
+  private static final int DEFAULT_BUFFER_ALLOCATION_BYTES = 32;
 
   private LabyModExtension() {
     throw new UnsupportedOperationException();
   }
 
+  // list of emote ids can be found here:
+  // https://dev.labymod.net/pages/server/labymod/features/emotes
   public static <W, P, I, E> @NotNull OutboundPacket<W, P, I, E> createEmotePacket(
     @NotNull PlatformPacketAdapter<W, P, I, E> packetAdapter,
     int... emoteIds
   ) {
     return (player, npc) -> {
-      // construct the data we need to write
-      JsonArray data = createIdJsonData(EMOTE_ID_PROPERTY, npc.profile().uniqueId(), emoteIds);
-      byte[] payloadData = constructPayloadData(EMOTE_API_MESSAGE_KEY, data.toString());
+      byte[] payloadData = constructPayloadData(EMOTE_PACKET_ID, buffer -> {
+        // put the amount of emotes to send into the buffer & write each emote into the buffer
+        // an emote is also prefixed with the npc uuid which is always the target npc id in our case
+        ByteBuffer target = BufferUtil.putVarInt(buffer, emoteIds.length);
+        for (int emoteId : emoteIds) {
+          target = BufferUtil.putUUID(target, npc.profile().uniqueId());
+          target = BufferUtil.putVarInt(target, emoteId);
+        }
+        return target;
+      });
 
       // create a new plugin message outbound packet and schedule the payload data
       packetAdapter.createCustomPayloadPacket(LM_PLUGIN_CHANNEL, payloadData).schedule(player, npc);
     };
   }
 
+  // currently not supported by the LM api
   public static <W, P, I, E> @NotNull OutboundPacket<W, P, I, E> createStickerPacket(
     @NotNull PlatformPacketAdapter<W, P, I, E> packetAdapter,
     int... stickerIds
   ) {
     return (player, npc) -> {
-      // construct the data we need to write
-      JsonArray data = createIdJsonData(STICKER_ID_PROPERTY, npc.profile().uniqueId(), stickerIds);
-      byte[] payloadData = constructPayloadData(STICKER_API_MESSAGE_KEY, data.toString());
-
-      // create a new plugin message outbound packet and schedule the payload data
-      packetAdapter.createCustomPayloadPacket(LM_PLUGIN_CHANNEL, payloadData).schedule(player, npc);
     };
   }
 
-  private static byte[] constructPayloadData(@NotNull String apiMessageKey, @NotNull String data) {
+  private static byte[] constructPayloadData(int packetId, @NotNull UnaryOperator<ByteBuffer> packetWriter) {
     ByteBuffer buffer = ByteBuffer.allocate(DEFAULT_BUFFER_ALLOCATION_BYTES);
 
     // put the message key, then the data
-    buffer = BufferUtil.putString(buffer, apiMessageKey);
-    buffer = BufferUtil.putString(buffer, data);
+    buffer = BufferUtil.putVarInt(buffer, packetId);
+    buffer = packetWriter.apply(buffer);
 
     // get the buffer content
     return BufferUtil.extractData(buffer);
-  }
-
-  private static @NotNull JsonArray createIdJsonData(@NotNull String idProperty, @NotNull UUID npcId, int... ids) {
-    // put the id api data
-    JsonArray array = new JsonArray();
-    for (int id : ids) {
-      JsonObject object = new JsonObject();
-      object.addProperty(idProperty, id);
-      object.addProperty("uuid", npcId.toString());
-      array.add(object);
-    }
-
-    return array;
   }
 }
