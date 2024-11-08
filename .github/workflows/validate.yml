@@ -1,0 +1,37 @@
+name: Validate
+on:
+  push:
+    branches: [ "**" ]
+    tags-ignore: [ "**" ]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  cancel-in-progress: true
+  group: validate-${{ github.event.pull_request.number || github.ref }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup java
+        uses: actions/setup-java@v4
+        with:
+          java-version: 11
+          check-latest: true
+          distribution: 'zulu'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          add-job-summary: always
+          cache-cleanup: on-success
+          cache-read-only: ${{ github.ref != 'refs/heads/v3' }}
+
+      - name: Execute build
+        run: ./gradlew clean build --stacktrace
