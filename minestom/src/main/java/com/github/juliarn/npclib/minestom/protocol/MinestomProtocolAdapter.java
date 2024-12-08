@@ -58,12 +58,12 @@ import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import net.minestom.server.MinecraftServer;
 import net.minestom.server.coordinate.Pos;
-import net.minestom.server.entity.Entity;
 import net.minestom.server.entity.EntityType;
 import net.minestom.server.entity.EquipmentSlot;
 import net.minestom.server.entity.GameMode;
 import net.minestom.server.entity.Metadata;
 import net.minestom.server.entity.Player;
+import net.minestom.server.entity.PlayerHand;
 import net.minestom.server.event.player.PlayerPacketEvent;
 import net.minestom.server.instance.Instance;
 import net.minestom.server.item.ItemStack;
@@ -80,7 +80,6 @@ import net.minestom.server.network.packet.server.play.PlayerInfoUpdatePacket;
 import net.minestom.server.network.packet.server.play.SpawnEntityPacket;
 import org.jetbrains.annotations.NotNull;
 
-@SuppressWarnings("UnstableApiUsage")
 public final class MinestomProtocolAdapter implements PlatformPacketAdapter<Instance, Player, ItemStack, Object> {
 
   private static final MinestomProtocolAdapter INSTANCE = new MinestomProtocolAdapter();
@@ -90,8 +89,8 @@ public final class MinestomProtocolAdapter implements PlatformPacketAdapter<Inst
     net.kyori.adventure.text.Component.class);
 
   private static final EnumMap<ItemSlot, EquipmentSlot> ITEM_SLOT_CONVERTER;
-  private static final EnumMap<EntityPose, Entity.Pose> ENTITY_POSE_CONVERTER;
-  private static final EnumMap<Player.Hand, InteractNpcEvent.Hand> HAND_CONVERTER;
+  private static final EnumMap<EntityPose, net.minestom.server.entity.EntityPose> ENTITY_POSE_CONVERTER;
+  private static final EnumMap<PlayerHand, InteractNpcEvent.Hand> HAND_CONVERTER;
   private static final EnumMap<EntityAnimation, EntityAnimationPacket.Animation> ANIMATION_CONVERTER;
 
   private static final Map<Type, Function<Object, Metadata.Entry<?>>> META_ENTRY_FACTORY;
@@ -117,28 +116,28 @@ public final class MinestomProtocolAdapter implements PlatformPacketAdapter<Inst
 
     // associate entity poses with their respective minestom lib enum
     ENTITY_POSE_CONVERTER = new EnumMap<>(EntityPose.class);
-    ENTITY_POSE_CONVERTER.put(EntityPose.STANDING, Entity.Pose.STANDING);
-    ENTITY_POSE_CONVERTER.put(EntityPose.FALL_FLYING, Entity.Pose.FALL_FLYING);
-    ENTITY_POSE_CONVERTER.put(EntityPose.SLEEPING, Entity.Pose.SLEEPING);
-    ENTITY_POSE_CONVERTER.put(EntityPose.SWIMMING, Entity.Pose.SWIMMING);
-    ENTITY_POSE_CONVERTER.put(EntityPose.SPIN_ATTACK, Entity.Pose.SPIN_ATTACK);
-    ENTITY_POSE_CONVERTER.put(EntityPose.CROUCHING, Entity.Pose.SNEAKING);
-    ENTITY_POSE_CONVERTER.put(EntityPose.LONG_JUMPING, Entity.Pose.LONG_JUMPING);
-    ENTITY_POSE_CONVERTER.put(EntityPose.DYING, Entity.Pose.DYING);
-    ENTITY_POSE_CONVERTER.put(EntityPose.CROAKING, Entity.Pose.CROAKING);
-    ENTITY_POSE_CONVERTER.put(EntityPose.USING_TONGUE, Entity.Pose.USING_TONGUE);
-    ENTITY_POSE_CONVERTER.put(EntityPose.ROARING, Entity.Pose.ROARING);
-    ENTITY_POSE_CONVERTER.put(EntityPose.SNIFFING, Entity.Pose.SNIFFING);
-    ENTITY_POSE_CONVERTER.put(EntityPose.EMERGING, Entity.Pose.EMERGING);
-    ENTITY_POSE_CONVERTER.put(EntityPose.DIGGING, Entity.Pose.DIGGING);
-    ENTITY_POSE_CONVERTER.put(EntityPose.SLIDING, Entity.Pose.SLIDING);
-    ENTITY_POSE_CONVERTER.put(EntityPose.SHOOTING, Entity.Pose.SHOOTING);
-    ENTITY_POSE_CONVERTER.put(EntityPose.INHALING, Entity.Pose.INHALING);
+    ENTITY_POSE_CONVERTER.put(EntityPose.STANDING, net.minestom.server.entity.EntityPose.STANDING);
+    ENTITY_POSE_CONVERTER.put(EntityPose.FALL_FLYING, net.minestom.server.entity.EntityPose.FALL_FLYING);
+    ENTITY_POSE_CONVERTER.put(EntityPose.SLEEPING, net.minestom.server.entity.EntityPose.SLEEPING);
+    ENTITY_POSE_CONVERTER.put(EntityPose.SWIMMING, net.minestom.server.entity.EntityPose.SWIMMING);
+    ENTITY_POSE_CONVERTER.put(EntityPose.SPIN_ATTACK, net.minestom.server.entity.EntityPose.SPIN_ATTACK);
+    ENTITY_POSE_CONVERTER.put(EntityPose.CROUCHING, net.minestom.server.entity.EntityPose.SNEAKING);
+    ENTITY_POSE_CONVERTER.put(EntityPose.LONG_JUMPING, net.minestom.server.entity.EntityPose.LONG_JUMPING);
+    ENTITY_POSE_CONVERTER.put(EntityPose.DYING, net.minestom.server.entity.EntityPose.DYING);
+    ENTITY_POSE_CONVERTER.put(EntityPose.CROAKING, net.minestom.server.entity.EntityPose.CROAKING);
+    ENTITY_POSE_CONVERTER.put(EntityPose.USING_TONGUE, net.minestom.server.entity.EntityPose.USING_TONGUE);
+    ENTITY_POSE_CONVERTER.put(EntityPose.ROARING, net.minestom.server.entity.EntityPose.ROARING);
+    ENTITY_POSE_CONVERTER.put(EntityPose.SNIFFING, net.minestom.server.entity.EntityPose.SNIFFING);
+    ENTITY_POSE_CONVERTER.put(EntityPose.EMERGING, net.minestom.server.entity.EntityPose.EMERGING);
+    ENTITY_POSE_CONVERTER.put(EntityPose.DIGGING, net.minestom.server.entity.EntityPose.DIGGING);
+    ENTITY_POSE_CONVERTER.put(EntityPose.SLIDING, net.minestom.server.entity.EntityPose.SLIDING);
+    ENTITY_POSE_CONVERTER.put(EntityPose.SHOOTING, net.minestom.server.entity.EntityPose.SHOOTING);
+    ENTITY_POSE_CONVERTER.put(EntityPose.INHALING, net.minestom.server.entity.EntityPose.INHALING);
 
     // associate hands with their respective minestom lib enum
-    HAND_CONVERTER = new EnumMap<>(Player.Hand.class);
-    HAND_CONVERTER.put(Player.Hand.MAIN, InteractNpcEvent.Hand.MAIN_HAND);
-    HAND_CONVERTER.put(Player.Hand.OFF, InteractNpcEvent.Hand.OFF_HAND);
+    HAND_CONVERTER = new EnumMap<>(PlayerHand.class);
+    HAND_CONVERTER.put(PlayerHand.MAIN, InteractNpcEvent.Hand.MAIN_HAND);
+    HAND_CONVERTER.put(PlayerHand.OFF, InteractNpcEvent.Hand.OFF_HAND);
 
     // associate animations with their respective minestom lib enum
     ANIMATION_CONVERTER = new EnumMap<>(EntityAnimation.class);
@@ -155,7 +154,7 @@ public final class MinestomProtocolAdapter implements PlatformPacketAdapter<Inst
     SERIALIZER_CONVERTERS = new HashMap<>(1);
     //noinspection SuspiciousMethodCalls
     SERIALIZER_CONVERTERS.put(EntityPose.class, new AbstractMap.SimpleImmutableEntry<>(
-      Entity.Pose.class,
+      net.minestom.server.entity.EntityPose.class,
       ENTITY_POSE_CONVERTER::get));
     SERIALIZER_CONVERTERS.put(
       TypeFactory.parameterizedClass(Optional.class, Component.class),
@@ -183,7 +182,9 @@ public final class MinestomProtocolAdapter implements PlatformPacketAdapter<Inst
     META_ENTRY_FACTORY.put(float.class, value -> Metadata.Float((float) value));
     META_ENTRY_FACTORY.put(boolean.class, value -> Metadata.Boolean((boolean) value));
     META_ENTRY_FACTORY.put(String.class, value -> Metadata.String((String) value));
-    META_ENTRY_FACTORY.put(Entity.Pose.class, value -> Metadata.Pose((Entity.Pose) value));
+    META_ENTRY_FACTORY.put(
+      net.minestom.server.entity.EntityPose.class,
+      value -> Metadata.Pose((net.minestom.server.entity.EntityPose) value));
     //noinspection unchecked
     META_ENTRY_FACTORY.put(
       OPTIONAL_CHAT_COMPONENT_TYPE,
@@ -275,7 +276,8 @@ public final class MinestomProtocolAdapter implements PlatformPacketAdapter<Inst
           20,
           GameMode.CREATIVE,
           null,
-          null
+          null,
+          0
         )));
       player.sendPacket(updatePacket);
     });
