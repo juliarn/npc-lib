@@ -57,6 +57,18 @@ Gradle:
 implementation("io.github.juliarn", "(module name from the list above)", "(latest version)")
 ```
 
+### Repositories
+
+Depending on your setup you might need to add the following repositories as well to download all the transitive
+dependencies coming from the modules:
+
+- `https://repo.papermc.io/repository/maven-public/` (For [PaperLib](https://github.com/PaperMC/PaperLib))
+- `https://repository.derklaro.dev/releases/` (You can also use `https://jitpack.io` instead, used e.g.
+  for [ProtocolLib](https://github.com/dmulloy2/ProtocolLib)).
+- `https://repo.codemc.io/repository/maven-releases/` (For [PacketEvents](https://github.com/retrooper/packetevents))
+- `https://s01.oss.sonatype.org/content/repositories/snapshots/` (For all kinds of snapshot dependencies that don't have
+  a stable release published to maven central yet)
+
 ### Shading
 This library is specifically made in a way that it can be shaded into your plugin jar. Below is a list of packages that
 are used by this library and that you probably want to relocate to prevent dependency issues with other plugins
