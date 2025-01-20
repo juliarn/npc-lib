@@ -44,6 +44,7 @@ import com.github.juliarn.npclib.fabric.ext.EntityAnimationS2CPacketExt;
 import com.github.juliarn.npclib.fabric.ext.EntitySetHeadYawS2CPacketExt;
 import com.github.juliarn.npclib.fabric.ext.PlayerListS2CPacketExt;
 import com.github.juliarn.npclib.fabric.mixin.accessor.DataTrackerAccessor;
+import com.github.juliarn.npclib.fabric.mixin.accessor.EntityAccessor;
 import com.github.juliarn.npclib.fabric.mixin.accessor.PlayerInteractEntityC2SPacketAccessor;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.properties.Property;
@@ -59,8 +60,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
-import java.util.stream.Collectors;
-import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.data.DataTracker;
@@ -180,7 +179,8 @@ public final class FabricProtocolAdapter implements
     // init the meta entry factories
     var playerClassId = DataTrackerAccessor.getClassToLastId().get(PlayerEntity.class);
     META_ENTRY_FACTORY = new HashMap<>(6);
-    META_ENTRY_FACTORY.put(byte.class, value -> DataTracker.SerializedEntry.of(TrackedDataHandlerRegistry.BYTE.create(playerClassId), (byte) value));
+    META_ENTRY_FACTORY.put(byte.class,
+      value -> DataTracker.SerializedEntry.of(TrackedDataHandlerRegistry.BYTE.create(playerClassId), (byte) value));
     META_ENTRY_FACTORY.put(int.class,
       value -> DataTracker.SerializedEntry.of(TrackedDataHandlerRegistry.INTEGER.create(playerClassId), (int) value));
     META_ENTRY_FACTORY.put(float.class,
@@ -323,23 +323,19 @@ public final class FabricProtocolAdapter implements
         return;
       }
 
-      Map<Integer, DataTracker.SerializedEntry<?>> metadataEntries = new HashMap<>();
-      metadataEntries.put(entityMetadata.index(), createMetadataEntry(entityMetadata.type(), entityMetadata.value()));
-
-      // add all dependant metas
+      //TODO das hier ist wirklich unschön gecodet aber habs nicht geiler hinbekommen
+      var flags = new ArrayList<DataTracker.SerializedEntry<?>>();
+      DataTracker.Entry entry = new DataTracker.Entry(EntityAccessor.getFlags(), entityMetadata.value());
+      flags.add(entry.toSerialized());
       for (EntityMetadataFactory<T, Object> relatedMetadata : metadata.relatedMetadata()) {
         EntityMetadata<Object> related = relatedMetadata.create(value, versionAccessor);
         if (related.available()) {
-          metadataEntries.put(related.index(), createMetadataEntry(related.type(), related.value()));
+          if (related.type() == EntityPose.class) {
+            flags.add(new DataTracker.Entry(EntityAccessor.getEntityPose(), ENTITY_POSE_CONVERTER.get(related.value())).toSerialized());
+          }
         }
       }
-
-      List<DataTracker.SerializedEntry<?>> sortedMetadataEntries = metadataEntries.entrySet().stream()
-        .sorted(Map.Entry.comparingByKey()) // Sort by index (key)
-        .map(Map.Entry::getValue)          // Extract the values
-        .collect(Collectors.toList());    // Collect to a list
-
-      var packet = new EntityTrackerUpdateS2CPacket(npc.entityId(), sortedMetadataEntries);
+      var packet = new EntityTrackerUpdateS2CPacket(npc.entityId(), flags);
       player.networkHandler.sendPacket(packet);
     };
   }
