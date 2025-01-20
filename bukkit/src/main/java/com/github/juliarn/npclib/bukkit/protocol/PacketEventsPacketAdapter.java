@@ -543,7 +543,7 @@ final class PacketEventsPacketAdapter implements PlatformPacketAdapter<World, Pl
                   if (component.rawMessage() != null) {
                     return AdventureSerializer.fromLegacyFormat(component.rawMessage());
                   } else {
-                    return AdventureSerializer.getGsonSerializer().deserializeOrNull(component.encodedJsonMessage());
+                    return AdventureSerializer.parseComponent(component.encodedJsonMessage());
                   }
                 }));
             } else {
@@ -562,7 +562,7 @@ final class PacketEventsPacketAdapter implements PlatformPacketAdapter<World, Pl
         .put(Float.class, EntityDataTypes.FLOAT)
         .put(Boolean.class, EntityDataTypes.BOOLEAN)
         .put(String.class, EntityDataTypes.STRING)
-        .put(OPTIONAL_CHAT_COMPONENT_TYPE, EntityDataTypes.OPTIONAL_COMPONENT)
+        .put(OPTIONAL_CHAT_COMPONENT_TYPE, EntityDataTypes.OPTIONAL_ADV_COMPONENT)
         .put(com.github.retrooper.packetevents.protocol.entity.pose.EntityPose.class, EntityDataTypes.ENTITY_POSE)
         .build();
     }
