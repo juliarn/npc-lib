@@ -60,6 +60,7 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.data.DataTracker;
@@ -179,8 +180,7 @@ public final class FabricProtocolAdapter implements
     // init the meta entry factories
     var playerClassId = DataTrackerAccessor.getClassToLastId().get(PlayerEntity.class);
     META_ENTRY_FACTORY = new HashMap<>(6);
-    META_ENTRY_FACTORY.put(byte.class,
-      value -> DataTracker.SerializedEntry.of(TrackedDataHandlerRegistry.BYTE.create(playerClassId), (byte) value));
+    META_ENTRY_FACTORY.put(byte.class, value -> DataTracker.SerializedEntry.of(TrackedDataHandlerRegistry.BYTE.create(playerClassId), (byte) value));
     META_ENTRY_FACTORY.put(int.class,
       value -> DataTracker.SerializedEntry.of(TrackedDataHandlerRegistry.INTEGER.create(playerClassId), (int) value));
     META_ENTRY_FACTORY.put(float.class,
@@ -357,7 +357,7 @@ public final class FabricProtocolAdapter implements
     Function<Object, DataTracker.SerializedEntry<?>> metaFactory = META_ENTRY_FACTORY.get(type);
     if (metaFactory == null) {
       // unable to handle that
-      throw new IllegalArgumentException("Unsupported type: " + type);
+      throw new IllegalArgumentException("Unsupported type: " + type + " Value " + value);
     }
 
     // create the meta entry
