@@ -78,6 +78,7 @@ import net.minecraft.network.packet.s2c.play.PlayerListS2CPacket;
 import net.minecraft.network.packet.s2c.play.PlayerRemoveS2CPacket;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.Hand;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.GameMode;
 import net.minecraft.world.World;
@@ -260,10 +261,11 @@ public final class FabricProtocolAdapter implements
     float pitch) {
     return (player, npc) -> {
       // head rotation (https://wiki.vg/Protocol#Entity_Head_Look) & rotation (https://wiki.vg/Protocol#Player_Rotation)
-      // TODO yaw pitch richtig berechnen
-      EntitySetHeadYawS2CPacket headLookPacket = new EntitySetHeadYawS2CPacket(player, (byte) 0);
+      EntitySetHeadYawS2CPacket headLookPacket = new EntitySetHeadYawS2CPacket(player,
+        (byte) MathHelper.floor(yaw * 256.0F / 360.0F));
       ((EntitySetHeadYawS2CPacketExt) headLookPacket).npclib_setEntityId(npc.entityId());
-      EntityS2CPacket rotationPacket = new EntityS2CPacket.Rotate(npc.entityId(), (byte) 0, (byte) 0, true);
+      EntityS2CPacket rotationPacket = new EntityS2CPacket.Rotate(npc.entityId(),
+        (byte) MathHelper.floor(yaw * 256.0F / 360.0F), (byte) MathHelper.floor(pitch * 256.0F / 360.0F), true);
       player.networkHandler.sendPacket(headLookPacket);
       player.networkHandler.sendPacket(rotationPacket);
     };
