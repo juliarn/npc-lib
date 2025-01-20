@@ -71,7 +71,6 @@ import net.minecraft.network.packet.s2c.play.EntityTrackerUpdateS2CPacket;
 import net.minecraft.network.packet.s2c.play.PlayerListS2CPacket;
 import net.minecraft.network.packet.s2c.play.PlayerRemoveS2CPacket;
 import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.Text;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.GameMode;
@@ -193,7 +192,6 @@ public final class FabricProtocolAdapter implements
   @Override
   public @NotNull OutboundPacket<World, ServerPlayerEntity, ItemStack, Object> createEntitySpawnPacket() {
     return (player, npc) -> {
-      player.sendMessage(Text.of("createEntitySpawnPacket"));
       EntitySpawnS2CPacket packet = new EntitySpawnS2CPacket(
         npc.entityId(),
         npc.profile().uniqueId(),

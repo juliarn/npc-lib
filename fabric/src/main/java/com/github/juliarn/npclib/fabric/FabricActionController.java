@@ -38,7 +38,10 @@ import com.github.juliarn.npclib.fabric.util.FabricUtil;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.minecraft.item.ItemStack;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.network.ServerPlayNetworkHandler;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.Vec3d;
@@ -103,11 +106,19 @@ public final class FabricActionController extends CommonNpcActionController {
   private void registerListeners() {
     System.out.println("###HIIII");
     PlayerMoveEvent.EVENT.register(this::handleMove);
+    ServerPlayConnectionEvents.DISCONNECT.register(this::handleQuit);
     /*MinecraftServer.getGlobalEventHandler().addListener(PlayerSpawnEvent.class, this::handlePlayerInstanceSpawn);
     MinecraftServer.getGlobalEventHandler().addListener(PlayerStartSneakingEvent.class, this::handleStartSneak);
     MinecraftServer.getGlobalEventHandler().addListener(PlayerStopSneakingEvent.class, this::handleStopSneak);
     MinecraftServer.getGlobalEventHandler().addListener(PlayerHandAnimationEvent.class, this::handleHandAnimation);
     MinecraftServer.getGlobalEventHandler().addListener(PlayerDisconnectEvent.class, this::handleQuit);*/
+  }
+
+  private void handleQuit(ServerPlayNetworkHandler serverPlayNetworkHandler, MinecraftServer minecraftServer) {
+    for (Npc<World, ServerPlayerEntity, ItemStack, Object> npc : this.npcTracker.trackedNpcs()) {
+      // check if the npc tracks the player which disconnected and stop tracking him if so
+      npc.stopTrackingPlayer(serverPlayNetworkHandler.player);
+    }
   }
 
   private void handleMove(ServerPlayerEntity player, Vec3d from, Vec3d to) {
@@ -118,7 +129,6 @@ public final class FabricActionController extends CommonNpcActionController {
     //boolean changedPosition = from.x() != to.x() || from.y() != to.y() || from.z() != to.z();
     boolean changedOrientation = true;
     boolean changedPosition = true;
-    player.sendMessage(Text.of("Du bewegst dich"));
 
     // check if any movement happened (event is also called when standing still)
     if (changedPosition || changedOrientation) {
@@ -212,13 +222,6 @@ public final class FabricActionController extends CommonNpcActionController {
         // let the npc left click as well
         npc.platform().packetFactory().createAnimationPacket(EntityAnimation.SWING_MAIN_ARM).schedule(player, npc);
       }
-    }
-  }
-
-  private void handleQuit(@NotNull PlayerDisconnectEvent event) {
-    for (Npc<Instance, Player, ItemStack, Object> npc : this.npcTracker.trackedNpcs()) {
-      // check if the npc tracks the player which disconnected and stop tracking him if so
-      npc.stopTrackingPlayer(event.getPlayer());
     }
   }*/
 
