@@ -29,11 +29,11 @@ import net.fabricmc.fabric.api.event.EventFactory;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.math.Vec3d;
 
-public interface PlayerMoveEvent {
+public interface ServerPlayerMoveEvent {
 
-  Event<PlayerMoveEvent> EVENT = EventFactory.createArrayBacked(PlayerMoveEvent.class,
+  Event<ServerPlayerMoveEvent> EVENT = EventFactory.createArrayBacked(ServerPlayerMoveEvent.class,
     (listeners) -> (player, from, to) -> {
-      for (PlayerMoveEvent listener : listeners) {
+      for (ServerPlayerMoveEvent listener : listeners) {
         listener.onMove(player, from, to);
       }
     });

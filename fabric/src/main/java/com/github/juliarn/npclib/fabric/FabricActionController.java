@@ -31,9 +31,11 @@ import com.github.juliarn.npclib.api.Position;
 import com.github.juliarn.npclib.api.event.ShowNpcEvent;
 import com.github.juliarn.npclib.api.event.manager.NpcEventManager;
 import com.github.juliarn.npclib.api.flag.NpcFlag;
+import com.github.juliarn.npclib.api.protocol.meta.EntityMetadataFactory;
 import com.github.juliarn.npclib.common.CommonNpcActionController;
 import com.github.juliarn.npclib.common.flag.CommonNpcFlaggedBuilder;
-import com.github.juliarn.npclib.fabric.event.PlayerMoveEvent;
+import com.github.juliarn.npclib.fabric.event.ServerPlayerMoveEvent;
+import com.github.juliarn.npclib.fabric.event.ServerPlayerToggleSneakEvent;
 import com.github.juliarn.npclib.fabric.util.FabricUtil;
 import java.util.Map;
 import java.util.Objects;
@@ -43,7 +45,6 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayNetworkHandler;
 import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.Text;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.NotNull;
@@ -105,13 +106,17 @@ public final class FabricActionController extends CommonNpcActionController {
 
   private void registerListeners() {
     System.out.println("###HIIII");
-    PlayerMoveEvent.EVENT.register(this::handleMove);
+    ServerPlayerMoveEvent.EVENT.register(this::handleMove);
     ServerPlayConnectionEvents.DISCONNECT.register(this::handleQuit);
+    ServerPlayerToggleSneakEvent.EVENT.register((player, isSneaking) -> {
+      if (isSneaking) {
+        handleStartSneak(player);
+      } else {
+        handleStopSneak(player);
+      }
+    });
     /*MinecraftServer.getGlobalEventHandler().addListener(PlayerSpawnEvent.class, this::handlePlayerInstanceSpawn);
-    MinecraftServer.getGlobalEventHandler().addListener(PlayerStartSneakingEvent.class, this::handleStartSneak);
-    MinecraftServer.getGlobalEventHandler().addListener(PlayerStopSneakingEvent.class, this::handleStopSneak);
-    MinecraftServer.getGlobalEventHandler().addListener(PlayerHandAnimationEvent.class, this::handleHandAnimation);
-    MinecraftServer.getGlobalEventHandler().addListener(PlayerDisconnectEvent.class, this::handleQuit);*/
+    MinecraftServer.getGlobalEventHandler().addListener(PlayerHandAnimationEvent.class, this::handleHandAnimation);*/
   }
 
   private void handleQuit(ServerPlayNetworkHandler serverPlayNetworkHandler, MinecraftServer minecraftServer) {
@@ -164,6 +169,32 @@ public final class FabricActionController extends CommonNpcActionController {
     }
   }
 
+  private void handleStartSneak(ServerPlayerEntity player) {
+    this.handleToggleSneak(player, player.getServerWorld(), true);
+  }
+
+  private void handleStopSneak(ServerPlayerEntity player) {
+    this.handleToggleSneak(player, player.getServerWorld(), false);
+  }
+
+  private void handleToggleSneak(@NotNull ServerPlayerEntity player, @NotNull World instance, boolean sneakActive) {
+    String instanceId = instance.getRegistryKey().getRegistry().toString();
+    for (Npc<World, ServerPlayerEntity, ItemStack, Object> npc : this.npcTracker.trackedNpcs()) {
+      double distance = FabricUtil.distance(npc, player.getPos());
+
+      // check if we should imitate the action
+      if (Objects.equals(instanceId, npc.position().worldId())
+        && npc.tracksPlayer(player)
+        && distance <= this.imitateDistance
+        && npc.flagValueOrDefault(Npc.SNEAK_WHEN_PLAYER_SNEAKS)) {
+        // let the npc sneak as well
+        npc.platform().packetFactory()
+          .createEntityMetaPacket(EntityMetadataFactory.sneakingMetaFactory(), sneakActive)
+          .schedule(player, npc);
+      }
+    }
+  }
+
  /* private void handlePlayerInstanceSpawn(@NotNull PlayerSpawnEvent event) {
     // ensure that we stop tracking the player on NPCs which are not in the same world as the player
     String instanceId = event.getInstance().getUniqueId().toString();
@@ -181,32 +212,6 @@ public final class FabricActionController extends CommonNpcActionController {
       }
     }
   }
-
-  private void handleStartSneak(@NotNull PlayerStartSneakingEvent event) {
-    this.handleToggleSneak(event.getPlayer(), event.getInstance(), true);
-  }
-
-  private void handleStopSneak(@NotNull PlayerStopSneakingEvent event) {
-    this.handleToggleSneak(event.getPlayer(), event.getInstance(), false);
-  }
-
-  private void handleToggleSneak(@NotNull Player player, @NotNull Instance instance, boolean sneakActive) {
-    String instanceId = instance.getUniqueId().toString();
-    for (Npc<Instance, Player, ItemStack, Object> npc : this.npcTracker.trackedNpcs()) {
-      double distance = MinestomUtil.distance(npc, player.getPosition());
-
-      // check if we should imitate the action
-      if (Objects.equals(instanceId, npc.position().worldId())
-        && npc.tracksPlayer(player)
-        && distance <= this.imitateDistance
-        && npc.flagValueOrDefault(Npc.SNEAK_WHEN_PLAYER_SNEAKS)) {
-        // let the npc sneak as well
-        npc.platform().packetFactory()
-          .createEntityMetaPacket(EntityMetadataFactory.sneakingMetaFactory(), sneakActive)
-          .schedule(player, npc);
-      }
-    }
-  } */
 
   /*private void handleHandAnimation(@NotNull PlayerHandAnimationEvent event) {
     Player player = event.getPlayer();
