@@ -24,10 +24,12 @@
 
 package com.github.juliarn.npclib.fabric.mixin.event;
 
+import com.github.juliarn.npclib.fabric.event.ServerPlayerHandSwingEvent;
 import com.github.juliarn.npclib.fabric.event.ServerPlayerInteractEntityPacketEvent;
 import com.github.juliarn.npclib.fabric.event.ServerPlayerMoveEvent;
 import com.github.juliarn.npclib.fabric.event.ServerPlayerToggleSneakEvent;
 import net.minecraft.network.packet.c2s.play.ClientCommandC2SPacket;
+import net.minecraft.network.packet.c2s.play.HandSwingC2SPacket;
 import net.minecraft.network.packet.c2s.play.PlayerInteractEntityC2SPacket;
 import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
 import net.minecraft.server.network.ServerPlayNetworkHandler;
@@ -55,6 +57,11 @@ public abstract class ServerPlayNetworkHandlerMixin {
     //TODO correct from to
     //TODO vehicle
     ServerPlayerMoveEvent.EVENT.invoker().onMove(this.player, this.player.getPos(), this.player.getPos());
+  }
+
+  @Inject(method = "onHandSwing", at = @At("TAIL"))
+  private void npclib$onHandSwing(HandSwingC2SPacket handSwingC2SPacket, CallbackInfo ci) {
+    ServerPlayerHandSwingEvent.EVENT.invoker().onHandSwing(this.player, handSwingC2SPacket.getHand());
   }
 
   @Inject(method = "onClientCommand", at = @At("TAIL"))

@@ -31,20 +31,25 @@ import com.github.juliarn.npclib.api.Position;
 import com.github.juliarn.npclib.api.event.ShowNpcEvent;
 import com.github.juliarn.npclib.api.event.manager.NpcEventManager;
 import com.github.juliarn.npclib.api.flag.NpcFlag;
+import com.github.juliarn.npclib.api.protocol.enums.EntityAnimation;
 import com.github.juliarn.npclib.api.protocol.meta.EntityMetadataFactory;
 import com.github.juliarn.npclib.common.CommonNpcActionController;
 import com.github.juliarn.npclib.common.flag.CommonNpcFlaggedBuilder;
+import com.github.juliarn.npclib.fabric.event.ServerPlayerHandSwingEvent;
 import com.github.juliarn.npclib.fabric.event.ServerPlayerMoveEvent;
 import com.github.juliarn.npclib.fabric.event.ServerPlayerToggleSneakEvent;
 import com.github.juliarn.npclib.fabric.util.FabricUtil;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerEntityEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayNetworkHandler;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.server.world.ServerWorld;
+import net.minecraft.util.Hand;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.NotNull;
@@ -75,18 +80,18 @@ public final class FabricActionController extends CommonNpcActionController {
     // register listener to update the npc rotation after it is tracked
     if (this.flagValueOrDefault(NpcActionController.AUTO_SYNC_POSITION_ON_SPAWN)) {
       eventManager.registerEventHandler(ShowNpcEvent.Post.class, event -> {
-        /*Player player = event.player();
-        Pos to = player.getPosition();
-        Instance instance = player.getInstance();
+        ServerPlayerEntity player = event.player();
+        Vec3d to = player.getPos();
+        ServerWorld instance = player.getServerWorld();
 
         // check if the player is within the imitate distance and spawned into an instance
         // in normal cases the instance check should no evaluate to false at this point
-        double distance = MinestomUtil.distance(event.npc(), to);
+        double distance = FabricUtil.distance(event.npc(), to);
         if (instance != null
           && distance <= this.imitateDistance
           && event.npc().flagValueOrDefault(Npc.LOOK_AT_PLAYER)) {
-          event.npc().lookAt(MinestomUtil.positionFromMinestom(to, instance)).schedule(player);
-        }*/
+          event.npc().lookAt(FabricUtil.positionFromMinestom(to, instance)).schedule(player);
+        }
       });
     }
 
@@ -115,8 +120,12 @@ public final class FabricActionController extends CommonNpcActionController {
         handleStopSneak(player);
       }
     });
-    /*MinecraftServer.getGlobalEventHandler().addListener(PlayerSpawnEvent.class, this::handlePlayerInstanceSpawn);
-    MinecraftServer.getGlobalEventHandler().addListener(PlayerHandAnimationEvent.class, this::handleHandAnimation);*/
+    ServerPlayerHandSwingEvent.EVENT.register(this::handleHandAnimation);
+    ServerEntityEvents.ENTITY_LOAD.register((entity, world) -> {
+      if (entity instanceof ServerPlayerEntity player) {
+        handlePlayerInstanceSpawn(player);
+      }
+    });
   }
 
   private void handleQuit(ServerPlayNetworkHandler serverPlayNetworkHandler, MinecraftServer minecraftServer) {
@@ -178,7 +187,7 @@ public final class FabricActionController extends CommonNpcActionController {
   }
 
   private void handleToggleSneak(@NotNull ServerPlayerEntity player, @NotNull World instance, boolean sneakActive) {
-    String instanceId = instance.getRegistryKey().getRegistry().toString();
+    String instanceId = instance.getRegistryKey().getValue().toString();
     for (Npc<World, ServerPlayerEntity, ItemStack, Object> npc : this.npcTracker.trackedNpcs()) {
       double distance = FabricUtil.distance(npc, player.getPos());
 
@@ -195,29 +204,28 @@ public final class FabricActionController extends CommonNpcActionController {
     }
   }
 
- /* private void handlePlayerInstanceSpawn(@NotNull PlayerSpawnEvent event) {
+  private void handlePlayerInstanceSpawn(@NotNull ServerPlayerEntity player) {
     // ensure that we stop tracking the player on NPCs which are not in the same world as the player
-    String instanceId = event.getInstance().getUniqueId().toString();
-    for (Npc<Instance, Player, ItemStack, Object> npc : this.npcTracker.trackedNpcs()) {
+    String instanceId = player.getWorld().getRegistryKey().getValue().toString();
+    for (Npc<World, ServerPlayerEntity, ItemStack, Object> npc : this.npcTracker.trackedNpcs()) {
       if (!npc.position().worldId().equals(instanceId)) {
         // the player is no longer in the same world, stop tracking
-        npc.stopTrackingPlayer(event.getPlayer());
+        npc.stopTrackingPlayer(player);
         continue;
       }
 
       // the player is now in the same instance as the npc, check if we should track him
-      double distance = MinestomUtil.distance(npc, event.getPlayer().getPosition());
+      double distance = FabricUtil.distance(npc, player.getPos());
       if (this.spawnDistance >= distance) {
-        npc.trackPlayer(event.getPlayer());
+        npc.trackPlayer(player);
       }
     }
   }
 
-  /*private void handleHandAnimation(@NotNull PlayerHandAnimationEvent event) {
-    Player player = event.getPlayer();
-    String instanceId = event.getInstance().getUniqueId().toString();
-    for (Npc<Instance, Player, ItemStack, Object> npc : this.npcTracker.trackedNpcs()) {
-      double distance = MinestomUtil.distance(npc, player.getPosition());
+  private void handleHandAnimation(ServerPlayerEntity player, Hand hand) {
+    String instanceId = player.getWorld().getRegistryKey().getValue().toString();
+    for (Npc<World, ServerPlayerEntity, ItemStack, Object> npc : this.npcTracker.trackedNpcs()) {
+      double distance = FabricUtil.distance(npc, player.getPos());
 
       // check if we should imitate the action
       if (Objects.equals(instanceId, npc.position().worldId())
@@ -228,7 +236,7 @@ public final class FabricActionController extends CommonNpcActionController {
         npc.platform().packetFactory().createAnimationPacket(EntityAnimation.SWING_MAIN_ARM).schedule(player, npc);
       }
     }
-  }*/
+  }
 
   private static final class FabricActionControllerBuilder
     extends CommonNpcFlaggedBuilder<Builder>

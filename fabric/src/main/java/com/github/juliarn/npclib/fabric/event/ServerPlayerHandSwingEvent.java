@@ -1,7 +1,7 @@
 /*
  * This file is part of npc-lib, licensed under the MIT License (MIT).
  *
- * Copyright (c) 2022-2023 Julian M., Pasqual K. and contributors
+ * Copyright (c) 2022-2025 Julian M., Pasqual K. and contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,37 +22,22 @@
  * THE SOFTWARE.
  */
 
-package com.github.juliarn.npclib.fabric;
+package com.github.juliarn.npclib.fabric.event;
 
-import com.github.juliarn.npclib.api.PlatformWorldAccessor;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.world.World;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import net.fabricmc.fabric.api.event.Event;
+import net.fabricmc.fabric.api.event.EventFactory;
+import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.util.Hand;
 
-public final class FabricWorldAccessor {
+public interface ServerPlayerHandSwingEvent {
 
-  public static @NotNull PlatformWorldAccessor<World> stringBased() {
-    return StringBasedInstanceAccessor.INSTANCE;
-  }
-
-  private static final class StringBasedInstanceAccessor implements PlatformWorldAccessor<World> {
-
-    private static final StringBasedInstanceAccessor INSTANCE = new StringBasedInstanceAccessor();
-
-    @Override
-    public @NotNull String extractWorldIdentifier(@NotNull World world) {
-      return world.getRegistryKey().getValue().toString();
-    }
-
-    @Override
-    public @Nullable World resolveWorldFromIdentifier(@NotNull String identifier) {
-      for (ServerWorld world : NpcLibServer.getServer().getWorlds()) {
-        if (world.getRegistryKey().getValue().toString().equals(identifier)) {
-          return world;
-        }
+  Event<ServerPlayerHandSwingEvent> EVENT = EventFactory.createArrayBacked(
+    ServerPlayerHandSwingEvent.class,
+    (listeners) -> (player, hand) -> {
+      for (ServerPlayerHandSwingEvent listener : listeners) {
+        listener.onHandSwing(player, hand);
       }
-      return null;
-    }
-  }
+    });
+
+  void onHandSwing(ServerPlayerEntity player, Hand hand);
 }
