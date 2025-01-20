@@ -1,7 +1,7 @@
 /*
  * This file is part of npc-lib, licensed under the MIT License (MIT).
  *
- * Copyright (c) 2022-2023 Julian M., Pasqual K. and contributors
+ * Copyright (c) 2022-2025 Julian M., Pasqual K. and contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,28 +22,18 @@
  * THE SOFTWARE.
  */
 
-pluginManagement {
-  repositories {
-    gradlePluginPortal()
-    maven("https://maven.fabricmc.net/")
-  }
-}
+package com.github.juliarn.npclib.fabric.mixin.accessor;
 
-enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
-enableFeaturePreview("STABLE_CONFIGURATION_CACHE")
+import net.minecraft.entity.data.DataTracker;
+import net.minecraft.util.collection.Class2IntMap;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.gen.Accessor;
 
-rootProject.name = "npc-lib"
-include(":api", ":common", ":bukkit", ":minestom", ":ext", ":fabric")
+@Mixin(DataTracker.class)
+public interface DataTrackerAccessor {
 
-// external modules
-include(":ext:labymod")
-
-// prefix all submodules with the name of the root project
-changeProjectNames(rootProject.name, rootProject)
-
-fun changeProjectNames(prefix: String, parent: ProjectDescriptor) {
-  parent.children.forEach {
-    it.name = "${prefix}-${it.name}"
-    changeProjectNames(prefix, it)
+  @Accessor("CLASS_TO_LAST_ID")
+  static Class2IntMap getClassToLastId() {
+    throw new AssertionError();
   }
 }

@@ -22,28 +22,33 @@
  * THE SOFTWARE.
  */
 
-pluginManagement {
-  repositories {
-    gradlePluginPortal()
-    maven("https://maven.fabricmc.net/")
+package com.github.juliarn.npclib.fabric;
+
+import com.github.juliarn.npclib.api.PlatformTaskManager;
+import com.github.juliarn.npclib.common.task.AsyncPlatformTaskManager;
+import com.github.juliarn.npclib.fabric.mixin.accessor.MinecraftServerAccessor;
+import net.minecraft.server.ServerTask;
+import org.jetbrains.annotations.NotNull;
+
+public final class FabricPlatformTaskManager extends AsyncPlatformTaskManager {
+
+  private static final FabricPlatformTaskManager INSTANCE = new FabricPlatformTaskManager();
+
+  private FabricPlatformTaskManager() {
+    super("Fabric");
   }
-}
 
-enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
-enableFeaturePreview("STABLE_CONFIGURATION_CACHE")
+  public static @NotNull PlatformTaskManager taskManager() {
+    return INSTANCE;
+  }
 
-rootProject.name = "npc-lib"
-include(":api", ":common", ":bukkit", ":minestom", ":ext", ":fabric")
+  @Override
+  public void scheduleSync(@NotNull Runnable task) {
+    NpcLibServer.getServer().execute(task);
+  }
 
-// external modules
-include(":ext:labymod")
-
-// prefix all submodules with the name of the root project
-changeProjectNames(rootProject.name, rootProject)
-
-fun changeProjectNames(prefix: String, parent: ProjectDescriptor) {
-  parent.children.forEach {
-    it.name = "${prefix}-${it.name}"
-    changeProjectNames(prefix, it)
+  @Override
+  public void scheduleDelayedSync(@NotNull Runnable task, int delayTicks) {
+    ((MinecraftServerAccessor) NpcLibServer.getServer()).invokeExecuteTask(new ServerTask(delayTicks, task));
   }
 }

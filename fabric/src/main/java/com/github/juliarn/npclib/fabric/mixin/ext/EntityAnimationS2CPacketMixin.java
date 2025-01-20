@@ -1,7 +1,7 @@
 /*
  * This file is part of npc-lib, licensed under the MIT License (MIT).
  *
- * Copyright (c) 2022-2023 Julian M., Pasqual K. and contributors
+ * Copyright (c) 2022-2025 Julian M., Pasqual K. and contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,28 +22,25 @@
  * THE SOFTWARE.
  */
 
-pluginManagement {
-  repositories {
-    gradlePluginPortal()
-    maven("https://maven.fabricmc.net/")
-  }
-}
+package com.github.juliarn.npclib.fabric.mixin.ext;
 
-enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
-enableFeaturePreview("STABLE_CONFIGURATION_CACHE")
+import com.github.juliarn.npclib.fabric.ext.EntityAnimationS2CPacketExt;
+import net.minecraft.network.packet.s2c.play.EntityAnimationS2CPacket;
+import org.spongepowered.asm.mixin.Final;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Mutable;
+import org.spongepowered.asm.mixin.Shadow;
 
-rootProject.name = "npc-lib"
-include(":api", ":common", ":bukkit", ":minestom", ":ext", ":fabric")
+@Mixin(EntityAnimationS2CPacket.class)
+public abstract class EntityAnimationS2CPacketMixin implements EntityAnimationS2CPacketExt {
 
-// external modules
-include(":ext:labymod")
+  @Mutable
+  @Shadow
+  @Final
+  private int entityId;
 
-// prefix all submodules with the name of the root project
-changeProjectNames(rootProject.name, rootProject)
-
-fun changeProjectNames(prefix: String, parent: ProjectDescriptor) {
-  parent.children.forEach {
-    it.name = "${prefix}-${it.name}"
-    changeProjectNames(prefix, it)
+  @Override
+  public void npclib_setEntityId(int entityId) {
+    this.entityId = entityId;
   }
 }

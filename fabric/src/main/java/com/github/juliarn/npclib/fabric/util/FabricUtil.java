@@ -22,28 +22,35 @@
  * THE SOFTWARE.
  */
 
-pluginManagement {
-  repositories {
-    gradlePluginPortal()
-    maven("https://maven.fabricmc.net/")
+package com.github.juliarn.npclib.fabric.util;
+
+import static net.minecraft.util.math.MathHelper.square;
+
+import com.github.juliarn.npclib.api.Npc;
+import com.github.juliarn.npclib.api.Position;
+import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.World;
+import org.jetbrains.annotations.NotNull;
+
+@SuppressWarnings("UnstableApiUsage")
+public final class FabricUtil {
+
+  private FabricUtil() {
+    throw new UnsupportedOperationException();
   }
-}
 
-enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
-enableFeaturePreview("STABLE_CONFIGURATION_CACHE")
+  public static double distance(@NotNull Npc<?, ?, ?, ?> npc, @NotNull Vec3d pos) {
+    Position position = npc.position();
+    return square(pos.getX() - position.x()) + square(pos.getY() - position.y()) + square(pos.getZ() - position.z());
+  }
 
-rootProject.name = "npc-lib"
-include(":api", ":common", ":bukkit", ":minestom", ":ext", ":fabric")
+  /*public static @NotNull Pos minestomFromPosition(@NotNull Position position) {
+    return new Pos(position.x(), position.y(), position.z(), position.yaw(), position.pitch());
+  }*/
 
-// external modules
-include(":ext:labymod")
-
-// prefix all submodules with the name of the root project
-changeProjectNames(rootProject.name, rootProject)
-
-fun changeProjectNames(prefix: String, parent: ProjectDescriptor) {
-  parent.children.forEach {
-    it.name = "${prefix}-${it.name}"
-    changeProjectNames(prefix, it)
+  //TODO yaw, pitch, key
+  public static @NotNull Position positionFromMinestom(@NotNull Vec3d pos, @NotNull World world) {
+    return Position.position(pos.getX(), pos.getY(), pos.getZ(), 0f, 0f,
+      world.getRegistryKey().getRegistry().toString());
   }
 }

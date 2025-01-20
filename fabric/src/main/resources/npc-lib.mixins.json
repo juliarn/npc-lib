@@ -1,0 +1,17 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.github.juliarn.npclib.fabric.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "injectors": {
+    "defaultRequire": 1
+  },
+  "mixins": [
+    "accessor.DataTrackerAccessor",
+    "accessor.MinecraftServerAccessor",
+    "event.ServerPlayNetworkHandlerMixin",
+    "ext.EntityAnimationS2CPacketMixin",
+    "ext.EntitySetHeadYawS2CPacketMixin",
+    "ext.PlayerListS2CPacketMixin"
+  ]
+}

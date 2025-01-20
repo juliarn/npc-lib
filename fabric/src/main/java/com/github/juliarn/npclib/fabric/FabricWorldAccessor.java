@@ -22,28 +22,32 @@
  * THE SOFTWARE.
  */
 
-pluginManagement {
-  repositories {
-    gradlePluginPortal()
-    maven("https://maven.fabricmc.net/")
+package com.github.juliarn.npclib.fabric;
+
+import com.github.juliarn.npclib.api.PlatformWorldAccessor;
+import net.minecraft.world.World;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+public final class FabricWorldAccessor {
+
+  public static @NotNull PlatformWorldAccessor<World> stringBased() {
+    return StringBasedInstanceAccessor.INSTANCE;
   }
-}
 
-enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
-enableFeaturePreview("STABLE_CONFIGURATION_CACHE")
+  private static final class StringBasedInstanceAccessor implements PlatformWorldAccessor<World> {
 
-rootProject.name = "npc-lib"
-include(":api", ":common", ":bukkit", ":minestom", ":ext", ":fabric")
+    private static final StringBasedInstanceAccessor INSTANCE = new StringBasedInstanceAccessor();
 
-// external modules
-include(":ext:labymod")
+    @Override
+    public @NotNull String extractWorldIdentifier(@NotNull World world) {
+      return world.getRegistryKey().getRegistry().toString();
+    }
 
-// prefix all submodules with the name of the root project
-changeProjectNames(rootProject.name, rootProject)
-
-fun changeProjectNames(prefix: String, parent: ProjectDescriptor) {
-  parent.children.forEach {
-    it.name = "${prefix}-${it.name}"
-    changeProjectNames(prefix, it)
+    @Override
+    public @Nullable World resolveWorldFromIdentifier(@NotNull String identifier) {
+      //TODO
+      return NpcLibServer.getServer().getOverworld();
+    }
   }
 }

@@ -22,28 +22,22 @@
  * THE SOFTWARE.
  */
 
-pluginManagement {
-  repositories {
-    gradlePluginPortal()
-    maven("https://maven.fabricmc.net/")
-  }
+plugins {
+  id("fabric-loom") version "1.7-SNAPSHOT"
 }
 
-enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
-enableFeaturePreview("STABLE_CONFIGURATION_CACHE")
+dependencies {
+  api(projects.npcLibApi)
+  api(projects.npcLibCommon)
 
-rootProject.name = "npc-lib"
-include(":api", ":common", ":bukkit", ":minestom", ":ext", ":fabric")
+  implementation(libs.geantyref)
 
-// external modules
-include(":ext:labymod")
+  minecraft("com.mojang:minecraft:1.21")
+  mappings("net.fabricmc:yarn:1.21+build.9")
+  modImplementation("net.fabricmc:fabric-loader:0.16.10")
+  modImplementation("net.fabricmc.fabric-api:fabric-api:0.102.0+1.21")
+}
 
-// prefix all submodules with the name of the root project
-changeProjectNames(rootProject.name, rootProject)
-
-fun changeProjectNames(prefix: String, parent: ProjectDescriptor) {
-  parent.children.forEach {
-    it.name = "${prefix}-${it.name}"
-    changeProjectNames(prefix, it)
-  }
+tasks.withType<JavaCompile> {
+  options.release.set(17)
 }

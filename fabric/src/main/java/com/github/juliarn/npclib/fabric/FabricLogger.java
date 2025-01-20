@@ -22,28 +22,45 @@
  * THE SOFTWARE.
  */
 
-pluginManagement {
-  repositories {
-    gradlePluginPortal()
-    maven("https://maven.fabricmc.net/")
+package com.github.juliarn.npclib.fabric;
+
+import static com.github.juliarn.npclib.fabric.NpcLibServer.MOD_ID;
+
+import com.github.juliarn.npclib.api.log.PlatformLogger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+public final class FabricLogger implements PlatformLogger {
+
+  private static final FabricLogger INSTANCE = new FabricLogger();
+  private static final Logger LOGGER = LogManager.getLogger(MOD_ID);
+
+  private FabricLogger() {
   }
-}
 
-enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
-enableFeaturePreview("STABLE_CONFIGURATION_CACHE")
+  public static @NotNull PlatformLogger fabricLogger() {
+    return INSTANCE;
+  }
 
-rootProject.name = "npc-lib"
-include(":api", ":common", ":bukkit", ":minestom", ":ext", ":fabric")
+  @Override
+  public void info(@NotNull String message) {
+    LOGGER.info(message);
+  }
 
-// external modules
-include(":ext:labymod")
+  @Override
+  public void warning(@NotNull String message) {
+    LOGGER.warn(message);
+  }
 
-// prefix all submodules with the name of the root project
-changeProjectNames(rootProject.name, rootProject)
+  @Override
+  public void error(@NotNull String message) {
+    LOGGER.error(message);
+  }
 
-fun changeProjectNames(prefix: String, parent: ProjectDescriptor) {
-  parent.children.forEach {
-    it.name = "${prefix}-${it.name}"
-    changeProjectNames(prefix, it)
+  @Override
+  public void error(@NotNull String message, @Nullable Throwable exception) {
+    LOGGER.error(message, exception);
   }
 }

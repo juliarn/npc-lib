@@ -1,7 +1,7 @@
 /*
  * This file is part of npc-lib, licensed under the MIT License (MIT).
  *
- * Copyright (c) 2022-2023 Julian M., Pasqual K. and contributors
+ * Copyright (c) 2022-2025 Julian M., Pasqual K. and contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,28 +22,28 @@
  * THE SOFTWARE.
  */
 
-pluginManagement {
-  repositories {
-    gradlePluginPortal()
-    maven("https://maven.fabricmc.net/")
-  }
-}
+package com.github.juliarn.npclib.fabric.mixin.event;
 
-enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
-enableFeaturePreview("STABLE_CONFIGURATION_CACHE")
+import com.github.juliarn.npclib.fabric.event.PlayerMoveEvent;
+import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
+import net.minecraft.server.network.ServerPlayNetworkHandler;
+import net.minecraft.server.network.ServerPlayerEntity;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-rootProject.name = "npc-lib"
-include(":api", ":common", ":bukkit", ":minestom", ":ext", ":fabric")
+@Mixin(ServerPlayNetworkHandler.class)
+public abstract class ServerPlayNetworkHandlerMixin {
 
-// external modules
-include(":ext:labymod")
+  @Shadow
+  public ServerPlayerEntity player;
 
-// prefix all submodules with the name of the root project
-changeProjectNames(rootProject.name, rootProject)
-
-fun changeProjectNames(prefix: String, parent: ProjectDescriptor) {
-  parent.children.forEach {
-    it.name = "${prefix}-${it.name}"
-    changeProjectNames(prefix, it)
+  @Inject(method = "onPlayerMove", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/network/ServerPlayerEntity;increaseTravelMotionStats(DDD)V"))
+  private void npclib$onPlayerMoveEvent(PlayerMoveC2SPacket playerMoveC2SPacket, CallbackInfo ci) {
+    //TODO correct from to
+    //TODO vehicle
+    PlayerMoveEvent.EVENT.invoker().onMove(this.player, this.player.getPos(), this.player.getPos());
   }
 }

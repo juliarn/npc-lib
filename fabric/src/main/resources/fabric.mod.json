@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "name": "NPC Lib",
+  "id": "npc-lib",
+  "version": "${version}",
+  "description": "npc-lib",
+  "authors": [
+    "copyandexecute"
+  ],
+  "icon": "",
+  "license": "MIT",
+  "environment": "server",
+  "entrypoints": {
+    "server": [
+      {
+        "value": "com.github.juliarn.npclib.fabric.NpcLibServer"
+      }
+    ]
+  },
+  "mixins": [
+    "npc-lib.mixins.json"
+  ],
+  "depends": {
+  }
+}
