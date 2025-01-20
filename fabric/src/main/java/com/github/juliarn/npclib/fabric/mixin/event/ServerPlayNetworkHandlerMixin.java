@@ -24,9 +24,11 @@
 
 package com.github.juliarn.npclib.fabric.mixin.event;
 
+import com.github.juliarn.npclib.fabric.event.ServerPlayerInteractEntityPacketEvent;
 import com.github.juliarn.npclib.fabric.event.ServerPlayerMoveEvent;
 import com.github.juliarn.npclib.fabric.event.ServerPlayerToggleSneakEvent;
 import net.minecraft.network.packet.c2s.play.ClientCommandC2SPacket;
+import net.minecraft.network.packet.c2s.play.PlayerInteractEntityC2SPacket;
 import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
 import net.minecraft.server.network.ServerPlayNetworkHandler;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -42,15 +44,21 @@ public abstract class ServerPlayNetworkHandlerMixin {
   @Shadow
   public ServerPlayerEntity player;
 
+  @Inject(method = "onPlayerInteractEntity", at = @At(value = "INVOKE", target = "Lnet/minecraft/network/NetworkThreadUtils;forceMainThread(Lnet/minecraft/network/packet/Packet;Lnet/minecraft/network/listener/PacketListener;Lnet/minecraft/server/world/ServerWorld;)V", shift = At.Shift.AFTER))
+  private void npclib$onPlayerInteractEntity(PlayerInteractEntityC2SPacket playerInteractEntityC2SPacket,
+    CallbackInfo ci) {
+    ServerPlayerInteractEntityPacketEvent.EVENT.invoker().onPacket(this.player, playerInteractEntityC2SPacket);
+  }
+
   @Inject(method = "onPlayerMove", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/network/ServerPlayerEntity;increaseTravelMotionStats(DDD)V"))
-  private void npclib$onPlayerMoveEvent(PlayerMoveC2SPacket playerMoveC2SPacket, CallbackInfo ci) {
+  private void npclib$onPlayerMove(PlayerMoveC2SPacket playerMoveC2SPacket, CallbackInfo ci) {
     //TODO correct from to
     //TODO vehicle
     ServerPlayerMoveEvent.EVENT.invoker().onMove(this.player, this.player.getPos(), this.player.getPos());
   }
 
   @Inject(method = "onClientCommand", at = @At("TAIL"))
-  private void npclib$onPlayerToggleSneakEvent(ClientCommandC2SPacket clientCommandC2SPacket, CallbackInfo ci) {
+  private void npclib$onClientCommand(ClientCommandC2SPacket clientCommandC2SPacket, CallbackInfo ci) {
     var mode = clientCommandC2SPacket.getMode();
     if (mode == ClientCommandC2SPacket.Mode.PRESS_SHIFT_KEY || mode == ClientCommandC2SPacket.Mode.RELEASE_SHIFT_KEY) {
       ServerPlayerToggleSneakEvent.EVENT.invoker()

@@ -24,6 +24,7 @@
 
 package com.github.juliarn.npclib.fabric.protocol;
 
+import com.github.juliarn.npclib.api.Npc;
 import com.github.juliarn.npclib.api.Platform;
 import com.github.juliarn.npclib.api.PlatformVersionAccessor;
 import com.github.juliarn.npclib.api.event.InteractNpcEvent;
@@ -36,10 +37,14 @@ import com.github.juliarn.npclib.api.protocol.enums.ItemSlot;
 import com.github.juliarn.npclib.api.protocol.enums.PlayerInfoAction;
 import com.github.juliarn.npclib.api.protocol.meta.EntityMetadata;
 import com.github.juliarn.npclib.api.protocol.meta.EntityMetadataFactory;
+import com.github.juliarn.npclib.common.event.DefaultAttackNpcEvent;
+import com.github.juliarn.npclib.common.event.DefaultInteractNpcEvent;
+import com.github.juliarn.npclib.fabric.event.ServerPlayerInteractEntityPacketEvent;
 import com.github.juliarn.npclib.fabric.ext.EntityAnimationS2CPacketExt;
 import com.github.juliarn.npclib.fabric.ext.EntitySetHeadYawS2CPacketExt;
 import com.github.juliarn.npclib.fabric.ext.PlayerListS2CPacketExt;
 import com.github.juliarn.npclib.fabric.mixin.accessor.DataTrackerAccessor;
+import com.github.juliarn.npclib.fabric.mixin.accessor.PlayerInteractEntityC2SPacketAccessor;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.properties.Property;
 import com.mojang.datafixers.util.Pair;
@@ -61,6 +66,7 @@ import net.minecraft.entity.data.DataTracker;
 import net.minecraft.entity.data.TrackedDataHandlerRegistry;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
+import net.minecraft.network.packet.c2s.play.PlayerInteractEntityC2SPacket;
 import net.minecraft.network.packet.s2c.play.EntitiesDestroyS2CPacket;
 import net.minecraft.network.packet.s2c.play.EntityAnimationS2CPacket;
 import net.minecraft.network.packet.s2c.play.EntityEquipmentUpdateS2CPacket;
@@ -358,6 +364,33 @@ public final class FabricProtocolAdapter implements
 
   @Override
   public void initialize(@NotNull Platform<World, ServerPlayerEntity, ItemStack, Object> platform) {
+    ServerPlayerInteractEntityPacketEvent.EVENT.register((player, packet) -> {
+      Npc<World, ServerPlayerEntity, ItemStack, Object> npc = platform.npcTracker()
+        .npcById(((PlayerInteractEntityC2SPacketAccessor) packet).getEntityId());
+      if (npc != null) {
+        packet.handle(new PlayerInteractEntityC2SPacket.Handler() {
+          @Override
+          public void interact(Hand hand) {
+            InteractNpcEvent.Hand genericHand = HAND_CONVERTER.get(hand);
+            platform.eventManager().post(DefaultInteractNpcEvent.interactNpc(npc, player, genericHand));
+          }
 
+          @Override
+          public void interactAt(Hand hand, Vec3d vec3d) {
+            InteractNpcEvent.Hand genericHand = HAND_CONVERTER.get(hand);
+            platform.eventManager().post(DefaultInteractNpcEvent.interactNpc(npc, player, genericHand));
+          }
+
+          @Override
+          public void attack() {
+            platform.eventManager().post(DefaultAttackNpcEvent.attackNpc(npc, player));
+          }
+
+          //TODO?
+          // don't pass the packet to the server
+          //event.setCancelled(true);
+        });
+      }
+    });
   }
 }

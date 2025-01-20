@@ -9,6 +9,7 @@
   "mixins": [
     "accessor.DataTrackerAccessor",
     "accessor.MinecraftServerAccessor",
+    "accessor.PlayerInteractEntityC2SPacketAccessor",
     "event.ServerPlayNetworkHandlerMixin",
     "ext.EntityAnimationS2CPacketMixin",
     "ext.EntitySetHeadYawS2CPacketMixin",
