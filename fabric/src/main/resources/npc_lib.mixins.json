@@ -1,0 +1,11 @@
+{
+  "required": true,
+  "package": "com.github.juliarn.npclib.fabric.mixins",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "MinecraftServerMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

@@ -1,7 +1,7 @@
 /*
  * This file is part of npc-lib, licensed under the MIT License (MIT).
  *
- * Copyright (c) 2022-2023 Julian M., Pasqual K. and contributors
+ * Copyright (c) 2022-2025 Julian M., Pasqual K. and contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,31 +22,43 @@
  * THE SOFTWARE.
  */
 
-enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
-enableFeaturePreview("STABLE_CONFIGURATION_CACHE")
+package com.github.juliarn.npclib.fabric;
 
-pluginManagement {
-  repositories {
-    gradlePluginPortal()
-    maven {
-      name = "Fabric"
-      url = uri("https://maven.fabricmc.net/")
-    }
+import com.github.juliarn.npclib.api.log.PlatformLogger;
+import com.mojang.logging.LogUtils;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+
+public final class FabricPlatformLogger implements PlatformLogger {
+
+  private static final Logger LOGGER = LogUtils.getLogger();
+  private static final FabricPlatformLogger INSTANCE = new FabricPlatformLogger();
+
+  private FabricPlatformLogger() {
   }
-}
 
-rootProject.name = "npc-lib"
-include(":api", ":common", ":bukkit", ":minestom", ":fabric", ":ext")
+  public static @NotNull PlatformLogger logger() {
+    return INSTANCE;
+  }
 
-// external modules
-include(":ext:labymod")
+  @Override
+  public void info(@NotNull String message) {
+    LOGGER.info(message);
+  }
 
-// prefix all submodules with the name of the root project
-changeProjectNames(rootProject.name, rootProject)
+  @Override
+  public void warning(@NotNull String message) {
+    LOGGER.warn(message);
+  }
 
-fun changeProjectNames(prefix: String, parent: ProjectDescriptor) {
-  parent.children.forEach {
-    it.name = "${prefix}-${it.name}"
-    changeProjectNames(prefix, it)
+  @Override
+  public void error(@NotNull String message) {
+    LOGGER.error(message);
+  }
+
+  @Override
+  public void error(@NotNull String message, @Nullable Throwable exception) {
+    LOGGER.error(message, exception);
   }
 }
