@@ -45,10 +45,12 @@ import com.github.juliarn.npclib.fabric.ext.EntitySetHeadYawS2CPacketExt;
 import com.github.juliarn.npclib.fabric.ext.PlayerListS2CPacketExt;
 import com.github.juliarn.npclib.fabric.mixin.accessor.DataTrackerAccessor;
 import com.github.juliarn.npclib.fabric.mixin.accessor.EntityAccessor;
+import com.github.juliarn.npclib.fabric.mixin.accessor.PlayerEntityAccessor;
 import com.github.juliarn.npclib.fabric.mixin.accessor.PlayerInteractEntityC2SPacketAccessor;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.properties.Property;
 import com.mojang.datafixers.util.Pair;
+
 import java.lang.reflect.Type;
 import java.util.AbstractMap;
 import java.util.ArrayList;
@@ -60,9 +62,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
+
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.data.DataTracker;
+import net.minecraft.entity.data.TrackedData;
 import net.minecraft.entity.data.TrackedDataHandlerRegistry;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
@@ -258,7 +262,7 @@ public final class FabricProtocolAdapter implements
 
   @Override
   public @NotNull OutboundPacket<World, ServerPlayerEntity, ItemStack, Object> createRotationPacket(float yaw,
-    float pitch) {
+                                                                                                    float pitch) {
     return (player, npc) -> {
       // head rotation (https://wiki.vg/Protocol#Entity_Head_Look) & rotation (https://wiki.vg/Protocol#Player_Rotation)
       EntitySetHeadYawS2CPacket headLookPacket = new EntitySetHeadYawS2CPacket(player,
@@ -325,7 +329,16 @@ public final class FabricProtocolAdapter implements
 
       //TODO das hier ist wirklich unschön gecodet aber habs nicht geiler hinbekommen
       var flags = new ArrayList<DataTracker.SerializedEntry<?>>();
-      DataTracker.Entry entry = new DataTracker.Entry(EntityAccessor.getFlags(), entityMetadata.value());
+
+      TrackedData<?> trackedData = null;
+      if (entityMetadata.index() == 0) {
+        trackedData = EntityAccessor.getFlags();
+      } else if (entityMetadata.index() >= 10) {
+        trackedData = PlayerEntityAccessor.getPlayerModelParts();
+      }
+
+
+      DataTracker.Entry entry = new DataTracker.Entry(trackedData, entityMetadata.value());
       flags.add(entry.toSerialized());
       for (EntityMetadataFactory<T, Object> relatedMetadata : metadata.relatedMetadata()) {
         EntityMetadata<Object> related = relatedMetadata.create(value, versionAccessor);
@@ -341,7 +354,7 @@ public final class FabricProtocolAdapter implements
   }
 
   private static @NotNull DataTracker.SerializedEntry<?> createMetadataEntry(@NotNull Type type,
-    @NotNull Object value) {
+                                                                             @NotNull Object value) {
     // check if we need to convert the value before creating the meta object
     Map.Entry<Type, UnaryOperator<Object>> converter = SERIALIZER_CONVERTERS.get(type);
     if (converter != null) {
