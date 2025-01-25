@@ -38,9 +38,14 @@ import com.github.juliarn.npclib.api.protocol.meta.EntityMetadataFactory;
 import com.github.juliarn.npclib.bukkit.util.BukkitPlatformUtil;
 import com.github.juliarn.npclib.common.CommonNpcActionController;
 import com.github.juliarn.npclib.common.flag.CommonNpcFlaggedBuilder;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
@@ -52,6 +57,8 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerToggleSneakEvent;
+import org.bukkit.event.world.ChunkLoadEvent;
+import org.bukkit.event.world.ChunkUnloadEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
@@ -59,6 +66,9 @@ import org.jetbrains.annotations.NotNull;
 public final class BukkitActionController extends CommonNpcActionController implements Listener {
 
   private final NpcTracker<World, Player, ItemStack, Plugin> npcTracker;
+  private final Map<World, Set<String>> loadedChunks = new HashMap<>();
+  private final Map<UUID, Long> playerCooldowns = new HashMap<>();
+  private static final int COOLDOWN_TICKS = 10;
 
   // based on the given flags
   private final int spawnDistance;
@@ -135,14 +145,31 @@ public final class BukkitActionController extends CommonNpcActionController impl
     boolean changedWorld = !Objects.equals(from.getWorld(), to.getWorld());
     boolean changedOrientation = from.getYaw() != to.getYaw() || from.getPitch() != to.getPitch();
     boolean changedPosition = from.getX() != to.getX() || from.getY() != to.getY() || from.getZ() != to.getZ();
+    boolean significantMovement = Math.abs(to.getX() - from.getX()) > 0.5 || Math.abs(to.getY() - from.getY()) > 0.5 || Math.abs(to.getZ() - from.getZ()) > 0.5;
+
+    if (!significantMovement) return;
+
+    Player player = event.getPlayer();
+    UUID playerId = player.getUniqueId();
+    long currentTick = System.currentTimeMillis() / 50; // Convert current time to ticks
+
+    // Cooldown check
+    Long lastProcessedTick = playerCooldowns.get(playerId);
+    if (lastProcessedTick != null && currentTick - lastProcessedTick < COOLDOWN_TICKS) {
+      return; // Skip processing if still within the cooldown period
+    }
+    playerCooldowns.put(playerId, currentTick);
 
     // check if any movement happened (event is also called when standing still)
     if (changedPosition || changedOrientation || changedWorld) {
-      Player player = event.getPlayer();
       for (Npc<World, Player, ItemStack, Plugin> npc : this.npcTracker.trackedNpcs()) {
         // check if the player is still in the same world as the npc
         Position pos = npc.position();
-        if (!npc.world().equals(player.getWorld()) || !npc.world().isChunkLoaded(pos.chunkX(), pos.chunkZ())) {
+        World npcWorld = npc.world();
+
+        // Use cached chunk data to check if the chunk is loaded
+        Set<String> loadedChunksInWorld = loadedChunks.get(npcWorld);
+        if (loadedChunksInWorld == null || !loadedChunksInWorld.contains(chunkKey(pos.chunkX(), pos.chunkZ()))) {
           // if the player is tracked by the npc, stop that
           npc.stopTrackingPlayer(player);
           continue;
@@ -166,6 +193,32 @@ public final class BukkitActionController extends CommonNpcActionController impl
           && npc.flagValueOrDefault(Npc.LOOK_AT_PLAYER)) {
           npc.lookAt(BukkitPlatformUtil.positionFromBukkitLegacy(to)).schedule(player);
         }
+      }
+    }
+  }
+
+  @EventHandler
+  public void onChunkLoad(ChunkLoadEvent event) {
+    World world = event.getWorld();
+    Chunk chunk = event.getChunk();
+
+    // Add the chunk to the cache
+    loadedChunks
+      .computeIfAbsent(world, w -> new HashSet<>())
+      .add(chunkKey(chunk.getX(), chunk.getZ()));
+  }
+
+  @EventHandler
+  public void onChunkUnload(ChunkUnloadEvent event) {
+    World world = event.getWorld();
+    Chunk chunk = event.getChunk();
+
+    // Remove the chunk from the cache
+    Set<String> chunks = loadedChunks.get(world);
+    if (chunks != null) {
+      chunks.remove(chunkKey(chunk.getX(), chunk.getZ()));
+      if (chunks.isEmpty()) {
+        loadedChunks.remove(world); // Clean up if no chunks are left
       }
     }
   }
@@ -214,6 +267,10 @@ public final class BukkitActionController extends CommonNpcActionController impl
       // check if the npc tracks the player which disconnected and stop tracking him if so
       npc.stopTrackingPlayer(event.getPlayer());
     }
+  }
+
+  private String chunkKey(int chunkX, int chunkZ) {
+    return chunkX + "," + chunkZ;
   }
 
   private static final class BukkitActionControllerBuilder
