@@ -24,6 +24,51 @@
 
 package com.github.juliarn.npclib.fabric.util;
 
-public class FabricUtil {
+import com.github.juliarn.npclib.api.Npc;
+import com.github.juliarn.npclib.api.Position;
+import java.util.Objects;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.Mth;
+import net.minecraft.world.phys.Vec2;
+import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
+public final class FabricUtil {
+
+  // @MonotonicNonNull
+  private static MinecraftServer theServer;
+
+  private FabricUtil() {
+    throw new UnsupportedOperationException();
+  }
+
+  public static @NotNull MinecraftServer getServer() {
+    Objects.requireNonNull(FabricUtil.theServer, "server not yet set");
+    return FabricUtil.theServer;
+  }
+
+  public static void setServer(@NotNull MinecraftServer theServer) {
+    if (FabricUtil.theServer != null) {
+      throw new IllegalStateException("server already set");
+    }
+
+    FabricUtil.theServer = theServer;
+  }
+
+  public static double distance(@NotNull Npc<?, ?, ?, ?> npc, @NotNull Vec3 other) {
+    Position pos = npc.position();
+    return Mth.square(other.x() - pos.x()) + Mth.square(other.y() - pos.y()) + Mth.square(other.z() - pos.z());
+  }
+
+  public static @NotNull Position positionFromPosAndRot(
+    @NotNull ServerLevel level,
+    @NotNull Vec3 pos,
+    @NotNull Vec2 rot
+  ) {
+    var worldId = level.dimension().location().toString();
+    return Position.position(pos.x(), pos.y(), pos.z(), rot.x, rot.y, worldId);
+  }
 }

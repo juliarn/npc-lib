@@ -24,8 +24,11 @@
 
 package com.github.juliarn.npclib.fabric;
 
+import com.github.juliarn.npclib.api.NpcActionController;
 import com.github.juliarn.npclib.api.Platform;
+import com.github.juliarn.npclib.common.platform.CommonPlatform;
 import com.github.juliarn.npclib.common.platform.CommonPlatformBuilder;
+import com.github.juliarn.npclib.fabric.controller.FabricActionController;
 import com.github.juliarn.npclib.fabric.protocol.FabricProtocolAdapter;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -33,6 +36,13 @@ import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
 public final class FabricPlatform extends CommonPlatformBuilder<ServerLevel, ServerPlayer, ItemStack, Object> {
+
+  private FabricPlatform() {
+  }
+
+  public static @NotNull Platform.Builder<ServerLevel, ServerPlayer, ItemStack, Object> fabricNpcPlatformBuilder() {
+    return new FabricPlatform();
+  }
 
   @Override
   protected void prepareBuild() {
@@ -64,6 +74,28 @@ public final class FabricPlatform extends CommonPlatformBuilder<ServerLevel, Ser
 
   @Override
   protected @NotNull Platform<ServerLevel, ServerPlayer, ItemStack, Object> doBuild() {
-    return null;
+    // check if we need an action controller
+    NpcActionController actionController = null;
+    if (this.actionControllerDecorator != null) {
+      NpcActionController.Builder builder = FabricActionController.actionControllerBuilder(
+        this.eventManager,
+        this.npcTracker);
+      this.actionControllerDecorator.accept(builder);
+      actionController = builder.build();
+    }
+
+    // build the platform
+    return new CommonPlatform<>(
+      this.debug,
+      this.extension,
+      this.logger,
+      this.npcTracker,
+      this.profileResolver,
+      this.taskManager,
+      actionController,
+      this.versionAccessor,
+      this.eventManager,
+      this.worldAccessor,
+      this.packetAdapter);
   }
 }

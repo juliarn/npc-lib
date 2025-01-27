@@ -24,7 +24,7 @@
 
 package com.github.juliarn.npclib.fabric.mixins;
 
-import com.github.juliarn.npclib.fabric.FabricModInitializer;
+import com.github.juliarn.npclib.fabric.util.FabricUtil;
 import net.minecraft.server.MinecraftServer;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -36,6 +36,6 @@ abstract class MinecraftServerMixin {
 
   @Inject(method = "loadLevel", at = @At("HEAD"))
   public void npc_lib$loadLevel(CallbackInfo ci) {
-    FabricModInitializer.theServer = (MinecraftServer) (Object) this;
+    FabricUtil.setServer((MinecraftServer) (Object) this);
   }
 }

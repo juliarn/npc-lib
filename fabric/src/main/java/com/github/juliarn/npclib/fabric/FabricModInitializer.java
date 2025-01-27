@@ -25,11 +25,8 @@
 package com.github.juliarn.npclib.fabric;
 
 import net.fabricmc.api.ModInitializer;
-import net.minecraft.server.MinecraftServer;
 
 public final class FabricModInitializer implements ModInitializer {
-
-  public static MinecraftServer theServer;
 
   @Override
   public void onInitialize() {

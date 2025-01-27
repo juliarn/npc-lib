@@ -25,6 +25,7 @@
 package com.github.juliarn.npclib.fabric;
 
 import com.github.juliarn.npclib.api.PlatformWorldAccessor;
+import com.github.juliarn.npclib.fabric.util.FabricUtil;
 import net.minecraft.server.level.ServerLevel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,7 +47,7 @@ public final class FabricWorldAccessor {
 
     @Override
     public @Nullable ServerLevel resolveWorldFromIdentifier(@NotNull String identifier) {
-      var levels = FabricModInitializer.theServer.getAllLevels();
+      var levels = FabricUtil.getServer().getAllLevels();
       for (var level : levels) {
         var levelIdentifier = this.extractWorldIdentifier(level);
         if (levelIdentifier.equals(identifier)) {

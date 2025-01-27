@@ -26,8 +26,10 @@ package com.github.juliarn.npclib.fabric.controller;
 
 import net.fabricmc.fabric.api.event.Event;
 import net.fabricmc.fabric.api.event.EventFactory;
+import net.minecraft.network.protocol.game.ServerboundInteractPacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.ApiStatus;
@@ -40,11 +42,11 @@ import org.jetbrains.annotations.Nullable;
 @ApiStatus.Internal
 public interface FabricActionControllerEvents {
 
-  Event<ServerPlayerPreLevelChange> PRE_SERVER_PLAYER_LEVEL_CHANGE = EventFactory.createArrayBacked(
-    ServerPlayerPreLevelChange.class,
+  Event<ServerPlayerLevelChange> SERVER_PLAYER_LEVEL_CHANGE = EventFactory.createArrayBacked(
+    ServerPlayerLevelChange.class,
     callbacks -> (player, oldLevel, newLevel) -> {
       for (var callback : callbacks) {
-        callback.preLevelChange(player, oldLevel, newLevel);
+        callback.levelChange(player, oldLevel, newLevel);
       }
     }
   );
@@ -85,13 +87,26 @@ public interface FabricActionControllerEvents {
     }
   );
 
+  Event<ServerPlayerEntityInteract> SERVER_PLAYER_ENTITY_INTERACT = EventFactory.createArrayBacked(
+    ServerPlayerEntityInteract.class,
+    callbacks -> (entityId, player, actionType, hand) -> {
+      for (var callback : callbacks) {
+        if (callback.interact(entityId, player, actionType, hand)) {
+          return true;
+        }
+      }
+
+      return false;
+    }
+  );
+
   /**
    * Called before a server player changes the level.
    */
   @FunctionalInterface
-  interface ServerPlayerPreLevelChange {
+  interface ServerPlayerLevelChange {
 
-    void preLevelChange(@NotNull ServerPlayer player, @Nullable ServerLevel oldLevel, @NotNull ServerLevel newLevel);
+    void levelChange(@NotNull ServerPlayer player, @Nullable ServerLevel oldLevel, @NotNull ServerLevel newLevel);
   }
 
   /**
@@ -128,5 +143,19 @@ public interface FabricActionControllerEvents {
   interface ServerPlayerMove {
 
     void move(@NotNull ServerPlayer player, @Nullable Vec3 posTo, @Nullable Vec2 rotTo);
+  }
+
+  /**
+   * Called when a server player interacts with an entity (interact or attack). If one listener returns true, all
+   * subsequent listeners are cancelled and the packet processing gets aborted.
+   */
+  @FunctionalInterface
+  interface ServerPlayerEntityInteract {
+
+    boolean interact(
+      int entityId,
+      @NotNull ServerPlayer player,
+      @NotNull ServerboundInteractPacket.ActionType actionType,
+      @NotNull InteractionHand hand);
   }
 }

@@ -26,6 +26,7 @@ package com.github.juliarn.npclib.fabric;
 
 import com.github.juliarn.npclib.api.PlatformTaskManager;
 import com.github.juliarn.npclib.common.task.AsyncPlatformTaskManager;
+import com.github.juliarn.npclib.fabric.util.FabricUtil;
 import org.jetbrains.annotations.NotNull;
 
 public final class FabricPlatformTaskManager extends AsyncPlatformTaskManager {
@@ -42,7 +43,7 @@ public final class FabricPlatformTaskManager extends AsyncPlatformTaskManager {
 
   @Override
   public void scheduleSync(@NotNull Runnable task) {
-    FabricModInitializer.theServer.execute(task);
+    FabricUtil.getServer().execute(task);
   }
 
   @Override

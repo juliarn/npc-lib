@@ -43,7 +43,9 @@ public abstract class ServerPlayerMixin {
   public void npc_lib$setServerLevel(ServerLevel level, CallbackInfo ci) {
     var currentLevel = this.serverLevel();
     var player = (ServerPlayer) (Object) this;
-    var eventInvoker = FabricActionControllerEvents.PRE_SERVER_PLAYER_LEVEL_CHANGE.invoker();
-    eventInvoker.preLevelChange(player, currentLevel, level);
+    if (currentLevel != null && player.connection != null) {
+      var eventInvoker = FabricActionControllerEvents.SERVER_PLAYER_LEVEL_CHANGE.invoker();
+      eventInvoker.levelChange(player, currentLevel, level);
+    }
   }
 }

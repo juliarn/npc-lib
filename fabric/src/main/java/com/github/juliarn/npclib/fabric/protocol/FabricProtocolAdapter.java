@@ -25,6 +25,7 @@
 package com.github.juliarn.npclib.fabric.protocol;
 
 import com.github.juliarn.npclib.api.Platform;
+import com.github.juliarn.npclib.api.event.InteractNpcEvent;
 import com.github.juliarn.npclib.api.protocol.OutboundPacket;
 import com.github.juliarn.npclib.api.protocol.PlatformPacketAdapter;
 import com.github.juliarn.npclib.api.protocol.enums.EntityAnimation;
@@ -32,7 +33,10 @@ import com.github.juliarn.npclib.api.protocol.enums.EntityPose;
 import com.github.juliarn.npclib.api.protocol.enums.ItemSlot;
 import com.github.juliarn.npclib.api.protocol.enums.PlayerInfoAction;
 import com.github.juliarn.npclib.api.protocol.meta.EntityMetadataFactory;
-import com.github.juliarn.npclib.fabric.FabricModInitializer;
+import com.github.juliarn.npclib.common.event.DefaultAttackNpcEvent;
+import com.github.juliarn.npclib.common.event.DefaultInteractNpcEvent;
+import com.github.juliarn.npclib.fabric.controller.FabricActionControllerEvents;
+import com.github.juliarn.npclib.fabric.util.FabricUtil;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.properties.Property;
 import com.mojang.datafixers.util.Pair;
@@ -66,6 +70,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.Pose;
@@ -85,6 +90,7 @@ public final class FabricProtocolAdapter
 
   private static final EnumMap<EntityPose, Pose> ENTITY_POSE_CONVERTER;
   private static final EnumMap<ItemSlot, EquipmentSlot> ITEM_SLOT_CONVERTER;
+  private static final EnumMap<InteractionHand, InteractNpcEvent.Hand> HAND_CONVERTER;
 
   private static final Map<Type, EntityDataFactory> META_ENTRY_FACTORY;
   private static final Map<Type, Map.Entry<Type, UnaryOperator<Object>>> SERIALIZER_CONVERTERS;
@@ -126,6 +132,10 @@ public final class FabricProtocolAdapter
     ENTITY_POSE_CONVERTER.put(EntityPose.SHOOTING, Pose.SHOOTING);
     ENTITY_POSE_CONVERTER.put(EntityPose.INHALING, Pose.INHALING);
 
+    HAND_CONVERTER = new EnumMap<>(InteractionHand.class);
+    HAND_CONVERTER.put(InteractionHand.MAIN_HAND, InteractNpcEvent.Hand.MAIN_HAND);
+    HAND_CONVERTER.put(InteractionHand.OFF_HAND, InteractNpcEvent.Hand.OFF_HAND);
+
     SERIALIZER_CONVERTERS = HashMap.newHashMap(2);
     //noinspection SuspiciousMethodCalls
     SERIALIZER_CONVERTERS.put(EntityPose.class, Map.entry(Pose.class, ENTITY_POSE_CONVERTER::get));
@@ -143,7 +153,7 @@ public final class FabricProtocolAdapter
               // TODO: color codes
               return Component.literal(rawMessage);
             } else {
-              var registries = FabricModInitializer.theServer.registryAccess();
+              var registries = FabricUtil.getServer().registryAccess();
               return Component.Serializer.fromJson(Objects.requireNonNull(component.encodedJsonMessage()), registries);
             }
           });
@@ -151,19 +161,19 @@ public final class FabricProtocolAdapter
       ));
 
     META_ENTRY_FACTORY = HashMap.newHashMap(7);
-    META_ENTRY_FACTORY.put(byte.class, (index, value) -> new SynchedEntityData.DataValue<>(
+    META_ENTRY_FACTORY.put(Byte.class, (index, value) -> new SynchedEntityData.DataValue<>(
       index,
       EntityDataSerializers.BYTE,
       (byte) value));
-    META_ENTRY_FACTORY.put(int.class, (index, value) -> new SynchedEntityData.DataValue<>(
+    META_ENTRY_FACTORY.put(Integer.class, (index, value) -> new SynchedEntityData.DataValue<>(
       index,
       EntityDataSerializers.INT,
       (int) value));
-    META_ENTRY_FACTORY.put(float.class, (index, value) -> new SynchedEntityData.DataValue<>(
+    META_ENTRY_FACTORY.put(Float.class, (index, value) -> new SynchedEntityData.DataValue<>(
       index,
       EntityDataSerializers.FLOAT,
       (float) value));
-    META_ENTRY_FACTORY.put(boolean.class, (index, value) -> new SynchedEntityData.DataValue<>(
+    META_ENTRY_FACTORY.put(Boolean.class, (index, value) -> new SynchedEntityData.DataValue<>(
       index,
       EntityDataSerializers.BOOLEAN,
       (boolean) value));
@@ -372,5 +382,24 @@ public final class FabricProtocolAdapter
 
   @Override
   public void initialize(@NotNull Platform<ServerLevel, ServerPlayer, ItemStack, Object> platform) {
+    FabricActionControllerEvents.SERVER_PLAYER_ENTITY_INTERACT.register((entityId, player, actionType, hand) -> {
+      var npc = platform.npcTracker().npcById(entityId);
+      if (npc != null) {
+        return switch (actionType) {
+          case ATTACK -> {
+            platform.eventManager().post(DefaultAttackNpcEvent.attackNpc(npc, player));
+            yield true;
+          }
+          case INTERACT -> {
+            var convertedHand = HAND_CONVERTER.get(hand);
+            platform.eventManager().post(DefaultInteractNpcEvent.interactNpc(npc, player, convertedHand));
+            yield true;
+          }
+          default -> false;
+        };
+      }
+
+      return false;
+    });
   }
 }

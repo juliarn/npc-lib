@@ -25,12 +25,14 @@
 package com.github.juliarn.npclib.fabric.mixins;
 
 import com.github.juliarn.npclib.fabric.controller.FabricActionControllerEvents;
+import net.minecraft.network.protocol.game.ServerboundInteractPacket;
 import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
 import net.minecraft.network.protocol.game.ServerboundMoveVehiclePacket;
 import net.minecraft.network.protocol.game.ServerboundPlayerCommandPacket;
 import net.minecraft.network.protocol.game.ServerboundSwingPacket;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;
@@ -42,6 +44,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(ServerGamePacketListenerImpl.class)
 public abstract class ServerGamePacketListenerImplMixin {
+
+  @Shadow
+  public ServerPlayer player;
 
   @Shadow
   public abstract ServerPlayer getPlayer();
@@ -130,6 +135,35 @@ public abstract class ServerGamePacketListenerImplMixin {
     if (posTo != null || rotTo != null) {
       var invoker = FabricActionControllerEvents.SERVER_PLAYER_MOVE.invoker();
       invoker.move(player, posTo, rotTo);
+    }
+  }
+
+  @Inject(
+    method = "handleInteract",
+    at = @At(
+      value = "INVOKE",
+      shift = At.Shift.AFTER,
+      target = "Lnet/minecraft/server/level/ServerPlayer;setShiftKeyDown(Z)V"
+    ),
+    cancellable = true
+  )
+  public void npc_lib$handleInteract(ServerboundInteractPacket packet, CallbackInfo ci) {
+    var player = this.getPlayer();
+    var invoker = FabricActionControllerEvents.SERVER_PLAYER_ENTITY_INTERACT.invoker();
+
+    // call the interact event if the action is either interact or attack
+    var action = packet.action;
+    var actionType = action.getType();
+    if (action instanceof ServerboundInteractPacket.InteractionAction interactionAction) {
+      var hand = interactionAction.hand;
+      if (invoker.interact(packet.entityId, player, ServerboundInteractPacket.ActionType.INTERACT, hand)) {
+        ci.cancel();
+      }
+    } else if (actionType == ServerboundInteractPacket.ActionType.ATTACK) {
+      var hand = InteractionHand.MAIN_HAND;
+      if (invoker.interact(packet.entityId, player, ServerboundInteractPacket.ActionType.ATTACK, hand)) {
+        ci.cancel();
+      }
     }
   }
 }

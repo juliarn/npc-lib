@@ -26,6 +26,13 @@ plugins {
   alias(libs.plugins.fabricLoom)
 }
 
+configurations {
+  // custom configuration for later dependency resolution
+  create("runtimeImpl") {
+    configurations.getByName("api").extendsFrom(this)
+  }
+}
+
 dependencies {
   minecraft(libs.minecraft)
   modImplementation(libs.fabricLoader)
@@ -34,10 +41,16 @@ dependencies {
   modImplementation(platform(libs.fabricApiBom))
   modImplementation(libs.fabricApiNetworkingV1)
 
-  api(projects.npcLibApi)
-  api(projects.npcLibCommon)
+  "runtimeImpl"(projects.npcLibApi)
+  "runtimeImpl"(projects.npcLibCommon)
 
   implementation(libs.geantyref)
+}
+
+tasks.withType<Jar> {
+  dependsOn(":npc-lib-api:jar")
+  dependsOn(":npc-lib-common:jar")
+  from(configurations.getByName("runtimeImpl").map { if (it.isDirectory) it else zipTree(it) })
 }
 
 tasks.withType<JavaCompile> {

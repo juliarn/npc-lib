@@ -25,7 +25,9 @@
 package com.github.juliarn.npclib.fabric.mixins;
 
 import com.github.juliarn.npclib.fabric.controller.FabricActionControllerEvents;
+import net.minecraft.network.Connection;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.network.CommonListenerCookie;
 import net.minecraft.server.players.PlayerList;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -39,5 +41,17 @@ public abstract class PlayerListMixin {
   public void npc_lib$remove(ServerPlayer player, CallbackInfo ci) {
     var invoker = FabricActionControllerEvents.SERVER_PLAYER_DISCONNECT.invoker();
     invoker.disconnect(player);
+  }
+
+  @Inject(method = "placeNewPlayer", at = @At("TAIL"))
+  public void npc_lib$placeNewPlayer(
+    Connection connection,
+    ServerPlayer serverPlayer,
+    CommonListenerCookie commonListenerCookie,
+    CallbackInfo ci
+  ) {
+    var newLevel = serverPlayer.serverLevel();
+    var invoker = FabricActionControllerEvents.SERVER_PLAYER_LEVEL_CHANGE.invoker();
+    invoker.levelChange(serverPlayer, null, newLevel);
   }
 }
