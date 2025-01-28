@@ -150,7 +150,6 @@ public final class FabricProtocolAdapter
             // build the component based on the given input
             String rawMessage = component.rawMessage();
             if (rawMessage != null) {
-              // TODO: color codes
               return Component.literal(rawMessage);
             } else {
               var registries = FabricUtil.getServer().registryAccess();
