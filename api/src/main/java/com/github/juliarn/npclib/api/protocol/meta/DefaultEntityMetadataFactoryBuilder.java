@@ -58,6 +58,10 @@ final class DefaultEntityMetadataFactoryBuilder<I, O> implements EntityMetadataF
 
   @Override
   public @NotNull EntityMetadataFactory.Builder<I, O> type(@NotNull Type type) {
+    if (type instanceof Class<?> && (((Class<?>) type).isPrimitive() || type == Void.class)) {
+      throw new IllegalArgumentException("Entity metadata type must not be a primitive or void");
+    }
+
     this.type = Objects.requireNonNull(type, "type");
     return this;
   }
