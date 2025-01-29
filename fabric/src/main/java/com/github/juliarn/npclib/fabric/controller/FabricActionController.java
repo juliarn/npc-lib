@@ -145,9 +145,8 @@ public final class FabricActionController extends CommonNpcActionController {
     @NotNull ServerLevel newLevel
   ) {
     // ensure that we stop tracking the player on NPCs which are not in the same world as the player
-    var levelId = newLevel.dimension().location().toString();
     for (var npc : this.npcTracker.trackedNpcs()) {
-      if (!npc.position().worldId().equals(levelId)) {
+      if (!npc.world().equals(player.serverLevel())) {
         // the player is no longer in the same world, stop tracking
         npc.stopTrackingPlayer(player);
         continue;
@@ -162,11 +161,10 @@ public final class FabricActionController extends CommonNpcActionController {
   }
 
   private void handleToggleSneak(@NotNull ServerPlayer player, boolean sneaking) {
-    var levelId = player.serverLevel().dimension().location().toString();
     for (var npc : this.npcTracker.trackedNpcs()) {
       // check if we should imitate the action
       var distance = FabricUtil.distance(npc, player.position());
-      if (npc.position().worldId().equals(levelId)
+      if (npc.world().equals(player.serverLevel())
         && npc.tracksPlayer(player)
         && distance <= this.imitateDistance
         && npc.flagValueOrDefault(Npc.SNEAK_WHEN_PLAYER_SNEAKS)) {
@@ -179,11 +177,10 @@ public final class FabricActionController extends CommonNpcActionController {
   }
 
   private void handlePlayerHandSwing(@NotNull ServerPlayer player) {
-    var levelId = player.serverLevel().dimension().location().toString();
     for (var npc : this.npcTracker.trackedNpcs()) {
       // check if we should imitate the action
       var distance = FabricUtil.distance(npc, player.position());
-      if (npc.position().worldId().equals(levelId)
+      if (npc.world().equals(player.serverLevel())
         && npc.tracksPlayer(player)
         && distance <= this.imitateDistance
         && npc.flagValueOrDefault(Npc.HIT_WHEN_PLAYER_HITS)) {
