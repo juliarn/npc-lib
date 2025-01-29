@@ -177,7 +177,7 @@ public final class BukkitActionController extends CommonNpcActionController impl
       double distance = BukkitPlatformUtil.distance(npc, player.getLocation());
 
       // check if we should imitate the action
-      if (Objects.equals(player.getWorld(), npc.world())
+      if (npc.world().equals(player.getWorld())
         && npc.tracksPlayer(player)
         && distance <= this.imitateDistance
         && npc.flagValueOrDefault(Npc.SNEAK_WHEN_PLAYER_SNEAKS)) {
@@ -197,7 +197,7 @@ public final class BukkitActionController extends CommonNpcActionController impl
         double distance = BukkitPlatformUtil.distance(npc, player.getLocation());
 
         // check if we should imitate the action
-        if (Objects.equals(player.getWorld(), npc.world())
+        if (npc.world().equals(player.getWorld())
           && npc.tracksPlayer(player)
           && distance <= this.imitateDistance
           && npc.flagValueOrDefault(Npc.HIT_WHEN_PLAYER_HITS)) {
