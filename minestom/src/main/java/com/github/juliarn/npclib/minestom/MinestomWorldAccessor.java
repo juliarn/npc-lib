@@ -43,7 +43,7 @@ public final class MinestomWorldAccessor {
 
     @Override
     public @NotNull String extractWorldIdentifier(@NotNull Instance world) {
-      return world.getUniqueId().toString();
+      return world.getUuid().toString();
     }
 
     @Override

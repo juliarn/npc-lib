@@ -49,6 +49,6 @@ public final class MinestomUtil {
   }
 
   public static @NotNull Position positionFromMinestom(@NotNull Pos pos, @NotNull Instance world) {
-    return Position.position(pos.x(), pos.y(), pos.z(), pos.yaw(), pos.pitch(), world.getUniqueId().toString());
+    return Position.position(pos.x(), pos.y(), pos.z(), pos.yaw(), pos.pitch(), world.getUuid().toString());
   }
 }
