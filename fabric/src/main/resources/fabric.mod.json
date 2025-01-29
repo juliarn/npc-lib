@@ -5,7 +5,7 @@
   "license": "MIT",
   "environment": "server",
   "name": "NPC-Lib",
-  "description": "",
+  "description": "Simple & Extendable NPC library for Minecraft Java Edition Servers",
   "authors": [
     "derklaro"
   ],
