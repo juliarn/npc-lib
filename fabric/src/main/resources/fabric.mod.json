@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "id": "npc_lib",
+  "version": "${version}",
+  "license": "MIT",
+  "environment": "server",
+  "name": "NPC-Lib",
+  "description": "Simple & Extendable NPC library for Minecraft Java Edition Servers",
+  "authors": [
+    "derklaro"
+  ],
+  "contact": {
+    "sources": "https://github.com/juliarn/npc-lib",
+    "issues": "https://github.com/juliarn/npc-lib/issues"
+  },
+  "entrypoints": {
+    "main": [
+      "com.github.juliarn.npclib.fabric.FabricModInitializer"
+    ]
+  },
+  "mixins": [
+    "npc_lib.mixins.json"
+  ],
+  "accessWidener": "npc_lib.accesswidener",
+  "depends": {
+    "fabricloader": ">=0.16.9",
+    "minecraft": "~1.21.4",
+    "java": ">=21",
+    "fabric-networking-api-v1": "*"
+  }
+}

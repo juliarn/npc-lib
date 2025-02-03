@@ -22,31 +22,32 @@
  * THE SOFTWARE.
  */
 
-enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
-enableFeaturePreview("STABLE_CONFIGURATION_CACHE")
+package com.github.juliarn.npclib.fabric;
 
-pluginManagement {
-  repositories {
-    gradlePluginPortal()
-    maven {
-      name = "Fabric"
-      url = uri("https://maven.fabricmc.net/")
-    }
+import com.github.juliarn.npclib.api.PlatformTaskManager;
+import com.github.juliarn.npclib.common.task.AsyncPlatformTaskManager;
+import com.github.juliarn.npclib.fabric.util.FabricUtil;
+import org.jetbrains.annotations.NotNull;
+
+public final class FabricPlatformTaskManager extends AsyncPlatformTaskManager {
+
+  private static final FabricPlatformTaskManager INSTANCE = new FabricPlatformTaskManager();
+
+  private FabricPlatformTaskManager() {
+    super("Fabric");
   }
-}
 
-rootProject.name = "npc-lib"
-include(":api", ":common", ":bukkit", ":minestom", ":fabric", ":ext")
+  public static @NotNull PlatformTaskManager taskManager() {
+    return INSTANCE;
+  }
 
-// external modules
-include(":ext:labymod")
+  @Override
+  public void scheduleSync(@NotNull Runnable task) {
+    FabricUtil.getServer().execute(task);
+  }
 
-// prefix all submodules with the name of the root project
-changeProjectNames(rootProject.name, rootProject)
-
-fun changeProjectNames(prefix: String, parent: ProjectDescriptor) {
-  parent.children.forEach {
-    it.name = "${prefix}-${it.name}"
-    changeProjectNames(prefix, it)
+  @Override
+  public void scheduleDelayedSync(@NotNull Runnable task, int delayTicks) {
+    throw new UnsupportedOperationException("not implemented on fabric platform");
   }
 }

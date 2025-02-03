@@ -22,31 +22,13 @@
  * THE SOFTWARE.
  */
 
-enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
-enableFeaturePreview("STABLE_CONFIGURATION_CACHE")
+package com.github.juliarn.npclib.fabric.protocol;
 
-pluginManagement {
-  repositories {
-    gradlePluginPortal()
-    maven {
-      name = "Fabric"
-      url = uri("https://maven.fabricmc.net/")
-    }
-  }
-}
+import net.minecraft.network.syncher.SynchedEntityData;
+import org.jetbrains.annotations.NotNull;
 
-rootProject.name = "npc-lib"
-include(":api", ":common", ":bukkit", ":minestom", ":fabric", ":ext")
+@FunctionalInterface
+interface EntityDataFactory {
 
-// external modules
-include(":ext:labymod")
-
-// prefix all submodules with the name of the root project
-changeProjectNames(rootProject.name, rootProject)
-
-fun changeProjectNames(prefix: String, parent: ProjectDescriptor) {
-  parent.children.forEach {
-    it.name = "${prefix}-${it.name}"
-    changeProjectNames(prefix, it)
-  }
+  @NotNull SynchedEntityData.DataValue<?> create(int index, @NotNull Object value);
 }

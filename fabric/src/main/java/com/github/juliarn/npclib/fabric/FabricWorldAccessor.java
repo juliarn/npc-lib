@@ -22,31 +22,40 @@
  * THE SOFTWARE.
  */
 
-enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
-enableFeaturePreview("STABLE_CONFIGURATION_CACHE")
+package com.github.juliarn.npclib.fabric;
 
-pluginManagement {
-  repositories {
-    gradlePluginPortal()
-    maven {
-      name = "Fabric"
-      url = uri("https://maven.fabricmc.net/")
-    }
+import com.github.juliarn.npclib.api.PlatformWorldAccessor;
+import com.github.juliarn.npclib.fabric.util.FabricUtil;
+import net.minecraft.server.level.ServerLevel;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+public final class FabricWorldAccessor {
+
+  public static @NotNull PlatformWorldAccessor<ServerLevel> keyBased() {
+    return KeyBasedLevelAccessor.INSTANCE;
   }
-}
 
-rootProject.name = "npc-lib"
-include(":api", ":common", ":bukkit", ":minestom", ":fabric", ":ext")
+  private static final class KeyBasedLevelAccessor implements PlatformWorldAccessor<ServerLevel> {
 
-// external modules
-include(":ext:labymod")
+    private static final KeyBasedLevelAccessor INSTANCE = new KeyBasedLevelAccessor();
 
-// prefix all submodules with the name of the root project
-changeProjectNames(rootProject.name, rootProject)
+    @Override
+    public @NotNull String extractWorldIdentifier(@NotNull ServerLevel world) {
+      return world.dimension().location().toString();
+    }
 
-fun changeProjectNames(prefix: String, parent: ProjectDescriptor) {
-  parent.children.forEach {
-    it.name = "${prefix}-${it.name}"
-    changeProjectNames(prefix, it)
+    @Override
+    public @Nullable ServerLevel resolveWorldFromIdentifier(@NotNull String identifier) {
+      var levels = FabricUtil.getServer().getAllLevels();
+      for (var level : levels) {
+        var levelIdentifier = this.extractWorldIdentifier(level);
+        if (levelIdentifier.equals(identifier)) {
+          return level;
+        }
+      }
+
+      return null;
+    }
   }
 }

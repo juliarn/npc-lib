@@ -15,10 +15,10 @@
 ## Features
 
 - **Bukkit & Forks** (including Folia) supported via **ProtocolLib** or **PacketEvents**
-- **Minestom** supported
+- Full **Minestom** & **Fabric** support (latest version only)
 - **Skin** (Static and Dynamic loading)
 - **Attributes** (Status, Pose, Skin Layers)
-- **Equipment** (Main & Off Hand, Armor)
+- **Equipment** (Main & Off-Hand, Armor)
 - **Interaction** (Interact & Attack)
 - **Action Controller** (Automatic Looking at Player, Player Imitation & Spawning etc.)
 - **LabyMod Extension** (Sending Emotes & Sprays)
@@ -30,13 +30,14 @@ There are some **[images](#images)** down below showcasing the use and features 
 
 All modules are available in [maven central](https://central.sonatype.com/search?q=io.github.juliarn):
 
-| Module artifact name | Module description                                                                                                                                                                    |
-|----------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| npc-lib-api          | General NPC-Lib API without platform specific class usage. This module should be used when the underlying implementation does not matter.                                             |
-| npc-lib-common       | Abstract implementation of the api module. This module should be used when a new platform implementation is made.                                                                     |
-| npc-lib-bukkit       | Platform specific implementation for Bukkit. This module implements the complete API (and common) to support Bukkit (and forks).                                                      |
-| npc-lib-minestom     | Platform specific implementation for Minestom. This module implements the complete API (and common) to support Minestom (and forks).                                                  |
-| npc-lib-labymod      | This module contains helper methods for accessing LabyMod NPC features (such as emotes and stickers). See the [LabyMod documentation](https://dev.labymod.net/) for more information. |
+| Module artifact name | Module description                                                                                                                                                                                    |
+|----------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| npc-lib-api          | General NPC-Lib API without platform specific class usage. This module should be used when the underlying implementation does not matter.                                                             |
+| npc-lib-common       | Abstract implementation of the api module. This module should be used when a new platform implementation is made.                                                                                     |
+| npc-lib-bukkit       | Platform specific implementation for Bukkit. This module implements the complete API (and common) to support Bukkit (and forks).                                                                      |
+| npc-lib-minestom     | Platform specific implementation for Minestom. This module implements the complete API (and common) to support Minestom (and forks).                                                                  |
+| npc-lib-fabric       | Platform specific implementation for Fabric. This module implements the complete API (and common) to support Fabric and [must be installed as a mod](https://modrinth.com/mod/npc-lib) on the server. |
+| npc-lib-labymod      | This module contains helper methods for accessing LabyMod NPC features (such as emotes and stickers). See the [LabyMod documentation](https://dev.labymod.net/) for more information.                 |
 
 ### How to include a module
 
@@ -99,6 +100,12 @@ BukkitPlatform.bukkitNpcPlatformBuilder()
 
 ```java
 MinestomPlatform.minestomNpcPlatformBuilder()
+```
+
+### On Fabric
+
+```java
+FabricPlatform.fabricNpcPlatformBuilder()
 ```
 
 ## Configuring the Platform

@@ -22,31 +22,20 @@
  * THE SOFTWARE.
  */
 
-enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
-enableFeaturePreview("STABLE_CONFIGURATION_CACHE")
+package com.github.juliarn.npclib.fabric.mixins;
 
-pluginManagement {
-  repositories {
-    gradlePluginPortal()
-    maven {
-      name = "Fabric"
-      url = uri("https://maven.fabricmc.net/")
-    }
-  }
-}
+import com.github.juliarn.npclib.fabric.util.FabricUtil;
+import net.minecraft.server.MinecraftServer;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-rootProject.name = "npc-lib"
-include(":api", ":common", ":bukkit", ":minestom", ":fabric", ":ext")
+@Mixin(MinecraftServer.class)
+abstract class MinecraftServerMixin {
 
-// external modules
-include(":ext:labymod")
-
-// prefix all submodules with the name of the root project
-changeProjectNames(rootProject.name, rootProject)
-
-fun changeProjectNames(prefix: String, parent: ProjectDescriptor) {
-  parent.children.forEach {
-    it.name = "${prefix}-${it.name}"
-    changeProjectNames(prefix, it)
+  @Inject(method = "loadLevel", at = @At("HEAD"))
+  public void npc_lib$loadLevel(CallbackInfo ci) {
+    FabricUtil.setServer((MinecraftServer) (Object) this);
   }
 }

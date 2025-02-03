@@ -1,7 +1,7 @@
 /*
  * This file is part of npc-lib, licensed under the MIT License (MIT).
  *
- * Copyright (c) 2022-2023 Julian M., Pasqual K. and contributors
+ * Copyright (c) 2022-2025 Julian M., Pasqual K. and contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,31 +22,49 @@
  * THE SOFTWARE.
  */
 
-enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
-enableFeaturePreview("STABLE_CONFIGURATION_CACHE")
+plugins {
+  alias(libs.plugins.fabricLoom)
+}
 
-pluginManagement {
-  repositories {
-    gradlePluginPortal()
-    maven {
-      name = "Fabric"
-      url = uri("https://maven.fabricmc.net/")
-    }
+configurations {
+  // custom configuration for later dependency resolution
+  create("runtimeImpl") {
+    configurations.getByName("api").extendsFrom(this)
   }
 }
 
-rootProject.name = "npc-lib"
-include(":api", ":common", ":bukkit", ":minestom", ":fabric", ":ext")
+dependencies {
+  minecraft(libs.minecraft)
+  modImplementation(libs.fabricLoader)
+  mappings(loom.officialMojangMappings())
 
-// external modules
-include(":ext:labymod")
+  modImplementation(platform(libs.fabricApiBom))
+  modImplementation(libs.fabricApiNetworkingV1)
 
-// prefix all submodules with the name of the root project
-changeProjectNames(rootProject.name, rootProject)
+  "runtimeImpl"(projects.npcLibApi)
+  "runtimeImpl"(projects.npcLibCommon)
 
-fun changeProjectNames(prefix: String, parent: ProjectDescriptor) {
-  parent.children.forEach {
-    it.name = "${prefix}-${it.name}"
-    changeProjectNames(prefix, it)
+  implementation(libs.geantyref)
+}
+
+tasks.withType<Jar> {
+  dependsOn(":npc-lib-api:jar")
+  dependsOn(":npc-lib-common:jar")
+  from(configurations.getByName("runtimeImpl").map { if (it.isDirectory) it else zipTree(it) })
+}
+
+tasks.withType<JavaCompile> {
+  options.release.set(21)
+}
+
+tasks.withType<ProcessResources> {
+  val props = mapOf("version" to project.version)
+  inputs.properties(props)
+  filesMatching("fabric.mod.json") {
+    expand(props)
   }
+}
+
+loom {
+  accessWidenerPath.set(project.file("src/main/resources/npc_lib.accesswidener"))
 }

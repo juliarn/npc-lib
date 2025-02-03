@@ -22,31 +22,30 @@
  * THE SOFTWARE.
  */
 
-enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
-enableFeaturePreview("STABLE_CONFIGURATION_CACHE")
+package com.github.juliarn.npclib.fabric.mixins;
 
-pluginManagement {
-  repositories {
-    gradlePluginPortal()
-    maven {
-      name = "Fabric"
-      url = uri("https://maven.fabricmc.net/")
+import com.github.juliarn.npclib.fabric.controller.FabricActionControllerEvents;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+@Mixin(ServerPlayer.class)
+public abstract class ServerPlayerMixin {
+
+  @Shadow
+  public abstract ServerLevel serverLevel();
+
+  @Inject(method = "setServerLevel", at = @At("HEAD"))
+  public void npc_lib$setServerLevel(ServerLevel level, CallbackInfo ci) {
+    var currentLevel = this.serverLevel();
+    var player = (ServerPlayer) (Object) this;
+    if (currentLevel != null && player.connection != null) {
+      var eventInvoker = FabricActionControllerEvents.SERVER_PLAYER_LEVEL_CHANGE.invoker();
+      eventInvoker.levelChange(player, currentLevel, level);
     }
-  }
-}
-
-rootProject.name = "npc-lib"
-include(":api", ":common", ":bukkit", ":minestom", ":fabric", ":ext")
-
-// external modules
-include(":ext:labymod")
-
-// prefix all submodules with the name of the root project
-changeProjectNames(rootProject.name, rootProject)
-
-fun changeProjectNames(prefix: String, parent: ProjectDescriptor) {
-  parent.children.forEach {
-    it.name = "${prefix}-${it.name}"
-    changeProjectNames(prefix, it)
   }
 }
