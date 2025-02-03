@@ -25,6 +25,7 @@
 package com.github.juliarn.npclib.api.protocol.meta;
 
 import com.github.juliarn.npclib.api.PlatformVersionAccessor;
+import com.github.juliarn.npclib.api.protocol.enums.EntityPose;
 import com.github.juliarn.npclib.api.protocol.enums.EntityStatus;
 import java.lang.reflect.Type;
 import java.util.Collection;
@@ -48,6 +49,22 @@ public interface EntityMetadataFactory<I, O> {
 
   static @NotNull EntityMetadataFactory<Collection<EntityStatus>, Byte> entityStatusMetaFactory() {
     return DefaultEntityMetadata.ENTITY_STATUS;
+  }
+
+  static @NotNull EntityMetadataFactory<EntityPose, EntityPose> entityPoseMetaFactory() {
+    return DefaultEntityMetadata.ENTITY_POSE;
+  }
+
+  static @NotNull EntityMetadataFactory<Boolean, Integer> shakingMetaFactory() {
+    return DefaultEntityMetadata.SHAKING;
+  }
+
+  static @NotNull EntityMetadataFactory<Boolean, Byte> usingItemMetaFactory() {
+    return DefaultEntityMetadata.USING_ITEM;
+  }
+
+  static @NotNull EntityMetadataFactory<Integer, Integer> arrowCountMetaFactory() {
+    return DefaultEntityMetadata.ARROW_COUNT;
   }
 
   @Unmodifiable

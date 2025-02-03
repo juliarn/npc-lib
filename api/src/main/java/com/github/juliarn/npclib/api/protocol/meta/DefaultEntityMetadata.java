@@ -27,32 +27,19 @@ package com.github.juliarn.npclib.api.protocol.meta;
 import com.github.juliarn.npclib.api.protocol.enums.EntityPose;
 import com.github.juliarn.npclib.api.protocol.enums.EntityStatus;
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.function.Function;
 
 interface DefaultEntityMetadata {
 
-  // https://wiki.vg/Entity_metadata#Entity - see index 0
+  // https://minecraft.wiki/w/Minecraft_Wiki:Projects/wiki.vg_merge/Entity_metadata#Entity - see index 0
   EntityMetadataFactory<Collection<EntityStatus>, Byte> ENTITY_STATUS =
     EntityMetadataFactory.<Collection<EntityStatus>, Byte>metaFactoryBuilder()
       .baseIndex(0)
       .type(Byte.class)
-      .inputConverter(rawEntries -> {
+      .inputConverter(entries -> {
         // if there are no entries the mask is always 0
-        int size = rawEntries.size();
-        if (size == 0) {
+        if (entries.isEmpty()) {
           return (byte) 0;
-        }
-
-        // ensure that there are no duplicates
-        Set<EntityStatus> entries;
-        if (rawEntries instanceof Set<?>) {
-          // already a set - nice
-          entries = (Set<EntityStatus>) rawEntries;
-        } else {
-          // copy over the elements
-          entries = new HashSet<>(size + 1, 1f);
-          entries.addAll(rawEntries);
         }
 
         // calculate the bitmask to send
@@ -64,7 +51,16 @@ interface DefaultEntityMetadata {
         return entryMask;
       }).build();
 
-  // https://wiki.vg/Entity_metadata#Entity - see index 0 and 6
+  // https://minecraft.wiki/w/Minecraft_Wiki:Projects/wiki.vg_merge/Entity_metadata#Entity - see index 6
+  EntityMetadataFactory<EntityPose, EntityPose> ENTITY_POSE =
+    EntityMetadataFactory.<EntityPose, EntityPose>metaFactoryBuilder()
+      .baseIndex(6)
+      .type(EntityPose.class)
+      .inputConverter(Function.identity())
+      .availabilityChecker(versionAccessor -> versionAccessor.atLeast(1, 14, 0))
+      .build();
+
+  // https://minecraft.wiki/w/Minecraft_Wiki:Projects/wiki.vg_merge/Entity_metadata#Entity - see index 0 and 6
   EntityMetadataFactory<Boolean, Byte> SNEAKING = EntityMetadataFactory.<Boolean, Byte>metaFactoryBuilder()
     .baseIndex(0)
     .type(Byte.class)
@@ -77,7 +73,32 @@ interface DefaultEntityMetadata {
       .build())
     .build();
 
-  // https://wiki.vg/Entity_metadata#Player - see index 10
+  // https://minecraft.wiki/w/Minecraft_Wiki:Projects/wiki.vg_merge/Entity_metadata#Entity - see index 7
+  EntityMetadataFactory<Boolean, Integer> SHAKING = EntityMetadataFactory.<Boolean, Integer>metaFactoryBuilder()
+    .baseIndex(7)
+    .type(Integer.class)
+    .inputConverter(value -> value ? 250 : 0)
+    .availabilityChecker(versionAccessor -> versionAccessor.atLeast(1, 17, 0))
+    .build();
+
+  // https://minecraft.wiki/w/Minecraft_Wiki:Projects/wiki.vg_merge/Entity_metadata#Living_Entity - see index 8
+  EntityMetadataFactory<Boolean, Byte> USING_ITEM = EntityMetadataFactory.<Boolean, Byte>metaFactoryBuilder()
+    .baseIndex(5)
+    .type(Byte.class)
+    .indexShiftVersions(10, 14, 17)
+    .inputConverter(value -> (byte) (value ? 0x01 : 0x00))
+    .availabilityChecker(versionAccessor -> versionAccessor.atLeast(1, 9, 0))
+    .build();
+
+  // https://minecraft.wiki/w/Minecraft_Wiki:Projects/wiki.vg_merge/Entity_metadata#Living_Entity - see index 12
+  EntityMetadataFactory<Integer, Integer> ARROW_COUNT = EntityMetadataFactory.<Integer, Integer>metaFactoryBuilder()
+    .baseIndex(9)
+    .type(Integer.class)
+    .indexShiftVersions(10, 14, 17)
+    .inputConverter(value -> Math.max(0, value))
+    .build();
+
+  // https://minecraft.wiki/w/Minecraft_Wiki:Projects/wiki.vg_merge/Entity_metadata#Player - see index 17
   EntityMetadataFactory<Boolean, Byte> SKIN_LAYERS = EntityMetadataFactory.<Boolean, Byte>metaFactoryBuilder()
     .baseIndex(10)
     .type(Byte.class)
