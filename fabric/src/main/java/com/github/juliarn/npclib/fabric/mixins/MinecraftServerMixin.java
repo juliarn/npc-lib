@@ -22,33 +22,20 @@
  * THE SOFTWARE.
  */
 
-package com.github.juliarn.npclib.minestom;
+package com.github.juliarn.npclib.fabric.mixins;
 
-import com.github.juliarn.npclib.api.PlatformWorldAccessor;
-import java.util.UUID;
-import net.minestom.server.MinecraftServer;
-import net.minestom.server.instance.Instance;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.github.juliarn.npclib.fabric.util.FabricUtil;
+import net.minecraft.server.MinecraftServer;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-public final class MinestomWorldAccessor {
+@Mixin(MinecraftServer.class)
+abstract class MinecraftServerMixin {
 
-  public static @NotNull PlatformWorldAccessor<Instance> uuidBased() {
-    return UuidBasedInstanceAccessor.INSTANCE;
-  }
-
-  private static final class UuidBasedInstanceAccessor implements PlatformWorldAccessor<Instance> {
-
-    private static final UuidBasedInstanceAccessor INSTANCE = new UuidBasedInstanceAccessor();
-
-    @Override
-    public @NotNull String extractWorldIdentifier(@NotNull Instance world) {
-      return world.getUuid().toString();
-    }
-
-    @Override
-    public @Nullable Instance resolveWorldFromIdentifier(@NotNull String identifier) {
-      return MinecraftServer.getInstanceManager().getInstance(UUID.fromString(identifier));
-    }
+  @Inject(method = "loadLevel", at = @At("HEAD"))
+  public void npc_lib$loadLevel(CallbackInfo ci) {
+    FabricUtil.setServer((MinecraftServer) (Object) this);
   }
 }

@@ -22,33 +22,13 @@
  * THE SOFTWARE.
  */
 
-package com.github.juliarn.npclib.minestom;
+package com.github.juliarn.npclib.fabric.protocol;
 
-import com.github.juliarn.npclib.api.PlatformWorldAccessor;
-import java.util.UUID;
-import net.minestom.server.MinecraftServer;
-import net.minestom.server.instance.Instance;
+import net.minecraft.network.syncher.SynchedEntityData;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-public final class MinestomWorldAccessor {
+@FunctionalInterface
+interface EntityDataFactory {
 
-  public static @NotNull PlatformWorldAccessor<Instance> uuidBased() {
-    return UuidBasedInstanceAccessor.INSTANCE;
-  }
-
-  private static final class UuidBasedInstanceAccessor implements PlatformWorldAccessor<Instance> {
-
-    private static final UuidBasedInstanceAccessor INSTANCE = new UuidBasedInstanceAccessor();
-
-    @Override
-    public @NotNull String extractWorldIdentifier(@NotNull Instance world) {
-      return world.getUuid().toString();
-    }
-
-    @Override
-    public @Nullable Instance resolveWorldFromIdentifier(@NotNull String identifier) {
-      return MinecraftServer.getInstanceManager().getInstance(UUID.fromString(identifier));
-    }
-  }
+  @NotNull SynchedEntityData.DataValue<?> create(int index, @NotNull Object value);
 }

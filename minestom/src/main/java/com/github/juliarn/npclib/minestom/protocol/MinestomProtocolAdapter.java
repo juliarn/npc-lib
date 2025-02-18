@@ -177,10 +177,10 @@ public final class MinestomProtocolAdapter implements PlatformPacketAdapter<Inst
 
     // init the meta entry factories
     META_ENTRY_FACTORY = new HashMap<>(6);
-    META_ENTRY_FACTORY.put(byte.class, value -> Metadata.Byte((byte) value));
-    META_ENTRY_FACTORY.put(int.class, value -> Metadata.VarInt((int) value));
-    META_ENTRY_FACTORY.put(float.class, value -> Metadata.Float((float) value));
-    META_ENTRY_FACTORY.put(boolean.class, value -> Metadata.Boolean((boolean) value));
+    META_ENTRY_FACTORY.put(Byte.class, value -> Metadata.Byte((byte) value));
+    META_ENTRY_FACTORY.put(Integer.class, value -> Metadata.VarInt((int) value));
+    META_ENTRY_FACTORY.put(Float.class, value -> Metadata.Float((float) value));
+    META_ENTRY_FACTORY.put(Boolean.class, value -> Metadata.Boolean((boolean) value));
     META_ENTRY_FACTORY.put(String.class, value -> Metadata.String((String) value));
     META_ENTRY_FACTORY.put(
       net.minestom.server.entity.EntityPose.class,

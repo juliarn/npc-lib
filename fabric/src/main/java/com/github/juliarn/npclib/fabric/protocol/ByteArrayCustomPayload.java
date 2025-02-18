@@ -22,33 +22,22 @@
  * THE SOFTWARE.
  */
 
-package com.github.juliarn.npclib.minestom;
+package com.github.juliarn.npclib.fabric.protocol;
 
-import com.github.juliarn.npclib.api.PlatformWorldAccessor;
-import java.util.UUID;
-import net.minestom.server.MinecraftServer;
-import net.minestom.server.instance.Instance;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-public final class MinestomWorldAccessor {
+record ByteArrayCustomPayload(
+  @NotNull Type<ByteArrayCustomPayload> type,
+  byte[] payloadContent
+) implements CustomPacketPayload {
 
-  public static @NotNull PlatformWorldAccessor<Instance> uuidBased() {
-    return UuidBasedInstanceAccessor.INSTANCE;
-  }
-
-  private static final class UuidBasedInstanceAccessor implements PlatformWorldAccessor<Instance> {
-
-    private static final UuidBasedInstanceAccessor INSTANCE = new UuidBasedInstanceAccessor();
-
-    @Override
-    public @NotNull String extractWorldIdentifier(@NotNull Instance world) {
-      return world.getUuid().toString();
+  static final StreamCodec<RegistryFriendlyByteBuf, ByteArrayCustomPayload> CODEC = CustomPacketPayload.codec(
+    (payload, buf) -> buf.writeBytes(payload.payloadContent()),
+    buf -> {
+      throw new UnsupportedOperationException("decode not supported");
     }
-
-    @Override
-    public @Nullable Instance resolveWorldFromIdentifier(@NotNull String identifier) {
-      return MinecraftServer.getInstanceManager().getInstance(UUID.fromString(identifier));
-    }
-  }
+  );
 }

@@ -129,7 +129,7 @@ public final class MinestomActionController extends CommonNpcActionController {
       for (Npc<Instance, Player, ItemStack, Object> npc : this.npcTracker.trackedNpcs()) {
         // check if the chunk of the npc is still loaded
         Position pos = npc.position();
-        if (!npc.world().isChunkLoaded(pos.chunkX(), pos.chunkZ())) {
+        if (!npc.world().equals(player.getInstance()) || !npc.world().isChunkLoaded(pos.chunkX(), pos.chunkZ())) {
           // if the player is tracked by the npc, stop that
           npc.stopTrackingPlayer(player);
           continue;
@@ -159,37 +159,36 @@ public final class MinestomActionController extends CommonNpcActionController {
 
   private void handlePlayerInstanceSpawn(@NotNull PlayerSpawnEvent event) {
     // ensure that we stop tracking the player on NPCs which are not in the same world as the player
-    String instanceId = event.getInstance().getUniqueId().toString();
+    Player player = event.getPlayer();
     for (Npc<Instance, Player, ItemStack, Object> npc : this.npcTracker.trackedNpcs()) {
-      if (!npc.position().worldId().equals(instanceId)) {
+      if (!npc.world().equals(player.getInstance())) {
         // the player is no longer in the same world, stop tracking
-        npc.stopTrackingPlayer(event.getPlayer());
+        npc.stopTrackingPlayer(player);
         continue;
       }
 
       // the player is now in the same instance as the npc, check if we should track him
-      double distance = MinestomUtil.distance(npc, event.getPlayer().getPosition());
+      double distance = MinestomUtil.distance(npc, player.getPosition());
       if (this.spawnDistance >= distance) {
-        npc.trackPlayer(event.getPlayer());
+        npc.trackPlayer(player);
       }
     }
   }
 
   private void handleStartSneak(@NotNull PlayerStartSneakingEvent event) {
-    this.handleToggleSneak(event.getPlayer(), event.getInstance(), true);
+    this.handleToggleSneak(event.getPlayer(), true);
   }
 
   private void handleStopSneak(@NotNull PlayerStopSneakingEvent event) {
-    this.handleToggleSneak(event.getPlayer(), event.getInstance(), false);
+    this.handleToggleSneak(event.getPlayer(), false);
   }
 
-  private void handleToggleSneak(@NotNull Player player, @NotNull Instance instance, boolean sneakActive) {
-    String instanceId = instance.getUniqueId().toString();
+  private void handleToggleSneak(@NotNull Player player, boolean sneakActive) {
     for (Npc<Instance, Player, ItemStack, Object> npc : this.npcTracker.trackedNpcs()) {
       double distance = MinestomUtil.distance(npc, player.getPosition());
 
       // check if we should imitate the action
-      if (Objects.equals(instanceId, npc.position().worldId())
+      if (npc.world().equals(player.getInstance())
         && npc.tracksPlayer(player)
         && distance <= this.imitateDistance
         && npc.flagValueOrDefault(Npc.SNEAK_WHEN_PLAYER_SNEAKS)) {
@@ -203,12 +202,11 @@ public final class MinestomActionController extends CommonNpcActionController {
 
   private void handleHandAnimation(@NotNull PlayerHandAnimationEvent event) {
     Player player = event.getPlayer();
-    String instanceId = event.getInstance().getUniqueId().toString();
     for (Npc<Instance, Player, ItemStack, Object> npc : this.npcTracker.trackedNpcs()) {
       double distance = MinestomUtil.distance(npc, player.getPosition());
 
       // check if we should imitate the action
-      if (Objects.equals(instanceId, npc.position().worldId())
+      if (npc.world().equals(player.getInstance())
         && npc.tracksPlayer(player)
         && distance <= this.imitateDistance
         && npc.flagValueOrDefault(Npc.HIT_WHEN_PLAYER_HITS)) {

@@ -22,33 +22,43 @@
  * THE SOFTWARE.
  */
 
-package com.github.juliarn.npclib.minestom;
+package com.github.juliarn.npclib.fabric;
 
-import com.github.juliarn.npclib.api.PlatformWorldAccessor;
-import java.util.UUID;
-import net.minestom.server.MinecraftServer;
-import net.minestom.server.instance.Instance;
+import com.github.juliarn.npclib.api.log.PlatformLogger;
+import com.mojang.logging.LogUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
 
-public final class MinestomWorldAccessor {
+public final class FabricPlatformLogger implements PlatformLogger {
 
-  public static @NotNull PlatformWorldAccessor<Instance> uuidBased() {
-    return UuidBasedInstanceAccessor.INSTANCE;
+  private static final Logger LOGGER = LogUtils.getLogger();
+  private static final FabricPlatformLogger INSTANCE = new FabricPlatformLogger();
+
+  private FabricPlatformLogger() {
   }
 
-  private static final class UuidBasedInstanceAccessor implements PlatformWorldAccessor<Instance> {
+  public static @NotNull PlatformLogger logger() {
+    return INSTANCE;
+  }
 
-    private static final UuidBasedInstanceAccessor INSTANCE = new UuidBasedInstanceAccessor();
+  @Override
+  public void info(@NotNull String message) {
+    LOGGER.info(message);
+  }
 
-    @Override
-    public @NotNull String extractWorldIdentifier(@NotNull Instance world) {
-      return world.getUuid().toString();
-    }
+  @Override
+  public void warning(@NotNull String message) {
+    LOGGER.warn(message);
+  }
 
-    @Override
-    public @Nullable Instance resolveWorldFromIdentifier(@NotNull String identifier) {
-      return MinecraftServer.getInstanceManager().getInstance(UUID.fromString(identifier));
-    }
+  @Override
+  public void error(@NotNull String message) {
+    LOGGER.error(message);
+  }
+
+  @Override
+  public void error(@NotNull String message, @Nullable Throwable exception) {
+    LOGGER.error(message, exception);
   }
 }

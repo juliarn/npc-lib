@@ -22,33 +22,32 @@
  * THE SOFTWARE.
  */
 
-package com.github.juliarn.npclib.minestom;
+package com.github.juliarn.npclib.fabric;
 
-import com.github.juliarn.npclib.api.PlatformWorldAccessor;
-import java.util.UUID;
-import net.minestom.server.MinecraftServer;
-import net.minestom.server.instance.Instance;
+import com.github.juliarn.npclib.api.PlatformTaskManager;
+import com.github.juliarn.npclib.common.task.AsyncPlatformTaskManager;
+import com.github.juliarn.npclib.fabric.util.FabricUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-public final class MinestomWorldAccessor {
+public final class FabricPlatformTaskManager extends AsyncPlatformTaskManager {
 
-  public static @NotNull PlatformWorldAccessor<Instance> uuidBased() {
-    return UuidBasedInstanceAccessor.INSTANCE;
+  private static final FabricPlatformTaskManager INSTANCE = new FabricPlatformTaskManager();
+
+  private FabricPlatformTaskManager() {
+    super("Fabric");
   }
 
-  private static final class UuidBasedInstanceAccessor implements PlatformWorldAccessor<Instance> {
+  public static @NotNull PlatformTaskManager taskManager() {
+    return INSTANCE;
+  }
 
-    private static final UuidBasedInstanceAccessor INSTANCE = new UuidBasedInstanceAccessor();
+  @Override
+  public void scheduleSync(@NotNull Runnable task) {
+    FabricUtil.getServer().execute(task);
+  }
 
-    @Override
-    public @NotNull String extractWorldIdentifier(@NotNull Instance world) {
-      return world.getUuid().toString();
-    }
-
-    @Override
-    public @Nullable Instance resolveWorldFromIdentifier(@NotNull String identifier) {
-      return MinecraftServer.getInstanceManager().getInstance(UUID.fromString(identifier));
-    }
+  @Override
+  public void scheduleDelayedSync(@NotNull Runnable task, int delayTicks) {
+    throw new UnsupportedOperationException("not implemented on fabric platform");
   }
 }

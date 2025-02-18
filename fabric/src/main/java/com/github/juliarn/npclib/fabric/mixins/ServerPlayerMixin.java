@@ -22,33 +22,30 @@
  * THE SOFTWARE.
  */
 
-package com.github.juliarn.npclib.minestom;
+package com.github.juliarn.npclib.fabric.mixins;
 
-import com.github.juliarn.npclib.api.PlatformWorldAccessor;
-import java.util.UUID;
-import net.minestom.server.MinecraftServer;
-import net.minestom.server.instance.Instance;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.github.juliarn.npclib.fabric.controller.FabricActionControllerEvents;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-public final class MinestomWorldAccessor {
+@Mixin(ServerPlayer.class)
+public abstract class ServerPlayerMixin {
 
-  public static @NotNull PlatformWorldAccessor<Instance> uuidBased() {
-    return UuidBasedInstanceAccessor.INSTANCE;
-  }
+  @Shadow
+  public abstract ServerLevel serverLevel();
 
-  private static final class UuidBasedInstanceAccessor implements PlatformWorldAccessor<Instance> {
-
-    private static final UuidBasedInstanceAccessor INSTANCE = new UuidBasedInstanceAccessor();
-
-    @Override
-    public @NotNull String extractWorldIdentifier(@NotNull Instance world) {
-      return world.getUuid().toString();
-    }
-
-    @Override
-    public @Nullable Instance resolveWorldFromIdentifier(@NotNull String identifier) {
-      return MinecraftServer.getInstanceManager().getInstance(UUID.fromString(identifier));
+  @Inject(method = "setServerLevel", at = @At("HEAD"))
+  public void npc_lib$setServerLevel(ServerLevel level, CallbackInfo ci) {
+    var currentLevel = this.serverLevel();
+    var player = (ServerPlayer) (Object) this;
+    if (currentLevel != null && player.connection != null) {
+      var eventInvoker = FabricActionControllerEvents.SERVER_PLAYER_LEVEL_CHANGE.invoker();
+      eventInvoker.levelChange(player, currentLevel, level);
     }
   }
 }

@@ -213,7 +213,9 @@ final class PacketEventsPacketAdapter implements PlatformPacketAdapter<World, Pl
             20,
             GameMode.CREATIVE,
             null,
-            null);
+            null,
+            0,
+            true);
 
           // PlayerInfo (https://wiki.vg/Protocol#Player_Info)
           wrapper = new WrapperPlayServerPlayerInfoUpdate(Lazy.ADD_ACTIONS, Collections.singletonList(playerInfo));
@@ -421,6 +423,7 @@ final class PacketEventsPacketAdapter implements PlatformPacketAdapter<World, Pl
     // static actions we need to send out for all player updates (since 1.19.3)
     private static final EnumSet<WrapperPlayServerPlayerInfoUpdate.Action> ADD_ACTIONS = EnumSet.of(
       WrapperPlayServerPlayerInfoUpdate.Action.ADD_PLAYER,
+      WrapperPlayServerPlayerInfoUpdate.Action.UPDATE_HAT,
       WrapperPlayServerPlayerInfoUpdate.Action.UPDATE_LISTED,
       WrapperPlayServerPlayerInfoUpdate.Action.UPDATE_LATENCY,
       WrapperPlayServerPlayerInfoUpdate.Action.UPDATE_GAME_MODE,

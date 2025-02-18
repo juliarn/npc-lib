@@ -1,7 +1,7 @@
 /*
  * This file is part of npc-lib, licensed under the MIT License (MIT).
  *
- * Copyright (c) 2022-2023 Julian M., Pasqual K. and contributors
+ * Copyright (c) 2022-2025 Julian M., Pasqual K. and contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,33 +22,49 @@
  * THE SOFTWARE.
  */
 
-package com.github.juliarn.npclib.minestom;
+plugins {
+  alias(libs.plugins.fabricLoom)
+}
 
-import com.github.juliarn.npclib.api.PlatformWorldAccessor;
-import java.util.UUID;
-import net.minestom.server.MinecraftServer;
-import net.minestom.server.instance.Instance;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-public final class MinestomWorldAccessor {
-
-  public static @NotNull PlatformWorldAccessor<Instance> uuidBased() {
-    return UuidBasedInstanceAccessor.INSTANCE;
+configurations {
+  // custom configuration for later dependency resolution
+  create("runtimeImpl") {
+    configurations.getByName("api").extendsFrom(this)
   }
+}
 
-  private static final class UuidBasedInstanceAccessor implements PlatformWorldAccessor<Instance> {
+dependencies {
+  minecraft(libs.minecraft)
+  modImplementation(libs.fabricLoader)
+  mappings(loom.officialMojangMappings())
 
-    private static final UuidBasedInstanceAccessor INSTANCE = new UuidBasedInstanceAccessor();
+  modImplementation(platform(libs.fabricApiBom))
+  modImplementation(libs.fabricApiNetworkingV1)
 
-    @Override
-    public @NotNull String extractWorldIdentifier(@NotNull Instance world) {
-      return world.getUuid().toString();
-    }
+  "runtimeImpl"(projects.npcLibApi)
+  "runtimeImpl"(projects.npcLibCommon)
 
-    @Override
-    public @Nullable Instance resolveWorldFromIdentifier(@NotNull String identifier) {
-      return MinecraftServer.getInstanceManager().getInstance(UUID.fromString(identifier));
-    }
+  implementation(libs.geantyref)
+}
+
+tasks.withType<Jar> {
+  dependsOn(":npc-lib-api:jar")
+  dependsOn(":npc-lib-common:jar")
+  from(configurations.getByName("runtimeImpl").map { if (it.isDirectory) it else zipTree(it) })
+}
+
+tasks.withType<JavaCompile> {
+  options.release.set(21)
+}
+
+tasks.withType<ProcessResources> {
+  val props = mapOf("version" to project.version)
+  inputs.properties(props)
+  filesMatching("fabric.mod.json") {
+    expand(props)
   }
+}
+
+loom {
+  accessWidenerPath.set(project.file("src/main/resources/npc_lib.accesswidener"))
 }

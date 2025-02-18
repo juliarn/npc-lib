@@ -22,33 +22,53 @@
  * THE SOFTWARE.
  */
 
-package com.github.juliarn.npclib.minestom.util;
-
-import static net.minestom.server.utils.MathUtils.square;
+package com.github.juliarn.npclib.fabric.util;
 
 import com.github.juliarn.npclib.api.Npc;
 import com.github.juliarn.npclib.api.Position;
-import net.minestom.server.coordinate.Pos;
-import net.minestom.server.instance.Instance;
+import java.util.Objects;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.Mth;
+import net.minecraft.world.phys.Vec2;
+import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-@SuppressWarnings("UnstableApiUsage")
-public final class MinestomUtil {
+@ApiStatus.Internal
+public final class FabricUtil {
 
-  private MinestomUtil() {
+  // @MonotonicNonNull
+  private static MinecraftServer theServer;
+
+  private FabricUtil() {
     throw new UnsupportedOperationException();
   }
 
-  public static double distance(@NotNull Npc<?, ?, ?, ?> npc, @NotNull Pos pos) {
-    Position position = npc.position();
-    return square(pos.x() - position.x()) + square(pos.y() - position.y()) + square(pos.z() - position.z());
+  public static @NotNull MinecraftServer getServer() {
+    Objects.requireNonNull(FabricUtil.theServer, "server not yet set");
+    return FabricUtil.theServer;
   }
 
-  public static @NotNull Pos minestomFromPosition(@NotNull Position position) {
-    return new Pos(position.x(), position.y(), position.z(), position.yaw(), position.pitch());
+  public static void setServer(@NotNull MinecraftServer theServer) {
+    if (FabricUtil.theServer != null) {
+      throw new IllegalStateException("server already set");
+    }
+
+    FabricUtil.theServer = theServer;
   }
 
-  public static @NotNull Position positionFromMinestom(@NotNull Pos pos, @NotNull Instance world) {
-    return Position.position(pos.x(), pos.y(), pos.z(), pos.yaw(), pos.pitch(), world.getUuid().toString());
+  public static double distance(@NotNull Npc<?, ?, ?, ?> npc, @NotNull Vec3 other) {
+    Position pos = npc.position();
+    return Mth.square(other.x() - pos.x()) + Mth.square(other.y() - pos.y()) + Mth.square(other.z() - pos.z());
+  }
+
+  public static @NotNull Position positionFromPosAndRot(
+    @NotNull ServerLevel level,
+    @NotNull Vec3 pos,
+    @NotNull Vec2 rot
+  ) {
+    var worldId = level.dimension().location().toString();
+    return Position.position(pos.x(), pos.y(), pos.z(), rot.x, rot.y, worldId);
   }
 }

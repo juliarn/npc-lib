@@ -25,8 +25,18 @@
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 enableFeaturePreview("STABLE_CONFIGURATION_CACHE")
 
+pluginManagement {
+  repositories {
+    gradlePluginPortal()
+    maven {
+      name = "Fabric"
+      url = uri("https://maven.fabricmc.net/")
+    }
+  }
+}
+
 rootProject.name = "npc-lib"
-include(":api", ":common", ":bukkit", ":minestom", ":ext")
+include(":api", ":common", ":bukkit", ":minestom", ":fabric", ":ext")
 
 // external modules
 include(":ext:labymod")

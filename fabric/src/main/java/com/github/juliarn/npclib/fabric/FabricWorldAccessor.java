@@ -22,33 +22,40 @@
  * THE SOFTWARE.
  */
 
-package com.github.juliarn.npclib.minestom;
+package com.github.juliarn.npclib.fabric;
 
 import com.github.juliarn.npclib.api.PlatformWorldAccessor;
-import java.util.UUID;
-import net.minestom.server.MinecraftServer;
-import net.minestom.server.instance.Instance;
+import com.github.juliarn.npclib.fabric.util.FabricUtil;
+import net.minecraft.server.level.ServerLevel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public final class MinestomWorldAccessor {
+public final class FabricWorldAccessor {
 
-  public static @NotNull PlatformWorldAccessor<Instance> uuidBased() {
-    return UuidBasedInstanceAccessor.INSTANCE;
+  public static @NotNull PlatformWorldAccessor<ServerLevel> keyBased() {
+    return KeyBasedLevelAccessor.INSTANCE;
   }
 
-  private static final class UuidBasedInstanceAccessor implements PlatformWorldAccessor<Instance> {
+  private static final class KeyBasedLevelAccessor implements PlatformWorldAccessor<ServerLevel> {
 
-    private static final UuidBasedInstanceAccessor INSTANCE = new UuidBasedInstanceAccessor();
+    private static final KeyBasedLevelAccessor INSTANCE = new KeyBasedLevelAccessor();
 
     @Override
-    public @NotNull String extractWorldIdentifier(@NotNull Instance world) {
-      return world.getUuid().toString();
+    public @NotNull String extractWorldIdentifier(@NotNull ServerLevel world) {
+      return world.dimension().location().toString();
     }
 
     @Override
-    public @Nullable Instance resolveWorldFromIdentifier(@NotNull String identifier) {
-      return MinecraftServer.getInstanceManager().getInstance(UUID.fromString(identifier));
+    public @Nullable ServerLevel resolveWorldFromIdentifier(@NotNull String identifier) {
+      var levels = FabricUtil.getServer().getAllLevels();
+      for (var level : levels) {
+        var levelIdentifier = this.extractWorldIdentifier(level);
+        if (levelIdentifier.equals(identifier)) {
+          return level;
+        }
+      }
+
+      return null;
     }
   }
 }
