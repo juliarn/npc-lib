@@ -66,7 +66,7 @@ import org.jetbrains.annotations.NotNull;
 public final class BukkitActionController extends CommonNpcActionController implements Listener {
 
   private final NpcTracker<World, Player, ItemStack, Plugin> npcTracker;
-  private final Map<World, Set<String>> loadedChunks = new HashMap<>();
+  private final Map<World, Set<Long>> loadedChunks = new HashMap<>();
   private final Map<UUID, Long> playerCooldowns = new HashMap<>();
   private static final int COOLDOWN_TICKS = 10;
 
@@ -168,8 +168,9 @@ public final class BukkitActionController extends CommonNpcActionController impl
         World npcWorld = npc.world();
 
         // Use cached chunk data to check if the chunk is loaded
-        Set<String> loadedChunksInWorld = loadedChunks.get(npcWorld);
-        if (loadedChunksInWorld == null || !loadedChunksInWorld.contains(chunkKey(pos.chunkX(), pos.chunkZ()))) {
+        Set<Long> loadedChunksInWorld = loadedChunks.get(npcWorld);
+        long chunkKey = Chunk.getChunkKey(pos.chunkX(), pos.chunkZ());
+        if (loadedChunksInWorld == null || !loadedChunksInWorld.contains(chunkKey)) {
           // if the player is tracked by the npc, stop that
           npc.stopTrackingPlayer(player);
           continue;
@@ -205,7 +206,7 @@ public final class BukkitActionController extends CommonNpcActionController impl
     // Add the chunk to the cache
     loadedChunks
       .computeIfAbsent(world, w -> new HashSet<>())
-      .add(chunkKey(chunk.getX(), chunk.getZ()));
+      .add(chunk.getChunkKey());
   }
 
   @EventHandler
@@ -214,9 +215,9 @@ public final class BukkitActionController extends CommonNpcActionController impl
     Chunk chunk = event.getChunk();
 
     // Remove the chunk from the cache
-    Set<String> chunks = loadedChunks.get(world);
+    Set<Long> chunks = loadedChunks.get(world);
     if (chunks != null) {
-      chunks.remove(chunkKey(chunk.getX(), chunk.getZ()));
+      chunks.remove(chunk.getChunkKey());
       if (chunks.isEmpty()) {
         loadedChunks.remove(world); // Clean up if no chunks are left
       }
