@@ -22,32 +22,7 @@
  * THE SOFTWARE.
  */
 
-/*
- * This file is part of npc-lib, licensed under the MIT License (MIT).
- *
- * Copyright (c) 2022-2023 Julian M., Pasqual K. and contributors
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- */
 package com.github.juliarn.npclib.bukkit;
-
-import static com.comphenix.protocol.ProtocolLibrary.getPlugin;
 
 import com.github.juliarn.npclib.api.Npc;
 import com.github.juliarn.npclib.api.NpcActionController;
@@ -57,18 +32,28 @@ import com.github.juliarn.npclib.api.Position;
 import com.github.juliarn.npclib.api.event.ShowNpcEvent;
 import com.github.juliarn.npclib.api.event.manager.NpcEventManager;
 import com.github.juliarn.npclib.api.flag.NpcFlag;
+import com.github.juliarn.npclib.api.protocol.enums.EntityAnimation;
+import com.github.juliarn.npclib.api.protocol.enums.PlayerInfoAction;
 import com.github.juliarn.npclib.api.protocol.meta.EntityMetadataFactory;
+import com.github.juliarn.npclib.bukkit.util.BukkitPlatformUtil;
 import com.github.juliarn.npclib.common.CommonNpcActionController;
 import com.github.juliarn.npclib.common.flag.CommonNpcFlaggedBuilder;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.Action;
+import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerToggleSneakEvent;
@@ -80,127 +65,136 @@ import org.jetbrains.annotations.NotNull;
 
 public final class BukkitActionController extends CommonNpcActionController implements Listener {
 
-  private final Plugin plugin;
   private final NpcTracker<World, Player, ItemStack, Plugin> npcTracker;
-
+  private final Map<World, Set<Long>> loadedChunks = new HashMap<>();
+  private final Map<UUID, Long> playerCooldowns = new HashMap<>();
   private static final int COOLDOWN_TICKS = 10;
-  private static final long COOLDOWN_MILLIS = COOLDOWN_TICKS * 50L;
-  private static final double MOVEMENT_THRESHOLD = 0.5;
+
+  // based on the given flags
   private final int spawnDistance;
+  private final int imitateDistance;
 
   public BukkitActionController(
     @NotNull Map<NpcFlag<?>, Optional<?>> flags,
     @NotNull Plugin plugin,
     @NotNull NpcEventManager eventManager,
     @NotNull PlatformVersionAccessor versionAccessor,
-    @NotNull NpcTracker<World, Player, ItemStack, Plugin> npcTracker) {
+    @NotNull NpcTracker<World, Player, ItemStack, Plugin> tracker
+  ) {
     super(flags);
-    this.plugin = plugin;
-    this.npcTracker = npcTracker;
-    this.eventManager = eventManager;
-    this.versionAccessor = versionAccessor;
-    this.spawnDistance = 50;
-    scheduleCleanup();
+    this.npcTracker = tracker;
+
+    // add all listeners
+    plugin.getServer().getPluginManager().registerEvents(this, plugin);
+
+    // register a listener for the post spawn event if we need to send out an update to remove the spawned player
+    if (!versionAccessor.atLeast(1, 19, 3)) {
+      eventManager.registerEventHandler(ShowNpcEvent.Post.class, event -> {
+        // remove the npc from the tab list after the given amount of time (never smaller than 0 because of validation)
+        int tabRemovalTicks = this.flagValueOrDefault(TAB_REMOVAL_TICKS);
+        plugin.getServer().getScheduler().runTaskLaterAsynchronously(plugin, () -> {
+          // schedule the removal of the player from the tab list, can be done async
+          Player player = event.player();
+          event.npc().platform().packetFactory()
+            .createPlayerInfoPacket(PlayerInfoAction.REMOVE_PLAYER)
+            .schedule(player, event.npc());
+        }, tabRemovalTicks);
+      });
+    }
+
+    // pre-calculate flag values
+    int spawnDistance = this.flagValueOrDefault(SPAWN_DISTANCE);
+    this.spawnDistance = spawnDistance * spawnDistance;
+
+    int imitateDistance = this.flagValueOrDefault(IMITATE_DISTANCE);
+    this.imitateDistance = imitateDistance * imitateDistance;
+
+    // register listener to update the npc rotation after it is tracked
+    if (this.flagValueOrDefault(NpcActionController.AUTO_SYNC_POSITION_ON_SPAWN)) {
+      eventManager.registerEventHandler(ShowNpcEvent.Post.class, event -> {
+        Player player = event.player();
+        Location to = player.getLocation();
+
+        double distance = BukkitPlatformUtil.distance(event.npc(), to);
+        if (distance <= this.imitateDistance && event.npc().flagValueOrDefault(Npc.LOOK_AT_PLAYER)) {
+          event.npc().lookAt(BukkitPlatformUtil.positionFromBukkitLegacy(to)).schedule(player);
+        }
+      });
+    }
   }
 
-  public static @NotNull NpcActionController.Builder actionControllerBuilder(
+  static @NotNull NpcActionController.Builder actionControllerBuilder(
     @NotNull Plugin plugin,
     @NotNull NpcEventManager eventManager,
     @NotNull PlatformVersionAccessor versionAccessor,
-    @NotNull NpcTracker<World, Player, ItemStack, Plugin> npcTracker) {
+    @NotNull NpcTracker<World, Player, ItemStack, Plugin> npcTracker
+  ) {
+    Objects.requireNonNull(plugin, "plugin");
+    Objects.requireNonNull(eventManager, "eventManager");
+    Objects.requireNonNull(npcTracker, "npcTracker");
+    Objects.requireNonNull(versionAccessor, "versionAccessor");
+
     return new BukkitActionControllerBuilder(plugin, eventManager, versionAccessor, npcTracker);
   }
 
-  private void scheduleCleanup() {
-    Bukkit.getScheduler().runTaskTimer(getPlugin(), () -> {
-      long currentTime = System.currentTimeMillis();
-      playerCooldowns.entrySet().removeIf(entry -> currentTime - entry.getValue() > COOLDOWN_MILLIS * 2);
-    }, 6000L, 6000L);
-  }
-
-  private long chunkKey(int x, int z) {
-    return ((long) x << 32) | (z & 0xFFFFFFFFL);
-  }
-
-  @EventHandler
+  @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
   public void handleMove(@NotNull PlayerMoveEvent event) {
+    Location to = event.getTo();
     Location from = event.getFrom();
 
     boolean changedWorld = !Objects.equals(from.getWorld(), to.getWorld());
     boolean changedOrientation = from.getYaw() != to.getYaw() || from.getPitch() != to.getPitch();
     boolean changedPosition = from.getX() != to.getX() || from.getY() != to.getY() || from.getZ() != to.getZ();
+    boolean significantMovement = Math.abs(to.getX() - from.getX()) > 0.5 || Math.abs(to.getY() - from.getY()) > 0.5 || Math.abs(to.getZ() - from.getZ()) > 0.5;
+
+    if (!significantMovement) return;
+
+    Player player = event.getPlayer();
+    UUID playerId = player.getUniqueId();
+    long currentTick = System.currentTimeMillis() / 50; // Convert current time to ticks
+
+    // Cooldown check
+    Long lastProcessedTick = playerCooldowns.get(playerId);
+    if (lastProcessedTick != null && currentTick - lastProcessedTick < COOLDOWN_TICKS) {
+      return; // Skip processing if still within the cooldown period
+    }
+    playerCooldowns.put(playerId, currentTick);
 
     // check if any movement happened (event is also called when standing still)
     if (changedPosition || changedOrientation || changedWorld) {
-      Player player = event.getPlayer();
       for (Npc<World, Player, ItemStack, Plugin> npc : this.npcTracker.trackedNpcs()) {
         // check if the player is still in the same world as the npc
         Position pos = npc.position();
-        if (!npc.world().equals(player.getWorld()) || !npc.world().isChunkLoaded(pos.chunkX(), pos.chunkZ())) {
+        World npcWorld = npc.world();
+
+        // Use cached chunk data to check if the chunk is loaded
+        Set<Long> loadedChunksInWorld = loadedChunks.get(npcWorld);
+        long chunkKey = Chunk.getChunkKey(pos.chunkX(), pos.chunkZ());
+        if (loadedChunksInWorld == null || !loadedChunksInWorld.contains(chunkKey)) {
           // if the player is tracked by the npc, stop that
           npc.stopTrackingPlayer(player);
           continue;
         }
 
-      double distX = playerLoc.getX() - pos.x();
-      double distY = playerLoc.getY() - pos.y();
-      double distZ = playerLoc.getZ() - pos.z();
-      double distanceSquared = distX * distX + distY * distY + distZ * distZ;
-
-      if (npc.trackedPlayers().contains(player)) {
-        if (distanceSquared > spawnDistance * spawnDistance) {
+        // check if the player moved in / out of any npc tracking distance
+        double distance = BukkitPlatformUtil.distance(npc, to);
+        if (distance > this.spawnDistance) {
+          // this will only do something if the player is already tracked by the npc
           npc.stopTrackingPlayer(player);
-        }
-      } else if (distanceSquared <= spawnDistance * spawnDistance) {
-        ShowNpcEvent.Pre showEvent = new ShowNpcEvent.Pre() {
-          private boolean isCancelled = false;
-
-          @Override
-          public boolean cancelled() {
-            return isCancelled;
-          }
-
-          @Override
-          public void cancelled(boolean cancelled) {
-            this.isCancelled = cancelled;
-          }
-
-          @Override
-          @SuppressWarnings("unchecked")
-          public <P> P player() {
-            return (P) player;
-          }
-
-          @Override
-          public Npc<World, Player, ItemStack, Plugin> npc() {
-            return npc;
-          }
-        };
-
-        eventManager.post(showEvent);
-
-        if (!showEvent.cancelled()) {
+          continue;
+        } else {
+          // this will only do something if the player is not already tracked by the npc
           npc.trackPlayer(player);
         }
+
+        // check if we should rotate the npc towards the player
+        if (changedPosition
+          && npc.tracksPlayer(player)
+          && distance <= this.imitateDistance
+          && npc.flagValueOrDefault(Npc.LOOK_AT_PLAYER)) {
+          npc.lookAt(BukkitPlatformUtil.positionFromBukkitLegacy(to)).schedule(player);
+        }
       }
-    }
-  }
-
-  @EventHandler
-  public void onChunkLoad(ChunkLoadEvent event) {
-    World world = event.getWorld();
-    Chunk chunk = event.getChunk();
-    loadedChunks.computeIfAbsent(world, k -> ConcurrentHashMap.newKeySet())
-      .add(chunkKey(chunk.getX(), chunk.getZ()));
-  }
-
-  @EventHandler
-  public void onChunkUnload(ChunkUnloadEvent event) {
-    World world = event.getWorld();
-    Set<Long> chunks = loadedChunks.get(world);
-    if (chunks != null) {
-      chunks.remove(chunkKey(event.getChunk().getX(), event.getChunk().getZ()));
-      if (chunks.isEmpty()) loadedChunks.remove(world);
     }
   }
 
@@ -233,20 +227,47 @@ public final class BukkitActionController extends CommonNpcActionController impl
   @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
   public void handleSneak(@NotNull PlayerToggleSneakEvent event) {
     Player player = event.getPlayer();
-    boolean isSneaking = event.isSneaking();
+    for (Npc<World, Player, ItemStack, Plugin> npc : this.npcTracker.trackedNpcs()) {
+      double distance = BukkitPlatformUtil.distance(npc, player.getLocation());
 
-    npcTracker.trackedNpcs().stream()
-      .filter(npc -> npc.trackedPlayers().contains(player))
-      .forEach(npc -> {
-        npc.changeMetadata(EntityMetadataFactory.sneakingMetaFactory(), isSneaking);
-      });
+      // check if we should imitate the action
+      if (npc.world().equals(player.getWorld())
+        && npc.tracksPlayer(player)
+        && distance <= this.imitateDistance
+        && npc.flagValueOrDefault(Npc.SNEAK_WHEN_PLAYER_SNEAKS)) {
+        // let the npc sneak as well
+        npc.platform().packetFactory()
+          .createEntityMetaPacket(EntityMetadataFactory.sneakingMetaFactory(), event.isSneaking())
+          .schedule(player, npc);
+      }
+    }
+  }
+
+  @EventHandler(priority = EventPriority.MONITOR)
+  public void handleLeftClick(@NotNull PlayerInteractEvent event) {
+    if (event.getAction() == Action.LEFT_CLICK_AIR || event.getAction() == Action.LEFT_CLICK_BLOCK) {
+      Player player = event.getPlayer();
+      for (Npc<World, Player, ItemStack, Plugin> npc : this.npcTracker.trackedNpcs()) {
+        double distance = BukkitPlatformUtil.distance(npc, player.getLocation());
+
+        // check if we should imitate the action
+        if (npc.world().equals(player.getWorld())
+          && npc.tracksPlayer(player)
+          && distance <= this.imitateDistance
+          && npc.flagValueOrDefault(Npc.HIT_WHEN_PLAYER_HITS)) {
+          // let the npc left click as well
+          npc.platform().packetFactory().createAnimationPacket(EntityAnimation.SWING_MAIN_ARM).schedule(player, npc);
+        }
+      }
+    }
   }
 
   @EventHandler(priority = EventPriority.MONITOR)
   public void handleQuit(@NotNull PlayerQuitEvent event) {
-    Player player = event.getPlayer();
-    playerCooldowns.remove(player.getUniqueId());
-    npcTracker.trackedNpcs().forEach(npc -> npc.stopTrackingPlayer(player));
+    for (Npc<World, Player, ItemStack, Plugin> npc : this.npcTracker.trackedNpcs()) {
+      // check if the npc tracks the player which disconnected and stop tracking him if so
+      npc.stopTrackingPlayer(event.getPlayer());
+    }
   }
 
   private String chunkKey(int chunkX, int chunkZ) {
@@ -266,22 +287,18 @@ public final class BukkitActionController extends CommonNpcActionController impl
       @NotNull Plugin plugin,
       @NotNull NpcEventManager eventManager,
       @NotNull PlatformVersionAccessor versionAccessor,
-      @NotNull NpcTracker<World, Player, ItemStack, Plugin> npcTracker) {
-      Objects.requireNonNull(plugin, "plugin");
-      Objects.requireNonNull(eventManager, "eventManager");
-      Objects.requireNonNull(versionAccessor, "versionAccessor");
-      Objects.requireNonNull(npcTracker, "npcTracker");
-
+      @NotNull NpcTracker<World, Player, ItemStack, Plugin> npcTracker
+    ) {
       this.plugin = plugin;
       this.eventManager = eventManager;
-      this.versionAccessor = versionAccessor;
       this.npcTracker = npcTracker;
+      this.versionAccessor = versionAccessor;
     }
 
     @Override
     public @NotNull NpcActionController build() {
       return new BukkitActionController(
-        (Map<NpcFlag<?>, Optional<?>>) this.flags,
+        this.flags,
         this.plugin,
         this.eventManager,
         this.versionAccessor,
