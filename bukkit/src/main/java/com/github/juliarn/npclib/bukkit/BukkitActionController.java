@@ -63,6 +63,11 @@ import com.github.juliarn.npclib.common.flag.CommonNpcFlaggedBuilder;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import org.bukkit.Bukkit;
+import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
@@ -82,6 +87,10 @@ public final class BukkitActionController extends CommonNpcActionController impl
 
   private final Plugin plugin;
   private final NpcTracker<World, Player, ItemStack, Plugin> npcTracker;
+  private final Map<World, Set<Long>> loadedChunks = new ConcurrentHashMap<>();
+  private final Map<UUID, Long> playerCooldowns = new ConcurrentHashMap<>();
+  private final NpcEventManager eventManager;
+  private final PlatformVersionAccessor versionAccessor;
 
   private static final int COOLDOWN_TICKS = 10;
   private static final long COOLDOWN_MILLIS = COOLDOWN_TICKS * 50L;
@@ -103,18 +112,11 @@ public final class BukkitActionController extends CommonNpcActionController impl
     scheduleCleanup();
   }
 
-  public static @NotNull NpcActionController.Builder actionControllerBuilder(
-    @NotNull Plugin plugin,
-    @NotNull NpcEventManager eventManager,
-    @NotNull PlatformVersionAccessor versionAccessor,
-    @NotNull NpcTracker<World, Player, ItemStack, Plugin> npcTracker) {
-    return new BukkitActionControllerBuilder(plugin, eventManager, versionAccessor, npcTracker);
-  }
-
   private void scheduleCleanup() {
-    Bukkit.getScheduler().runTaskTimer(getPlugin(), () -> {
+    Bukkit.getScheduler().runTaskTimer(plugin, () -> {
       long currentTime = System.currentTimeMillis();
-      playerCooldowns.entrySet().removeIf(entry -> currentTime - entry.getValue() > COOLDOWN_MILLIS * 2);
+      playerCooldowns.entrySet().removeIf(entry ->
+        currentTime - entry.getValue() > COOLDOWN_MILLIS * 2);
     }, 6000L, 6000L);
   }
 
@@ -125,22 +127,41 @@ public final class BukkitActionController extends CommonNpcActionController impl
   @EventHandler
   public void handleMove(@NotNull PlayerMoveEvent event) {
     Location from = event.getFrom();
+    Location to = event.getTo();
+    if (to == null) return;
 
-    boolean changedWorld = !Objects.equals(from.getWorld(), to.getWorld());
-    boolean changedOrientation = from.getYaw() != to.getYaw() || from.getPitch() != to.getPitch();
-    boolean changedPosition = from.getX() != to.getX() || from.getY() != to.getY() || from.getZ() != to.getZ();
+    double dx = to.getX() - from.getX();
+    double dy = to.getY() - from.getY();
+    double dz = to.getZ() - from.getZ();
 
-    // check if any movement happened (event is also called when standing still)
-    if (changedPosition || changedOrientation || changedWorld) {
-      Player player = event.getPlayer();
-      for (Npc<World, Player, ItemStack, Plugin> npc : this.npcTracker.trackedNpcs()) {
-        // check if the player is still in the same world as the npc
-        Position pos = npc.position();
-        if (!npc.world().equals(player.getWorld()) || !npc.world().isChunkLoaded(pos.chunkX(), pos.chunkZ())) {
-          // if the player is tracked by the npc, stop that
-          npc.stopTrackingPlayer(player);
-          continue;
-        }
+    if (Math.abs(dx) <= MOVEMENT_THRESHOLD &&
+      Math.abs(dy) <= MOVEMENT_THRESHOLD &&
+      Math.abs(dz) <= MOVEMENT_THRESHOLD) return;
+
+    Player player = event.getPlayer();
+    UUID playerId = player.getUniqueId();
+    long currentTime = System.currentTimeMillis();
+
+    Long lastProcessed = playerCooldowns.get(playerId);
+    if (lastProcessed != null && currentTime - lastProcessed < COOLDOWN_MILLIS) return;
+    playerCooldowns.put(playerId, currentTime);
+
+    World playerWorld = player.getWorld();
+    Location playerLoc = player.getLocation();
+
+    for (Npc<World, Player, ItemStack, Plugin> npc : npcTracker.trackedNpcs()) {
+      World npcWorld = npc.world();
+      if (!npcWorld.equals(playerWorld)) {
+        npc.stopTrackingPlayer(player);
+        continue;
+      }
+
+      Position pos = npc.position();
+      Set<Long> worldChunks = loadedChunks.get(npcWorld);
+      if (worldChunks == null || !worldChunks.contains(chunkKey(pos.chunkX(), pos.chunkZ()))) {
+        npc.stopTrackingPlayer(player);
+        continue;
+      }
 
       double distX = playerLoc.getX() - pos.x();
       double distY = playerLoc.getY() - pos.y();
@@ -200,32 +221,8 @@ public final class BukkitActionController extends CommonNpcActionController impl
     Set<Long> chunks = loadedChunks.get(world);
     if (chunks != null) {
       chunks.remove(chunkKey(event.getChunk().getX(), event.getChunk().getZ()));
-      if (chunks.isEmpty()) loadedChunks.remove(world);
-    }
-  }
-
-  @EventHandler
-  public void onChunkLoad(ChunkLoadEvent event) {
-    World world = event.getWorld();
-    Chunk chunk = event.getChunk();
-
-    // Add the chunk to the cache
-    loadedChunks
-      .computeIfAbsent(world, w -> new HashSet<>())
-      .add(chunk.getChunkKey());
-  }
-
-  @EventHandler
-  public void onChunkUnload(ChunkUnloadEvent event) {
-    World world = event.getWorld();
-    Chunk chunk = event.getChunk();
-
-    // Remove the chunk from the cache
-    Set<Long> chunks = loadedChunks.get(world);
-    if (chunks != null) {
-      chunks.remove(chunk.getChunkKey());
       if (chunks.isEmpty()) {
-        loadedChunks.remove(world); // Clean up if no chunks are left
+        loadedChunks.remove(world);
       }
     }
   }
@@ -249,8 +246,13 @@ public final class BukkitActionController extends CommonNpcActionController impl
     npcTracker.trackedNpcs().forEach(npc -> npc.stopTrackingPlayer(player));
   }
 
-  private String chunkKey(int chunkX, int chunkZ) {
-    return chunkX + "," + chunkZ;
+  // Static factory method for builder
+  public static @NotNull NpcActionController.Builder actionControllerBuilder(
+    @NotNull Plugin plugin,
+    @NotNull NpcEventManager eventManager,
+    @NotNull PlatformVersionAccessor versionAccessor,
+    @NotNull NpcTracker<World, Player, ItemStack, Plugin> npcTracker) {
+    return new BukkitActionControllerBuilder(plugin, eventManager, versionAccessor, npcTracker);
   }
 
   private static final class BukkitActionControllerBuilder
