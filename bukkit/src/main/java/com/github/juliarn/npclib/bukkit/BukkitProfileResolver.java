@@ -29,6 +29,7 @@ import com.github.juliarn.npclib.api.profile.Profile;
 import com.github.juliarn.npclib.api.profile.ProfileProperty;
 import com.github.juliarn.npclib.api.profile.ProfileResolver;
 import io.papermc.lib.PaperLib;
+import java.lang.reflect.Method;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -101,15 +102,44 @@ public final class BukkitProfileResolver {
     }
   }
 
+  @SuppressWarnings("deprecation") // deprecated by paper, but we only use this on spigot
   private static final class SpigotProfileResolver implements ProfileResolver {
 
     private static final ProfileResolver INSTANCE = new SpigotProfileResolver();
 
+    private static final String NIL_NAME = "";
+    private static final UUID NIL_UUID = new UUID(0, 0);
+
+    private final boolean convertNullToNilValues;
+
+    private SpigotProfileResolver() {
+      this.convertNullToNilValues = nullToNilConversationNecessary();
+    }
+
+    private static boolean nullToNilConversationNecessary() {
+      try {
+        org.bukkit.profile.PlayerProfile dummy = Bukkit.createPlayerProfile(UUID.randomUUID(), "dummy");
+        Method ignored = dummy.getClass().getDeclaredMethod("buildResolvableProfile");
+        return true;
+      } catch (NoSuchMethodException exception) {
+        return false;
+      }
+    }
+
     @Override
-    @SuppressWarnings("deprecation") // deprecated by paper, but we only use this on spigot
     public @NotNull CompletableFuture<Profile.Resolved> resolveProfile(@NotNull Profile profile) {
-      // create the profile and fill in the empty values
-      org.bukkit.profile.PlayerProfile playerProfile = Bukkit.createPlayerProfile(profile.uniqueId(), profile.name());
+      org.bukkit.profile.PlayerProfile playerProfile;
+      if (this.convertNullToNilValues) {
+        // need to replace null values with nil values, spigot half-changed
+        // their handling of these values, so null doesn't properly work anymore
+        String profileName = profile.name() != null ? profile.name() : NIL_NAME;
+        UUID profileId = profile.uniqueId() != null ? profile.uniqueId() : NIL_UUID;
+        playerProfile = Bukkit.createPlayerProfile(profileId, profileName);
+      } else {
+        // create a raw profile, everything will be wrapped for us
+        playerProfile = Bukkit.createPlayerProfile(profile.uniqueId(), profile.name());
+      }
+
       return playerProfile.update().thenApplyAsync(resolvedProfile -> {
         // validate that the profile was actually completed
         UUID profileId = resolvedProfile.getUniqueId();
