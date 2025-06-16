@@ -77,8 +77,8 @@ public abstract class ServerGamePacketListenerImplMixin {
       target = "Lnet/minecraft/network/protocol/game/ServerboundMovePlayerPacket;getYRot(F)F"
     ),
     slice = @Slice(
-      from = @At(value = "INVOKE", target = "Lnet/minecraft/server/network/ServerGamePacketListenerImpl;updateAwaitingTeleport()Z"),
-      to = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerPlayer;isPassenger()Z")
+      from = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerPlayer;hasClientLoaded()Z"),
+      to = @At(value = "INVOKE", target = "Lnet/minecraft/server/network/ServerGamePacketListenerImpl;updateAwaitingTeleport()Z")
     )
   )
   public void npc_lib$handleMovePlayer(ServerboundMovePlayerPacket packet, CallbackInfo ci) {
