@@ -33,7 +33,7 @@ plugins {
 defaultTasks("clean", "build")
 
 allprojects {
-  version = "3.0.0-SNAPSHOT"
+  version = "3.0.0-beta13"
   group = "io.github.juliarn"
   description = "Abstract NPC-Library for Minecraft 1.8+ Servers"
 
