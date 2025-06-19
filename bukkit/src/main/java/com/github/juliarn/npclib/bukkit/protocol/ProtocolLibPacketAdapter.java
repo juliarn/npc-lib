@@ -32,9 +32,7 @@ import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.events.PacketEvent;
 import com.comphenix.protocol.utility.MinecraftReflection;
 import com.comphenix.protocol.utility.MinecraftVersion;
-import com.comphenix.protocol.wrappers.CustomPacketPayloadWrapper;
 import com.comphenix.protocol.wrappers.EnumWrappers;
-import com.comphenix.protocol.wrappers.MinecraftKey;
 import com.comphenix.protocol.wrappers.Pair;
 import com.comphenix.protocol.wrappers.PlayerInfoData;
 import com.comphenix.protocol.wrappers.WrappedChatComponent;
@@ -64,8 +62,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import io.leangen.geantyref.GenericTypeReflector;
 import io.leangen.geantyref.TypeFactory;
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.AbstractMap;
@@ -208,6 +204,9 @@ final class ProtocolLibPacketAdapter implements PlatformPacketAdapter<World, Pla
         })
       .build();
   }
+
+  // MonotonicNonNull, lazily initialized
+  private Platform<World, Player, ItemStack, Plugin> platform;
 
   private static @Nullable WrappedWatchableObject createWatchableObject(
     int index,
@@ -494,36 +493,8 @@ final class ProtocolLibPacketAdapter implements PlatformPacketAdapter<World, Pla
     byte[] payload
   ) {
     return (player, npc) -> {
-      // CustomPayload (https://wiki.vg/Protocol#Custom_Payload)
-      PacketContainer container = new PacketContainer(PacketType.Play.Server.CUSTOM_PAYLOAD);
-
-      if (MinecraftVersion.AQUATIC_UPDATE.atOrAbove()) {
-        // mc 1.13: channel id is now in the format of a resource location
-        String[] parts = channelId.split(":", 2);
-        MinecraftKey key = parts.length == 1 ? new MinecraftKey(channelId) : new MinecraftKey(parts[0], parts[1]);
-
-        if (MinecraftVersion.CONFIG_PHASE_PROTOCOL_UPDATE.atOrAbove()) {
-          // mc 1.20.2: custom payload info is in a wrapper object
-          CustomPacketPayloadWrapper payloadWrapper = new CustomPacketPayloadWrapper(payload, key);
-          container.getCustomPacketPayloads().write(0, payloadWrapper);
-        } else {
-          // pre 1.20.2: payload key is a plain field
-          container.getMinecraftKeys().write(0, key);
-        }
-      } else {
-        // mc 1.8: channel id is a string
-        container.getStrings().write(0, channelId);
-      }
-
-      if (!MinecraftVersion.CONFIG_PHASE_PROTOCOL_UPDATE.atOrAbove()) {
-        // pre 1.20.2: payload data is a ByteBuf field
-        ByteBuf buffer = Unpooled.copiedBuffer(payload);
-        Object wrappedSerializableBuffer = MinecraftReflection.getPacketDataSerializer(buffer);
-        container.getModifier().withType(ByteBuf.class).write(0, wrappedSerializableBuffer);
-      }
-
-      // send the packet without notifying any bound packet listeners
-      PROTOCOL_MANAGER.sendServerPacket(player, container, false);
+      Plugin plugin = this.platform.extension();
+      player.sendPluginMessage(plugin, channelId, payload);
     };
   }
 
