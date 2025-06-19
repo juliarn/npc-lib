@@ -28,7 +28,7 @@ import com.github.juliarn.npclib.fabric.controller.FabricActionControllerEvents;
 import net.minecraft.network.protocol.game.ServerboundInteractPacket;
 import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
 import net.minecraft.network.protocol.game.ServerboundMoveVehiclePacket;
-import net.minecraft.network.protocol.game.ServerboundPlayerCommandPacket;
+import net.minecraft.network.protocol.game.ServerboundPlayerInputPacket;
 import net.minecraft.network.protocol.game.ServerboundSwingPacket;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
@@ -46,20 +46,23 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class ServerGamePacketListenerImplMixin {
 
   @Shadow
-  public ServerPlayer player;
-
-  @Shadow
   public abstract ServerPlayer getPlayer();
 
-  @Inject(method = "handlePlayerCommand", at = @At("TAIL"))
-  public void npc_lib$handlePlayerCommand(ServerboundPlayerCommandPacket packet, CallbackInfo ci) {
+  @Inject(
+    method = "handlePlayerInput",
+    at = @At(
+      value = "INVOKE",
+      shift = At.Shift.AFTER,
+      target = "Lnet/minecraft/network/protocol/PacketUtils;ensureRunningOnSameThread(Lnet/minecraft/network/protocol/Packet;Lnet/minecraft/network/PacketListener;Lnet/minecraft/server/level/ServerLevel;)V"
+    )
+  )
+  public void npc_lib$handlePlayerInput(ServerboundPlayerInputPacket packet, CallbackInfo ci) {
     var player = this.getPlayer();
-    var command = packet.getAction();
-    if (command == ServerboundPlayerCommandPacket.Action.PRESS_SHIFT_KEY
-      || command == ServerboundPlayerCommandPacket.Action.RELEASE_SHIFT_KEY) {
+    var sentInput = packet.input();
+    var lastInput = player.getLastClientInput();
+    if (lastInput.shift() != sentInput.shift()) {
       var invoker = FabricActionControllerEvents.SERVER_PLAYER_TOGGLE_SNEAK.invoker();
-      var sprintStarted = command == ServerboundPlayerCommandPacket.Action.PRESS_SHIFT_KEY;
-      invoker.toggleSneak(player, sprintStarted);
+      invoker.toggleSneak(player, sentInput.shift());
     }
   }
 

@@ -77,7 +77,7 @@ public final class FabricActionController extends CommonNpcActionController {
         ServerPlayer player = event.player();
         var pos = player.position();
         var rot = player.getRotationVector();
-        var level = player.serverLevel();
+        var level = player.level();
 
         double distance = FabricUtil.distance(event.npc(), pos);
         if (distance <= this.imitateDistance && event.npc().flagValueOrDefault(Npc.LOOK_AT_PLAYER)) {
@@ -109,7 +109,7 @@ public final class FabricActionController extends CommonNpcActionController {
     for (var npc : this.npcTracker.trackedNpcs()) {
       // check if the player is still in the same world as the npc
       var npcPos = npc.position();
-      var level = player.serverLevel();
+      var level = player.level();
       if (!npc.world().equals(level) || !npc.world().hasChunk(npcPos.chunkX(), npcPos.chunkZ())) {
         // if the player is tracked by the npc, stop that
         npc.stopTrackingPlayer(player);
@@ -146,7 +146,7 @@ public final class FabricActionController extends CommonNpcActionController {
   ) {
     // ensure that we stop tracking the player on NPCs which are not in the same world as the player
     for (var npc : this.npcTracker.trackedNpcs()) {
-      if (!npc.world().equals(player.serverLevel())) {
+      if (!npc.world().equals(player.level())) {
         // the player is no longer in the same world, stop tracking
         npc.stopTrackingPlayer(player);
         continue;
@@ -164,7 +164,7 @@ public final class FabricActionController extends CommonNpcActionController {
     for (var npc : this.npcTracker.trackedNpcs()) {
       // check if we should imitate the action
       var distance = FabricUtil.distance(npc, player.position());
-      if (npc.world().equals(player.serverLevel())
+      if (npc.world().equals(player.level())
         && npc.tracksPlayer(player)
         && distance <= this.imitateDistance
         && npc.flagValueOrDefault(Npc.SNEAK_WHEN_PLAYER_SNEAKS)) {
@@ -180,7 +180,7 @@ public final class FabricActionController extends CommonNpcActionController {
     for (var npc : this.npcTracker.trackedNpcs()) {
       // check if we should imitate the action
       var distance = FabricUtil.distance(npc, player.position());
-      if (npc.world().equals(player.serverLevel())
+      if (npc.world().equals(player.level())
         && npc.tracksPlayer(player)
         && distance <= this.imitateDistance
         && npc.flagValueOrDefault(Npc.HIT_WHEN_PLAYER_HITS)) {

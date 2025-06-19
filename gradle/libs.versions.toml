@@ -13,19 +13,19 @@ netty = "4.1.117.Final"
 
 # platform api versions
 sponge = "10.0.0"
-minestom = "a1d1920a04"
-paper = "1.21.5-R0.1-SNAPSHOT"
+minestom = "e94aaed297"
+paper = "1.21.6-R0.1-SNAPSHOT"
 
 # fabric
-minecraft = "1.21.5"
+minecraft = "1.21.6"
 fabricLoom = "1.10-SNAPSHOT"
 fabricLoader = "0.16.14"
-fabricApi = "0.122.0+1.21.5"
+fabricApi = "0.127.1+1.21.6"
 
 # platform extensions
 paperLib = "1.0.8"
-packetEvents = "2.7.0"
-protocolLib = "2c0d632dc2"
+packetEvents = "2.9.0-SNAPSHOT"
+protocolLib = "9417eee444"
 
 
 [libraries]

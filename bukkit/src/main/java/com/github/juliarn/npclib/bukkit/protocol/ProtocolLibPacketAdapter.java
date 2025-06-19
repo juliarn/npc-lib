@@ -235,14 +235,14 @@ final class ProtocolLibPacketAdapter implements PlatformPacketAdapter<World, Pla
         boolean optional = parameterized.getRawType() == Optional.class;
         if (optional) {
           Type serializerType = parameterized.getActualTypeArguments()[0];
-          Class<?> rawSerializerType = GenericTypeReflector.erase(serializerType);
+          Type rawSerializerType = GenericTypeReflector.erase(serializerType);
 
           WrappedDataWatcher.Serializer serializer = WrappedDataWatcher.Registry.get(rawSerializerType, true);
           return new WrappedWatchableObject(new WrappedDataWatcher.WrappedDataWatcherObject(index, serializer), value);
         }
       }
 
-      Class<?> raw = GenericTypeReflector.erase(type);
+      Type raw = GenericTypeReflector.erase(type);
       WrappedDataWatcher.Serializer serializer = WrappedDataWatcher.Registry.get(raw, false);
       return new WrappedWatchableObject(new WrappedDataWatcher.WrappedDataWatcherObject(index, serializer), value);
     } else {

@@ -31,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
 public final class FabricVersionAccessor {
 
   private static int[] extractServerVersionParts() {
-    String[] parts = SharedConstants.getCurrentVersion().getName().split("\\.");
+    String[] parts = SharedConstants.getCurrentVersion().name().split("\\.");
     if (parts.length == 2 || parts.length == 3) {
       // should be in the correct format, just to make sure
       try {

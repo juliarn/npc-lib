@@ -37,9 +37,11 @@ import com.github.juliarn.npclib.common.event.DefaultAttackNpcEvent;
 import com.github.juliarn.npclib.common.event.DefaultInteractNpcEvent;
 import com.github.juliarn.npclib.fabric.controller.FabricActionControllerEvents;
 import com.github.juliarn.npclib.fabric.util.FabricUtil;
+import com.google.gson.JsonParser;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.properties.Property;
 import com.mojang.datafixers.util.Pair;
+import com.mojang.serialization.JsonOps;
 import io.leangen.geantyref.TypeFactory;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -54,6 +56,7 @@ import java.util.function.UnaryOperator;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.fabricmc.fabric.impl.networking.PayloadTypeRegistryImpl;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.ComponentSerialization;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.network.protocol.game.ClientboundAddEntityPacket;
 import net.minecraft.network.protocol.game.ClientboundAnimatePacket;
@@ -152,8 +155,13 @@ public final class FabricProtocolAdapter
             if (rawMessage != null) {
               return Component.literal(rawMessage);
             } else {
-              var registries = FabricUtil.getServer().registryAccess();
-              return Component.Serializer.fromJson(Objects.requireNonNull(component.encodedJsonMessage()), registries);
+              var encodedJson = Objects.requireNonNull(component.encodedJsonMessage());
+              var encodedJsonTree = JsonParser.parseString(encodedJson);
+              var context = FabricUtil.getServer().registryAccess().createSerializationContext(JsonOps.INSTANCE);
+              return ComponentSerialization.CODEC
+                .decode(context, encodedJsonTree)
+                .getOrThrow(IllegalArgumentException::new)
+                .getFirst();
             }
           });
         }

@@ -37,11 +37,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class ServerPlayerMixin {
 
   @Shadow
-  public abstract ServerLevel serverLevel();
+  public abstract ServerLevel level();
 
   @Inject(method = "setServerLevel", at = @At("HEAD"))
   public void npc_lib$setServerLevel(ServerLevel level, CallbackInfo ci) {
-    var currentLevel = this.serverLevel();
+    var currentLevel = this.level();
     var player = (ServerPlayer) (Object) this;
     if (currentLevel != null && player.connection != null) {
       var eventInvoker = FabricActionControllerEvents.SERVER_PLAYER_LEVEL_CHANGE.invoker();

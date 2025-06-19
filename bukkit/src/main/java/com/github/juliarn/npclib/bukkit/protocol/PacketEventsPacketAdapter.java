@@ -104,6 +104,7 @@ final class PacketEventsPacketAdapter implements PlatformPacketAdapter<World, Pl
 
   static final PacketEventsPacketAdapter INSTANCE = new PacketEventsPacketAdapter();
 
+  @SuppressWarnings("UnstableApiUsage") // fine for now
   private static final PacketEventsSettings PACKET_EVENTS_SETTINGS = new PacketEventsSettings()
     .debug(false)
     .checkForUpdates(false)
@@ -128,7 +129,7 @@ final class PacketEventsPacketAdapter implements PlatformPacketAdapter<World, Pl
     return new Location(pos.x(), pos.y(), pos.z(), yaw, pitch);
   }
 
-  private static @NotNull EntityData createEntityData(
+  private static @NotNull EntityData<Object> createEntityData(
     int index,
     @NotNull Type type,
     @NotNull Object value,
@@ -144,7 +145,9 @@ final class PacketEventsPacketAdapter implements PlatformPacketAdapter<World, Pl
       value = converted.getValue();
     }
 
-    return new EntityData(index, Lazy.ENTITY_DATA_TYPE_LOOKUP.get(type), value);
+    @SuppressWarnings("unchecked") // safe to cast here
+    EntityDataType<Object> entityDataType = (EntityDataType<Object>) Lazy.ENTITY_DATA_TYPE_LOOKUP.get(type);
+    return new EntityData<>(index, entityDataType, value);
   }
 
   @Override
@@ -323,7 +326,7 @@ final class PacketEventsPacketAdapter implements PlatformPacketAdapter<World, Pl
       }
 
       // construct the meta we want to send out
-      List<EntityData> entityData = new ArrayList<>();
+      List<EntityData<?>> entityData = new ArrayList<>();
       entityData.add(createEntityData(
         entityMetadata.index(),
         entityMetadata.type(),
@@ -543,10 +546,11 @@ final class PacketEventsPacketAdapter implements PlatformPacketAdapter<World, Pl
                 OPTIONAL_CHAT_COMPONENT_TYPE,
                 optionalComponent.map(component -> {
                   // build the component based on the given input
+                  AdventureSerializer serializer = AdventureSerializer.serializer();
                   if (component.rawMessage() != null) {
-                    return AdventureSerializer.fromLegacyFormat(component.rawMessage());
+                    return serializer.fromLegacy(component.rawMessage());
                   } else {
-                    return AdventureSerializer.parseComponent(component.encodedJsonMessage());
+                    return serializer.fromJson(component.encodedJsonMessage());
                   }
                 }));
             } else {

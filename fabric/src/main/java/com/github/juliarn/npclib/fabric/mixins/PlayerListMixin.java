@@ -50,7 +50,7 @@ public abstract class PlayerListMixin {
     CommonListenerCookie commonListenerCookie,
     CallbackInfo ci
   ) {
-    var newLevel = serverPlayer.serverLevel();
+    var newLevel = serverPlayer.level();
     var invoker = FabricActionControllerEvents.SERVER_PLAYER_LEVEL_CHANGE.invoker();
     invoker.levelChange(serverPlayer, null, newLevel);
   }
