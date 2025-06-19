@@ -41,6 +41,8 @@ import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.Locale;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -64,7 +66,7 @@ final class MojangProfileResolver implements ProfileResolver {
   private static final Pattern UUID_NO_DASH_PATTERN = Pattern.compile("-", Pattern.LITERAL);
   private static final Pattern UUID_DASHER_PATTERN = Pattern.compile("(\\w{8})(\\w{4})(\\w{4})(\\w{4})(\\w{12})");
 
-  private static final String NAME_TO_UUID_ENDPOINT = "https://api.mojang.com/users/profiles/minecraft/%s";
+  private static final String NAME_TO_UUID_ENDPOINT = "https://api.minecraftservices.com/minecraft/profile/lookup/name/%s";
   private static final String UUID_TO_PROFILE_ENDPOINT = "https://sessionserver.mojang.com/session/minecraft/profile/%s?unsigned=false";
 
   private static @NotNull JsonObject makeRequest(@NotNull String endpoint) throws IOException {
@@ -136,7 +138,8 @@ final class MojangProfileResolver implements ProfileResolver {
       UUID uniqueId = profile.uniqueId();
       if (uniqueId == null) {
         // this will give us either a valid object or throw an exception
-        JsonObject responseData = makeRequest(String.format(NAME_TO_UUID_ENDPOINT, profile.name()));
+        String name = Objects.requireNonNull(profile.name(), "either profile name or uuid must be given");
+        JsonObject responseData = makeRequest(String.format(NAME_TO_UUID_ENDPOINT, name.toLowerCase(Locale.ROOT)));
         String rawUniqueId = responseData.get("id").getAsString();
 
         // insert dashes into the unique id string we get to parse it
