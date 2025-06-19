@@ -31,7 +31,7 @@ import java.util.function.Function;
 
 interface DefaultEntityMetadata {
 
-  // https://minecraft.wiki/w/Minecraft_Wiki:Projects/wiki.vg_merge/Entity_metadata#Entity - see index 0
+  // https://minecraft.wiki/w/Java_Edition_protocol/Entity_metadata#Entity - see index 0
   EntityMetadataFactory<Collection<EntityStatus>, Byte> ENTITY_STATUS =
     EntityMetadataFactory.<Collection<EntityStatus>, Byte>metaFactoryBuilder()
       .baseIndex(0)
@@ -51,7 +51,7 @@ interface DefaultEntityMetadata {
         return entryMask;
       }).build();
 
-  // https://minecraft.wiki/w/Minecraft_Wiki:Projects/wiki.vg_merge/Entity_metadata#Entity - see index 6
+  // https://minecraft.wiki/w/Java_Edition_protocol/Entity_metadata#Entity - see index 6
   EntityMetadataFactory<EntityPose, EntityPose> ENTITY_POSE =
     EntityMetadataFactory.<EntityPose, EntityPose>metaFactoryBuilder()
       .baseIndex(6)
@@ -60,7 +60,7 @@ interface DefaultEntityMetadata {
       .availabilityChecker(versionAccessor -> versionAccessor.atLeast(1, 14, 0))
       .build();
 
-  // https://minecraft.wiki/w/Minecraft_Wiki:Projects/wiki.vg_merge/Entity_metadata#Entity - see index 0 and 6
+  // https://minecraft.wiki/w/Java_Edition_protocol/Entity_metadata#Entity - see index 0 and 6
   EntityMetadataFactory<Boolean, Byte> SNEAKING = EntityMetadataFactory.<Boolean, Byte>metaFactoryBuilder()
     .baseIndex(0)
     .type(Byte.class)
@@ -73,7 +73,7 @@ interface DefaultEntityMetadata {
       .build())
     .build();
 
-  // https://minecraft.wiki/w/Minecraft_Wiki:Projects/wiki.vg_merge/Entity_metadata#Entity - see index 7
+  // https://minecraft.wiki/w/Java_Edition_protocol/Entity_metadata#Entity - see index 7
   EntityMetadataFactory<Boolean, Integer> SHAKING = EntityMetadataFactory.<Boolean, Integer>metaFactoryBuilder()
     .baseIndex(7)
     .type(Integer.class)
@@ -81,7 +81,7 @@ interface DefaultEntityMetadata {
     .availabilityChecker(versionAccessor -> versionAccessor.atLeast(1, 17, 0))
     .build();
 
-  // https://minecraft.wiki/w/Minecraft_Wiki:Projects/wiki.vg_merge/Entity_metadata#Living_Entity - see index 8
+  // https://minecraft.wiki/w/Java_Edition_protocol/Entity_metadata#Living_Entity - see index 8
   EntityMetadataFactory<Boolean, Byte> USING_ITEM = EntityMetadataFactory.<Boolean, Byte>metaFactoryBuilder()
     .baseIndex(5)
     .type(Byte.class)
@@ -90,7 +90,7 @@ interface DefaultEntityMetadata {
     .availabilityChecker(versionAccessor -> versionAccessor.atLeast(1, 9, 0))
     .build();
 
-  // https://minecraft.wiki/w/Minecraft_Wiki:Projects/wiki.vg_merge/Entity_metadata#Living_Entity - see index 12
+  // https://minecraft.wiki/w/Java_Edition_protocol/Entity_metadata#Living_Entity - see index 12
   EntityMetadataFactory<Integer, Integer> ARROW_COUNT = EntityMetadataFactory.<Integer, Integer>metaFactoryBuilder()
     .baseIndex(9)
     .type(Integer.class)
@@ -98,7 +98,7 @@ interface DefaultEntityMetadata {
     .inputConverter(value -> Math.max(0, value))
     .build();
 
-  // https://minecraft.wiki/w/Minecraft_Wiki:Projects/wiki.vg_merge/Entity_metadata#Player - see index 17
+  // https://minecraft.wiki/w/Java_Edition_protocol/Entity_metadata#Player - see index 17
   EntityMetadataFactory<Boolean, Byte> SKIN_LAYERS = EntityMetadataFactory.<Boolean, Byte>metaFactoryBuilder()
     .baseIndex(10)
     .type(Byte.class)
