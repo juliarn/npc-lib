@@ -2,6 +2,7 @@
 
 ![GitHub License](https://img.shields.io/github/license/juliarn/npc-lib?logo=github)
 [![Maven Central Version](https://img.shields.io/maven-central/v/io.github.juliarn/npc-lib-api?logo=apachemaven)](https://central.sonatype.com/search?q=io.github.juliarn)
+[![Modrinth Version](https://img.shields.io/modrinth/v/npc-lib?logo=modrinth&label=modrinth)](https://modrinth.com/mod/npc-lib)
 
 ![GitHub forks](https://img.shields.io/github/forks/juliarn/npc-lib)
 ![GitHub Repo stars](https://img.shields.io/github/stars/juliarn/npc-lib)
@@ -28,7 +29,8 @@ There are some **[images](#images)** down below showcasing the use and features 
 
 ## Installation
 
-All modules are available in [maven central](https://central.sonatype.com/search?q=io.github.juliarn):
+All modules are available in [maven central](https://central.sonatype.com/search?q=io.github.juliarn), a precompiled
+version of the fabric module can be downloaded from [modrinth](https://modrinth.com/mod/npc-lib):
 
 | Module artifact name | Module description                                                                                                                                                                                    |
 |----------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -67,8 +69,6 @@ dependencies coming from the modules:
 - `https://repository.derklaro.dev/releases/` (You can also use `https://jitpack.io` instead, used e.g.
   for [ProtocolLib](https://github.com/dmulloy2/ProtocolLib)).
 - `https://repo.codemc.io/repository/maven-releases/` (For [PacketEvents](https://github.com/retrooper/packetevents))
-- `https://s01.oss.sonatype.org/content/repositories/snapshots/` (For all kinds of snapshot dependencies that don't have
-  a stable release published to maven central yet)
 
 ### Shading
 This library is specifically made in a way that it can be shaded into your plugin jar. Below is a list of packages that
