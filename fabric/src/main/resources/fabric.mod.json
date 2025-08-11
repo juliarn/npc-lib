@@ -13,17 +13,12 @@
     "sources": "https://github.com/juliarn/npc-lib",
     "issues": "https://github.com/juliarn/npc-lib/issues"
   },
-  "entrypoints": {
-    "main": [
-      "com.github.juliarn.npclib.fabric.FabricModInitializer"
-    ]
-  },
   "mixins": [
     "npc_lib.mixins.json"
   ],
   "accessWidener": "npc_lib.accesswidener",
   "depends": {
-    "fabricloader": ">=0.16.14",
+    "fabricloader": ">=0.17.0",
     "minecraft": "~1.21.6",
     "java": ">=21",
     "fabric-networking-api-v1": "*"

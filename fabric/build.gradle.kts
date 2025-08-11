@@ -23,48 +23,50 @@
  */
 
 plugins {
+  alias(libs.plugins.shadow)
   alias(libs.plugins.fabricLoom)
 }
 
 configurations {
-  // custom configuration for later dependency resolution
-  create("runtimeImpl") {
-    configurations.getByName("api").extendsFrom(this)
-  }
+  val shaded = register("shaded")
+  getByName("compileOnly").extendsFrom(shaded.get())
 }
 
 dependencies {
   minecraft(libs.minecraft)
-  modImplementation(libs.fabricLoader)
   mappings(loom.officialMojangMappings())
 
+  modImplementation(libs.geantyref)
+  modImplementation(libs.fabricLoader)
   modImplementation(platform(libs.fabricApiBom))
   modImplementation(libs.fabricApiNetworkingV1)
 
-  "runtimeImpl"(projects.npcLibApi)
-  "runtimeImpl"(projects.npcLibCommon)
-
-  implementation(libs.geantyref)
+  "shaded"(projects.npcLibApi)
+  "shaded"(projects.npcLibCommon)
 }
 
-tasks.withType<Jar> {
-  dependsOn(":npc-lib-api:jar")
-  dependsOn(":npc-lib-common:jar")
-  from(configurations.getByName("runtimeImpl").map { if (it.isDirectory) it else zipTree(it) })
+loom {
+  accessWidenerPath.set(project.file("src/main/resources/npc_lib.accesswidener"))
 }
 
-tasks.withType<JavaCompile> {
-  options.release.set(21)
+tasks.shadowJar {
+  exclude("META-INF/maven/**")
+  configurations = setOf(project.configurations["shaded"])
 }
 
-tasks.withType<ProcessResources> {
+tasks.remapJar {
+  dependsOn(tasks.shadowJar)
+  inputFile = tasks.shadowJar.flatMap { it.archiveFile }
+}
+
+tasks.compileJava {
+  options.release = 21
+}
+
+tasks.processResources {
   val props = mapOf("version" to project.version)
   inputs.properties(props)
   filesMatching("fabric.mod.json") {
     expand(props)
   }
-}
-
-loom {
-  accessWidenerPath.set(project.file("src/main/resources/npc_lib.accesswidener"))
 }

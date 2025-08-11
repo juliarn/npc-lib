@@ -1,9 +1,10 @@
 [versions]
 
 # plugins
-spotless = "7.0.3"
+shadow = "9.0.1"
+spotless = "7.2.1"
 nexusPublish = "2.0.0"
-checkstyleTools = "10.23.1"
+checkstyleTools = "11.0.0"
 
 # general
 gson = "2.13.1"
@@ -13,18 +14,18 @@ netty = "4.1.117.Final"
 
 # platform api versions
 sponge = "10.0.0"
-minestom = "e94aaed297"
-paper = "1.21.6-R0.1-SNAPSHOT"
+minestom = "2025.08.11-1.21.8"
+paper = "1.21.8-R0.1-SNAPSHOT"
 
 # fabric
 minecraft = "1.21.6"
-fabricLoom = "1.10-SNAPSHOT"
+fabricLoom = "1.11.6"
 fabricLoader = "0.16.14"
 fabricApi = "0.127.1+1.21.6"
 
 # platform extensions
 paperLib = "1.0.8"
-packetEvents = "2.9.0-SNAPSHOT"
+packetEvents = "2.9.4"
 protocolLib = "9417eee444"
 
 
@@ -38,8 +39,8 @@ geantyref = { group = "io.leangen.geantyref", name = "geantyref", version.ref = 
 
 # platform api
 paper = { group = "io.papermc.paper", name = "paper-api", version.ref = "paper" }
+minestom = { group = "net.minestom", name = "minestom", version.ref = "minestom" }
 sponge = { group = "org.spongepowered", name = "spongeapi", version.ref = "sponge" }
-minestom = { group = "net.minestom", name = "minestom-snapshots", version.ref = "minestom" }
 
 # fabric
 minecraft = { group = "com.mojang", name = "minecraft", version.ref = "minecraft" }
@@ -57,6 +58,7 @@ checkstyleTools = { group = "com.puppycrawl.tools", name = "checkstyle", version
 
 [plugins]
 
+shadow = { id = "com.gradleup.shadow", version.ref = "shadow" }
 fabricLoom = { id = "fabric-loom", version.ref = "fabricLoom" }
 spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
 nexusPublish = { id = "io.github.gradle-nexus.publish-plugin", version.ref = "nexusPublish" }

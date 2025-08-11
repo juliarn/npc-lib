@@ -90,12 +90,22 @@ subprojects {
   }
 
   tasks.withType<JavaCompile>().configureEach {
-    // options
-    options.release.set(8)
+    options.release = 8
     options.encoding = "UTF-8"
     options.isIncremental = true
-    // we are aware that those are there, but we only do that if there is no other way we can use - so please keep the terminal clean!
-    options.compilerArgs = mutableListOf("-Xlint:-deprecation,-unchecked")
+
+    options.compilerArgs.add("-proc:none")
+    options.compilerArgs.addAll(
+      listOf(
+        "-Xlint:all",         // enable all warnings
+        "-Xlint:-options",    // reduce warning size for the following warning types
+        "-Xlint:-preview",
+        "-Xlint:-unchecked",
+        "-Xlint:-classfile",
+        "-Xlint:-processing",
+        "-Xlint:-deprecation",
+      )
+    )
   }
 
   extensions.configure<JavaPluginExtension> {
