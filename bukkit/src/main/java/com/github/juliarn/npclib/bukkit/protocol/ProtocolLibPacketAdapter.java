@@ -569,6 +569,7 @@ final class ProtocolLibPacketAdapter implements PlatformPacketAdapter<World, Pla
 
   @Override
   public void initialize(@NotNull Platform<World, Player, ItemStack, Plugin> platform) {
+    this.platform = platform;
     PROTOCOL_MANAGER.addPacketListener(new NpcUsePacketAdapter(platform));
   }
 
