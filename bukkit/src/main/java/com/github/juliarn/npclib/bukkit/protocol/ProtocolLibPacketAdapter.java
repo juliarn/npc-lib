@@ -288,17 +288,25 @@ final class ProtocolLibPacketAdapter implements PlatformPacketAdapter<World, Pla
 
       // rotation (angles)
       if (MinecraftVersion.CONFIG_PHASE_PROTOCOL_UPDATE.atOrAbove()) {
+        // mc 1.20.2
         // yaw is byte 1, pitch is byte 0
         container.getBytes()
-          .write(1, (byte) (npc.position().yaw() * 256F / 360F))
           .write(0, (byte) (npc.position().pitch() * 256F / 360F))
+          .write(1, (byte) (npc.position().yaw() * 256F / 360F))
           .write(2, (byte) (npc.position().yaw() * 256F / 360F));
-      } else {
+      } else if (MinecraftVersion.WILD_UPDATE.atOrAbove()) {
+        // mc 1.19
         // yaw is byte 0, pitch is byte 1
         container.getBytes()
           .write(0, (byte) (npc.position().yaw() * 256F / 360F))
           .write(1, (byte) (npc.position().pitch() * 256F / 360F))
           .write(2, (byte) (npc.position().yaw() * 256F / 360F));
+      } else {
+        // mc 1.18
+        // yaw is byte 0, pitch is byte 1
+        container.getBytes()
+          .write(0, (byte) (npc.position().yaw() * 256F / 360F))
+          .write(1, (byte) (npc.position().pitch() * 256F / 360F));
       }
 
       // metadata if on an old server version (< 15)

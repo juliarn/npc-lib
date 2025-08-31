@@ -165,7 +165,7 @@ final class PacketEventsPacketAdapter implements PlatformPacketAdapter<World, Pl
           location.getPosition(),
           location.getPitch(),
           location.getYaw(),
-          0,
+          location.getYaw(),
           0,
           Optional.empty());
       } else {
