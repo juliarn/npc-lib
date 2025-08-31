@@ -239,12 +239,12 @@ public final class FabricProtocolAdapter
         pos.x(),
         pos.y(),
         pos.z(),
-        0F,
-        0F,
+        pos.pitch(),
+        pos.yaw(),
         EntityType.PLAYER,
         0,
         Vec3.ZERO,
-        0F);
+        pos.yaw());
       player.connection.send(packet);
     };
   }

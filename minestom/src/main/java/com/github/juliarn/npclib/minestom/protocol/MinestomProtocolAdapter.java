@@ -226,7 +226,7 @@ public final class MinestomProtocolAdapter implements PlatformPacketAdapter<Inst
         npc.profile().uniqueId(),
         EntityType.PLAYER.id(),
         position,
-        0F,
+        position.yaw(),
         0,
         (short) 0,
         (short) 0,
