@@ -98,6 +98,7 @@ public final class MinestomProtocolAdapter implements PlatformPacketAdapter<Inst
 
   private static final EnumSet<PlayerInfoUpdatePacket.Action> ADD_ACTIONS = EnumSet.of(
     PlayerInfoUpdatePacket.Action.ADD_PLAYER,
+    PlayerInfoUpdatePacket.Action.UPDATE_HAT,
     PlayerInfoUpdatePacket.Action.UPDATE_LISTED,
     PlayerInfoUpdatePacket.Action.UPDATE_LATENCY,
     PlayerInfoUpdatePacket.Action.UPDATE_GAME_MODE,
@@ -277,7 +278,8 @@ public final class MinestomProtocolAdapter implements PlatformPacketAdapter<Inst
           GameMode.CREATIVE,
           null,
           null,
-          0
+          0,
+          true
         )));
       player.sendPacket(updatePacket);
     });

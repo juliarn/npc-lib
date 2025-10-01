@@ -26,6 +26,7 @@ package com.github.juliarn.npclib.fabric.protocol;
 
 import com.github.juliarn.npclib.api.Platform;
 import com.github.juliarn.npclib.api.event.InteractNpcEvent;
+import com.github.juliarn.npclib.api.profile.ProfileProperty;
 import com.github.juliarn.npclib.api.protocol.OutboundPacket;
 import com.github.juliarn.npclib.api.protocol.PlatformPacketAdapter;
 import com.github.juliarn.npclib.api.protocol.enums.EntityAnimation;
@@ -37,9 +38,12 @@ import com.github.juliarn.npclib.common.event.DefaultAttackNpcEvent;
 import com.github.juliarn.npclib.common.event.DefaultInteractNpcEvent;
 import com.github.juliarn.npclib.fabric.controller.FabricActionControllerEvents;
 import com.github.juliarn.npclib.fabric.util.FabricUtil;
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimaps;
 import com.google.gson.JsonParser;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.properties.Property;
+import com.mojang.authlib.properties.PropertyMap;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.JsonOps;
 import io.leangen.geantyref.TypeFactory;
@@ -53,6 +57,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.UnaryOperator;
+import java.util.stream.Collectors;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.fabricmc.fabric.impl.networking.PayloadTypeRegistryImpl;
 import net.minecraft.network.chat.Component;
@@ -266,11 +271,13 @@ public final class FabricProtocolAdapter
         case REMOVE_PLAYER -> new ClientboundPlayerInfoRemovePacket(List.of(npc.profile().uniqueId()));
         case ADD_PLAYER -> {
           var profile = npc.profile();
-          var gameProfile = new GameProfile(profile.uniqueId(), profile.name());
-          for (var property : profile.properties()) {
-            var prop = new Property(property.name(), property.value(), property.signature());
-            gameProfile.getProperties().put(property.name(), prop);
-          }
+          var gameProfileProperties = profile.properties().stream().collect(Collectors.collectingAndThen(
+            Multimaps.toMultimap(
+              ProfileProperty::name,
+              pp -> new Property(pp.name(), pp.value(), pp.signature()),
+              HashMultimap::create),
+            PropertyMap::new));
+          var gameProfile = new GameProfile(profile.uniqueId(), profile.name(), gameProfileProperties);
 
           var updatePacket = new ClientboundPlayerInfoUpdatePacket(ADD_ACTIONS, List.of());
           updatePacket.entries = List.of(new ClientboundPlayerInfoUpdatePacket.Entry(
