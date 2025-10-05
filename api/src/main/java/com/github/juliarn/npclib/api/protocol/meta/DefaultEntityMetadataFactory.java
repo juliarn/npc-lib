@@ -35,7 +35,7 @@ import org.jetbrains.annotations.Unmodifiable;
 final class DefaultEntityMetadataFactory<I, O> implements EntityMetadataFactory<I, O> {
 
   private final int baseIndex;
-  private final int[] indexShitVersions;
+  private final MetadataIndexShiftData[] shiftData;
 
   private final Type type;
   private final Function<I, O> inputConverter;
@@ -45,16 +45,16 @@ final class DefaultEntityMetadataFactory<I, O> implements EntityMetadataFactory<
 
   public DefaultEntityMetadataFactory(
     int baseIndex,
-    int[] indexShitVersions,
     @NotNull Type type,
     @NotNull Function<I, O> inputConverter,
+    @NotNull MetadataIndexShiftData[] shiftData,
     @NotNull Collection<EntityMetadataFactory<I, Object>> relatedMetadata,
     @NotNull Function<PlatformVersionAccessor, Boolean> availabilityChecker
   ) {
     this.baseIndex = baseIndex;
-    this.indexShitVersions = indexShitVersions;
     this.type = type;
     this.inputConverter = inputConverter;
+    this.shiftData = shiftData;
     this.relatedMetadata = Collections.unmodifiableCollection(relatedMetadata);
     this.availabilityChecker = availabilityChecker;
   }
@@ -68,26 +68,22 @@ final class DefaultEntityMetadataFactory<I, O> implements EntityMetadataFactory<
   @Override
   @SuppressWarnings("unchecked")
   public @NotNull EntityMetadata<O> create(@NotNull I input, @NotNull PlatformVersionAccessor versionAccessor) {
-    // check if the meta is available
     if (this.availabilityChecker.apply(versionAccessor)) {
-      // try to convert the given input value
       O value = this.inputConverter.apply(input);
       if (value != null) {
-        // calculate the index & create the meta
         int index = this.baseIndex + this.calcIndexShift(versionAccessor);
         return new AvailableEntityMetadata<>(index, value, this.type);
       }
     }
 
-    // not available
     return (EntityMetadata<O>) UnavailableEntityMetadata.INSTANCE;
   }
 
   private int calcIndexShift(@NotNull PlatformVersionAccessor versionAccessor) {
     int shift = 0;
-    for (int version : this.indexShitVersions) {
-      if (versionAccessor.minor() >= version) {
-        shift++;
+    for (MetadataIndexShiftData shiftData : this.shiftData) {
+      if (shiftData.shouldApply(versionAccessor)) {
+        shift += shiftData.shiftBy();
       }
     }
     return shift;

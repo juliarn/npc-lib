@@ -76,7 +76,7 @@ public interface EntityMetadataFactory<I, O> {
 
     @NotNull Builder<I, O> baseIndex(int index);
 
-    @NotNull Builder<I, O> indexShiftVersions(int... versions);
+    @NotNull Builder<I, O> shiftBaseIndex(int minor, int patch, int by);
 
     @NotNull Builder<I, O> type(@NotNull Type type);
 
