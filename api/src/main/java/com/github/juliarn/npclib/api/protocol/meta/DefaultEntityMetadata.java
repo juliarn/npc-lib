@@ -85,7 +85,9 @@ interface DefaultEntityMetadata {
   EntityMetadataFactory<Boolean, Byte> USING_ITEM = EntityMetadataFactory.<Boolean, Byte>metaFactoryBuilder()
     .baseIndex(5)
     .type(Byte.class)
-    .indexShiftVersions(10, 14, 17)
+    .shiftBaseIndex(10, 0, 1)
+    .shiftBaseIndex(14, 0, 1)
+    .shiftBaseIndex(17, 0, 1)
     .inputConverter(value -> (byte) (value ? 0x01 : 0x00))
     .availabilityChecker(versionAccessor -> versionAccessor.atLeast(1, 9, 0))
     .build();
@@ -94,15 +96,22 @@ interface DefaultEntityMetadata {
   EntityMetadataFactory<Integer, Integer> ARROW_COUNT = EntityMetadataFactory.<Integer, Integer>metaFactoryBuilder()
     .baseIndex(9)
     .type(Integer.class)
-    .indexShiftVersions(10, 14, 17)
+    .shiftBaseIndex(10, 0, 1)
+    .shiftBaseIndex(14, 0, 1)
+    .shiftBaseIndex(17, 0, 1)
     .inputConverter(value -> Math.max(0, value))
     .build();
 
-  // https://minecraft.wiki/w/Java_Edition_protocol/Entity_metadata#Player - see index 17
+  // https://minecraft.wiki/w/Java_Edition_protocol/Entity_metadata#Avatar - see index 16
   EntityMetadataFactory<Boolean, Byte> SKIN_LAYERS = EntityMetadataFactory.<Boolean, Byte>metaFactoryBuilder()
     .baseIndex(10)
     .type(Byte.class)
-    .indexShiftVersions(9, 9, 10, 14, 14, 15, 17)
+    .shiftBaseIndex(9, 0, 2)
+    .shiftBaseIndex(10, 0, 1)
+    .shiftBaseIndex(14, 0, 2)
+    .shiftBaseIndex(15, 0, 1)
+    .shiftBaseIndex(17, 0, 1)
+    .shiftBaseIndex(21, 9, -1)
     .inputConverter(value -> (byte) (value ? 0xff : 0x00))
     .build();
 }

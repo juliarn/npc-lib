@@ -26,9 +26,11 @@ package com.github.juliarn.npclib.api.protocol.meta;
 
 import com.github.juliarn.npclib.api.PlatformVersionAccessor;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 import org.jetbrains.annotations.NotNull;
@@ -36,7 +38,7 @@ import org.jetbrains.annotations.NotNull;
 final class DefaultEntityMetadataFactoryBuilder<I, O> implements EntityMetadataFactory.Builder<I, O> {
 
   private int baseIndex = 0;
-  private int[] indexShitVersions = new int[0];
+  private List<MetadataIndexShiftData> shiftData;
 
   private Type type;
   private Function<I, O> inputConverter;
@@ -51,8 +53,12 @@ final class DefaultEntityMetadataFactoryBuilder<I, O> implements EntityMetadataF
   }
 
   @Override
-  public @NotNull EntityMetadataFactory.Builder<I, O> indexShiftVersions(int... versions) {
-    this.indexShitVersions = versions;
+  public @NotNull EntityMetadataFactory.Builder<I, O> shiftBaseIndex(int minor, int patch, int by) {
+    if (this.shiftData == null) {
+      this.shiftData = new ArrayList<>();
+    }
+
+    this.shiftData.add(new MetadataIndexShiftData(minor, patch, by));
     return this;
   }
 
@@ -103,11 +109,15 @@ final class DefaultEntityMetadataFactoryBuilder<I, O> implements EntityMetadataF
       this.availabilityChecker = accessor -> true;
     }
 
+    if (this.shiftData == null) {
+      this.shiftData = Collections.emptyList();
+    }
+
     return new DefaultEntityMetadataFactory<>(
       this.baseIndex,
-      this.indexShitVersions,
       Objects.requireNonNull(this.type, "type"),
       Objects.requireNonNull(this.inputConverter, "inputConverter"),
+      this.shiftData.toArray(new MetadataIndexShiftData[0]),
       this.relatedMetadata,
       this.availabilityChecker
     );
