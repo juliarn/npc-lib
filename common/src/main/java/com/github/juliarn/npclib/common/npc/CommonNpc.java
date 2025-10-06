@@ -196,7 +196,10 @@ public class CommonNpc<W, P, I, E> extends CommonNpcFlaggedObject implements Npc
 
       // send the player info packet & add packet of the entity into the world after resolving the player profile
       this.settings().profileResolver().resolveNpcProfile(player, this).thenAccept(profile -> {
-        this.platform.packetFactory().createPlayerInfoAddPacket(profile).schedule(player, this);
+        // ensure that we keep the same unique id as the base profile of this npc, it
+        // MUST not be changed by the profile resolver as, e.g., the player info remove depends on it
+        Profile.Resolved npcProfileToSend = profile.withUniqueId(this.profile.uniqueId());
+        this.platform.packetFactory().createPlayerInfoAddPacket(npcProfileToSend).schedule(player, this);
         this.platform.packetFactory().createEntitySpawnPacket().schedule(player, this);
         this.platform.eventManager().post(DefaultShowNpcEvent.post(this, player));
 
