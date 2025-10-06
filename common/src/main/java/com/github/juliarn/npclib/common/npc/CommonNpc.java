@@ -209,7 +209,7 @@ public class CommonNpc<W, P, I, E> extends CommonNpcFlaggedObject implements Npc
           () -> this.platform.packetFactory()
             .createPlayerInfoPacket(PlayerInfoAction.REMOVE_PLAYER)
             .schedule(player, this),
-          50);
+          30);
       }, 10);
     }
 
