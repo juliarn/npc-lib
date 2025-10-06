@@ -35,7 +35,7 @@ defaultTasks("clean", "build")
 allprojects {
   version = "3.0.0-SNAPSHOT"
   group = "io.github.juliarn"
-  description = "Abstract NPC-Library for Minecraft 1.8+ Servers"
+  description = "NPC-Library for Minecraft 1.8+ Servers"
 
   repositories {
     mavenCentral()
@@ -68,7 +68,6 @@ allprojects {
 }
 
 subprojects {
-  // apply all plugins only to subprojects
   apply(plugin = "signing")
   apply(plugin = "checkstyle")
   apply(plugin = "java-library")
@@ -77,11 +76,6 @@ subprojects {
 
   dependencies {
     "compileOnly"(rootProject.libs.annotations)
-  }
-
-  configurations.all {
-    // unsure why but every project loves them, and they literally have an import for every letter I type - beware
-    exclude("org.checkerframework", "checker-qual")
   }
 
   tasks.withType<Jar> {
@@ -109,6 +103,9 @@ subprojects {
   }
 
   extensions.configure<JavaPluginExtension> {
+    withSourcesJar()
+    withJavadocJar()
+
     disableAutoTargetJvm()
     toolchain.languageVersion.set(JavaLanguageVersion.of(21))
   }
@@ -131,37 +128,26 @@ subprojects {
 
   tasks.withType<Javadoc> {
     val options = options as? StandardJavadocDocletOptions ?: return@withType
-
-    // options
     options.encoding = "UTF-8"
     options.memberLevel = JavadocMemberLevel.PRIVATE
     options.addStringOption("-html5")
     options.addBooleanOption("Xdoclint:-missing", true)
   }
 
-  tasks.register<org.gradle.jvm.tasks.Jar>("javadocJar") {
-    archiveClassifier.set("javadoc")
-    from(tasks.getByName("javadoc"))
-  }
-
-  tasks.register<org.gradle.jvm.tasks.Jar>("sourcesJar") {
-    archiveClassifier.set("sources")
-    from(project.the<SourceSetContainer>()["main"].allJava)
-  }
-
   extensions.configure<PublishingExtension> {
+    val projectName = project.name
+    val projectDescription = project.description
+    val projectRepos = project.repositories
+      .filterIsInstance<MavenArtifactRepository>()
+      .filter { it.url.scheme == "https" }
+      .map { Pair(it.name, it.url.toString()) }
+
     publications.apply {
-      create("maven", MavenPublication::class.java).apply {
-        // main output to publish
+      register<MavenPublication>("maven") {
         from(components.getByName("java"))
-
-        // additional artifacts
-        artifact(tasks.getByName("sourcesJar"))
-        artifact(tasks.getByName("javadocJar"))
-
         pom {
-          name.set(project.name)
-          description.set(project.description)
+          name.set(projectName)
+          description.set(projectDescription)
           url.set("https://github.com/juliarn/NPC-Lib")
 
           licenses {
@@ -191,7 +177,7 @@ subprojects {
           developers {
             developer {
               id.set("derklaro")
-              email.set("git@derklaro.dev")
+              email.set("me@derklaro.dev")
               timezone.set("Europe/Berlin")
               name.set("Pasqual Koschmieder")
             }
@@ -199,12 +185,10 @@ subprojects {
 
           withXml {
             val repositories = asNode().appendNode("repositories")
-            project.repositories.forEach {
-              if (it is MavenArtifactRepository && it.url.toString().startsWith("https://")) {
-                val repo = repositories.appendNode("repository")
-                repo.appendNode("id", it.name)
-                repo.appendNode("url", it.url.toString())
-              }
+            projectRepos.forEach {
+              val repo = repositories.appendNode("repository")
+              repo.appendNode("id", it.first)
+              repo.appendNode("url", it.second)
             }
           }
         }
@@ -213,14 +197,19 @@ subprojects {
   }
 
   tasks.withType<Sign> {
+    val projectVersion = rootProject.version.toString()
     onlyIf {
-      !rootProject.version.toString().endsWith("-SNAPSHOT")
+      !projectVersion.endsWith("-SNAPSHOT")
     }
   }
 
   extensions.configure<SigningExtension> {
     useGpgCmd()
     sign(extensions.getByType(PublishingExtension::class.java).publications.getByName("maven"))
+  }
+
+  configurations.all {
+    exclude("org.checkerframework", "checker-qual")
   }
 }
 
