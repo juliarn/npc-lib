@@ -88,7 +88,7 @@ subprojects {
     options.encoding = "UTF-8"
     options.isIncremental = true
 
-    options.compilerArgs.add("-proc:none")
+    options.compilerArgs.add("-proc:full")
     options.compilerArgs.addAll(
       listOf(
         "-Xlint:all",         // enable all warnings
