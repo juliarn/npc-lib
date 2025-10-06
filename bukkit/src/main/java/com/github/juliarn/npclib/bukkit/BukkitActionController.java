@@ -33,7 +33,6 @@ import com.github.juliarn.npclib.api.event.ShowNpcEvent;
 import com.github.juliarn.npclib.api.event.manager.NpcEventManager;
 import com.github.juliarn.npclib.api.flag.NpcFlag;
 import com.github.juliarn.npclib.api.protocol.enums.EntityAnimation;
-import com.github.juliarn.npclib.api.protocol.enums.PlayerInfoAction;
 import com.github.juliarn.npclib.api.protocol.meta.EntityMetadataFactory;
 import com.github.juliarn.npclib.bukkit.util.BukkitPlatformUtil;
 import com.github.juliarn.npclib.common.CommonNpcActionController;
@@ -73,24 +72,7 @@ public final class BukkitActionController extends CommonNpcActionController impl
   ) {
     super(flags);
     this.npcTracker = tracker;
-
-    // add all listeners
     plugin.getServer().getPluginManager().registerEvents(this, plugin);
-
-    // register a listener for the post spawn event if we need to send out an update to remove the spawned player
-    if (!versionAccessor.atLeast(1, 19, 3)) {
-      eventManager.registerEventHandler(ShowNpcEvent.Post.class, event -> {
-        // remove the npc from the tab list after the given amount of time (never smaller than 0 because of validation)
-        int tabRemovalTicks = this.flagValueOrDefault(TAB_REMOVAL_TICKS);
-        plugin.getServer().getScheduler().runTaskLaterAsynchronously(plugin, () -> {
-          // schedule the removal of the player from the tab list, can be done async
-          Player player = event.player();
-          event.npc().platform().packetFactory()
-            .createPlayerInfoPacket(PlayerInfoAction.REMOVE_PLAYER)
-            .schedule(player, event.npc());
-        }, tabRemovalTicks);
-      });
-    }
 
     // pre-calculate flag values
     int spawnDistance = this.flagValueOrDefault(SPAWN_DISTANCE);

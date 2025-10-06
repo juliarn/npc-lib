@@ -201,6 +201,15 @@ public class CommonNpc<W, P, I, E> extends CommonNpcFlaggedObject implements Npc
       this.platform.taskManager().scheduleDelayedAsync(() -> {
         this.platform.packetFactory().createEntitySpawnPacket().schedule(player, this);
         this.platform.eventManager().post(DefaultShowNpcEvent.post(this, player));
+
+        // removes the player info of the spawned npc from the client. this is necessary on
+        //  - legacy versions to remove the player from the tablist
+        //  - modern versions to prevent autocomplete of npc names
+        this.platform.taskManager().scheduleDelayedAsync(
+          () -> this.platform.packetFactory()
+            .createPlayerInfoPacket(PlayerInfoAction.REMOVE_PLAYER)
+            .schedule(player, this),
+          50);
       }, 10);
     }
 
