@@ -55,7 +55,8 @@ final class MojangProfileResolver implements ProfileResolver {
 
   public static final MojangProfileResolver INSTANCE = new MojangProfileResolver();
 
-  private static final int DEFAULT_TIMEOUT = (int) TimeUnit.SECONDS.toMillis(10);
+  private static final int DEFAULT_TIMEOUT = (int) TimeUnit.SECONDS.toMillis(5);
+  private static final int HTTP_TIMEOUT = Integer.getInteger("npc_lib.http.timeout", DEFAULT_TIMEOUT);
 
   private static final Gson GSON = new GsonBuilder()
     .disableHtmlEscaping()
@@ -71,44 +72,16 @@ final class MojangProfileResolver implements ProfileResolver {
 
   private static @NotNull JsonObject makeRequest(@NotNull String endpoint) throws IOException {
     HttpURLConnection connection = createBaseConnection(endpoint);
+    connection.connect();
 
-    // little hack - we cannot just follow redirects as some endpoints (for example CF workers)
-    // are setting a cookie and redirect us, we need to keep that cookie for the next request
-    // so we re-request the site when we were redirected
-    int redirectCount = 0;
-    do {
-      connection.connect();
-
-      // check for a redirect
-      int status = connection.getResponseCode();
-      boolean redirect = status == HttpURLConnection.HTTP_MOVED_TEMP
-        || status == HttpURLConnection.HTTP_MOVED_PERM
-        || status == HttpURLConnection.HTTP_SEE_OTHER;
-
-      if (redirect) {
-        // get the cookies and the target endpoint
-        String cookies = connection.getHeaderField("Set-Cookie");
-        String redirectTarget = connection.getHeaderField("Location");
-
-        // retry the request
-        connection = createBaseConnection(redirectTarget);
-        connection.setRequestProperty("Cookie", cookies);
-      } else {
-        // we are connected successfully
-        if (status == HttpURLConnection.HTTP_OK) {
-          // parse the incoming data
-          try (Reader reader = new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8)) {
-            return GSON.fromJson(reader, JsonElement.class).getAsJsonObject();
-          }
-        } else {
-          // rate limit, invalid name/uuid etc.
-          throw new IllegalArgumentException("Unable to fetch data, server responded with " + status);
-        }
+    int status = connection.getResponseCode();
+    if (status == HttpURLConnection.HTTP_OK) {
+      try (Reader reader = new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8)) {
+        return GSON.fromJson(reader, JsonElement.class).getAsJsonObject();
       }
-    } while (redirectCount++ < 10);
+    }
 
-    // too many redirects
-    throw new IllegalStateException("Endpoint request redirected more than 10 times!");
+    throw new IllegalArgumentException("Unable to fetch data, server responded with " + status);
   }
 
   private static @NotNull HttpURLConnection createBaseConnection(@NotNull String endpoint) throws IOException {
@@ -121,11 +94,12 @@ final class MojangProfileResolver implements ProfileResolver {
     connection.setRequestProperty("User-Agent", "juliarn/npc-lib2");
 
     // ensure that the request will not take forever
-    connection.setReadTimeout(DEFAULT_TIMEOUT);
-    connection.setConnectTimeout(DEFAULT_TIMEOUT);
+    connection.setReadTimeout(HTTP_TIMEOUT);
+    connection.setConnectTimeout(HTTP_TIMEOUT);
 
     // ensure that these are 'true' even if the defaults changed
     connection.setUseCaches(true);
+    connection.setAllowUserInteraction(false);
     connection.setInstanceFollowRedirects(true);
 
     return connection;
@@ -134,7 +108,6 @@ final class MojangProfileResolver implements ProfileResolver {
   @Override
   public @NotNull CompletableFuture<Profile.Resolved> resolveProfile(@NotNull Profile profile) {
     return CompletableFuture.supplyAsync(Util.callableToSupplier(() -> {
-      // check if we need to resolve the uuid of the profile
       UUID uniqueId = profile.uniqueId();
       if (uniqueId == null) {
         // this will give us either a valid object or throw an exception
@@ -176,23 +149,18 @@ final class MojangProfileResolver implements ProfileResolver {
 
     @Override
     public @Nullable ProfileProperty read(@NotNull JsonReader in) throws IOException {
-      // early break if the value is null
       if (in.peek() == JsonToken.NULL) {
         in.nextNull();
         return null;
       }
 
-      // the values we might find
       String name = null;
       String value = null;
       String signature = null;
 
-      // begin the next object and read it until it's over
       in.beginObject();
       while (in.peek() != JsonToken.END_OBJECT) {
         String fieldName = in.nextName();
-
-        // check if we know the field
         switch (fieldName.toLowerCase()) {
           case "name":
             name = in.nextString();
@@ -201,7 +169,6 @@ final class MojangProfileResolver implements ProfileResolver {
             value = in.nextString();
             break;
           case "signature":
-            // normally should not be included, just to be sure
             if (in.peek() == JsonToken.NULL) {
               in.nextNull();
             } else {
@@ -215,10 +182,7 @@ final class MojangProfileResolver implements ProfileResolver {
         }
       }
 
-      // finish reading
       in.endObject();
-
-      // ensure that all values are present to create the property object
       return name != null && value != null ? ProfileProperty.property(name, value, signature) : null;
     }
   }
