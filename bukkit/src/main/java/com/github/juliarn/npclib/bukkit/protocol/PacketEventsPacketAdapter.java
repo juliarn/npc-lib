@@ -29,6 +29,7 @@ import com.github.juliarn.npclib.api.Platform;
 import com.github.juliarn.npclib.api.PlatformVersionAccessor;
 import com.github.juliarn.npclib.api.Position;
 import com.github.juliarn.npclib.api.event.InteractNpcEvent;
+import com.github.juliarn.npclib.api.profile.Profile;
 import com.github.juliarn.npclib.api.profile.ProfileProperty;
 import com.github.juliarn.npclib.api.protocol.OutboundPacket;
 import com.github.juliarn.npclib.api.protocol.PlatformPacketAdapter;
@@ -36,7 +37,6 @@ import com.github.juliarn.npclib.api.protocol.chat.Component;
 import com.github.juliarn.npclib.api.protocol.enums.EntityAnimation;
 import com.github.juliarn.npclib.api.protocol.enums.EntityPose;
 import com.github.juliarn.npclib.api.protocol.enums.ItemSlot;
-import com.github.juliarn.npclib.api.protocol.enums.PlayerInfoAction;
 import com.github.juliarn.npclib.api.protocol.meta.EntityMetadata;
 import com.github.juliarn.npclib.api.protocol.meta.EntityMetadataFactory;
 import com.github.juliarn.npclib.common.event.DefaultAttackNpcEvent;
@@ -92,7 +92,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.function.BiFunction;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
@@ -188,10 +187,31 @@ final class PacketEventsPacketAdapter implements PlatformPacketAdapter<World, Pl
   }
 
   @Override
-  public @NotNull OutboundPacket<World, Player, ItemStack, Plugin> createPlayerInfoPacket(
-    @NotNull PlayerInfoAction action
+  public @NotNull OutboundPacket<World, Player, ItemStack, Plugin> createPlayerInfoRemovePacket() {
+    return (player, npc) -> {
+      PacketWrapper<?> wrapper;
+      if (this.serverVersion.isNewerThanOrEquals(ServerVersion.V_1_19_3)) {
+        // mc 1.19.3: PlayerRemove (https://wiki.vg/Protocol#Player_Remove)
+        wrapper = new WrapperPlayServerPlayerInfoRemove(Collections.singletonList(npc.profile().uniqueId()));
+      } else {
+        // mc 1.8: PlayerInfo (https://wiki.vg/Protocol#Player_Info)
+        Profile npcProfile = npc.profile();
+        UserProfile userProfile = new UserProfile(npcProfile.uniqueId(), npcProfile.name());
+        WrapperPlayServerPlayerInfo.PlayerData playerData =
+          new WrapperPlayServerPlayerInfo.PlayerData(null, userProfile, null, null, 20);
+        wrapper = new WrapperPlayServerPlayerInfo(WrapperPlayServerPlayerInfo.Action.REMOVE_PLAYER, playerData);
+      }
+
+      // send the packet without notifying any listeners
+      this.packetPlayerManager.sendPacketSilently(player, wrapper);
+    };
+  }
+
+  @Override
+  public @NotNull OutboundPacket<World, Player, ItemStack, Plugin> createPlayerInfoAddPacket(
+    @NotNull Profile.Resolved profile
   ) {
-    return (player, npc) -> npc.settings().profileResolver().resolveNpcProfile(player, npc).thenAcceptAsync(profile -> {
+    return (player, npc) -> {
       // convert the profile to a UserProfile
       UserProfile userProfile = new UserProfile(profile.uniqueId(), profile.name());
       for (ProfileProperty property : profile.properties()) {
@@ -199,46 +219,31 @@ final class PacketEventsPacketAdapter implements PlatformPacketAdapter<World, Pl
         userProfile.getTextureProperties().add(textureProperty);
       }
 
-      // the wrapper we want to send
+      // PlayerInfo (https://wiki.vg/Protocol#Player_Info)
       PacketWrapper<?> wrapper;
-
-      // check if we need to apply the old handling or new handling
       if (this.serverVersion.isNewerThanOrEquals(ServerVersion.V_1_19_3)) {
-        if (action == PlayerInfoAction.REMOVE_PLAYER) {
-          // PlayerRemove (https://wiki.vg/Protocol#Player_Remove)
-          List<UUID> uuidsToRemove = Collections.singletonList(profile.uniqueId());
-          wrapper = new WrapperPlayServerPlayerInfoRemove(uuidsToRemove);
-        } else {
-          // create the player
-          WrapperPlayServerPlayerInfoUpdate.PlayerInfo playerInfo = new WrapperPlayServerPlayerInfoUpdate.PlayerInfo(
-            userProfile,
-            false,
-            20,
-            GameMode.CREATIVE,
-            null,
-            null,
-            0,
-            true);
-
-          // PlayerInfo (https://wiki.vg/Protocol#Player_Info)
-          wrapper = new WrapperPlayServerPlayerInfoUpdate(Lazy.ADD_ACTIONS, Collections.singletonList(playerInfo));
-        }
+        WrapperPlayServerPlayerInfoUpdate.PlayerInfo playerInfo = new WrapperPlayServerPlayerInfoUpdate.PlayerInfo(
+          userProfile,
+          false,
+          20,
+          GameMode.CREATIVE,
+          null,
+          null,
+          0,
+          true);
+        wrapper = new WrapperPlayServerPlayerInfoUpdate(Lazy.ADD_ACTIONS, Collections.singletonList(playerInfo));
       } else {
-        // create the player profile data
         WrapperPlayServerPlayerInfo.PlayerData playerData = new WrapperPlayServerPlayerInfo.PlayerData(
           null,
           userProfile,
           GameMode.CREATIVE,
           20);
-
-        // PlayerInfo (https://wiki.vg/Protocol#Player_Info)
-        WrapperPlayServerPlayerInfo.Action playerInfoAction = Lazy.PLAYER_INFO_ACTION_CONVERTER.get(action);
-        wrapper = new WrapperPlayServerPlayerInfo(playerInfoAction, playerData);
+        wrapper = new WrapperPlayServerPlayerInfo(WrapperPlayServerPlayerInfo.Action.ADD_PLAYER, playerData);
       }
 
       // send the packet without notifying any listeners
       this.packetPlayerManager.sendPacketSilently(player, wrapper);
-    });
+    };
   }
 
   @Override
@@ -410,7 +415,6 @@ final class PacketEventsPacketAdapter implements PlatformPacketAdapter<World, Pl
 
     private static final EnumMap<ItemSlot, EquipmentSlot> ITEM_SLOT_CONVERTER;
     private static final EnumMap<InteractionHand, InteractNpcEvent.Hand> HAND_CONVERTER;
-    private static final EnumMap<PlayerInfoAction, WrapperPlayServerPlayerInfo.Action> PLAYER_INFO_ACTION_CONVERTER;
     private static final EnumMap<EntityAnimation, WrapperPlayServerEntityAnimation.EntityAnimationType> ENTITY_ANIMATION_CONVERTER;
     private static final EnumMap<EntityPose, com.github.retrooper.packetevents.protocol.entity.pose.EntityPose> ENTITY_POSE_CONVERTER;
 
@@ -441,12 +445,6 @@ final class PacketEventsPacketAdapter implements PlatformPacketAdapter<World, Pl
       HAND_CONVERTER = new EnumMap<>(InteractionHand.class);
       HAND_CONVERTER.put(InteractionHand.MAIN_HAND, InteractNpcEvent.Hand.MAIN_HAND);
       HAND_CONVERTER.put(InteractionHand.OFF_HAND, InteractNpcEvent.Hand.OFF_HAND);
-
-      // associate player info actions with their respective packet events enum
-      PLAYER_INFO_ACTION_CONVERTER = new EnumMap<>(PlayerInfoAction.class);
-      PLAYER_INFO_ACTION_CONVERTER.put(PlayerInfoAction.ADD_PLAYER, WrapperPlayServerPlayerInfo.Action.ADD_PLAYER);
-      PLAYER_INFO_ACTION_CONVERTER.put(PlayerInfoAction.REMOVE_PLAYER,
-        WrapperPlayServerPlayerInfo.Action.REMOVE_PLAYER);
 
       // associate entity animations with their respective packet events enum
       ENTITY_ANIMATION_CONVERTER = new EnumMap<>(EntityAnimation.class);

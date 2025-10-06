@@ -25,9 +25,9 @@
 package com.github.juliarn.npclib.api.protocol;
 
 import com.github.juliarn.npclib.api.Platform;
+import com.github.juliarn.npclib.api.profile.Profile;
 import com.github.juliarn.npclib.api.protocol.enums.EntityAnimation;
 import com.github.juliarn.npclib.api.protocol.enums.ItemSlot;
-import com.github.juliarn.npclib.api.protocol.enums.PlayerInfoAction;
 import com.github.juliarn.npclib.api.protocol.meta.EntityMetadataFactory;
 import org.jetbrains.annotations.NotNull;
 
@@ -37,7 +37,9 @@ public interface PlatformPacketAdapter<W, P, I, E> {
 
   @NotNull OutboundPacket<W, P, I, E> createEntityRemovePacket();
 
-  @NotNull OutboundPacket<W, P, I, E> createPlayerInfoPacket(@NotNull PlayerInfoAction action);
+  @NotNull OutboundPacket<W, P, I, E> createPlayerInfoRemovePacket();
+
+  @NotNull OutboundPacket<W, P, I, E> createPlayerInfoAddPacket(@NotNull Profile.Resolved profile);
 
   @NotNull OutboundPacket<W, P, I, E> createRotationPacket(float yaw, float pitch);
 

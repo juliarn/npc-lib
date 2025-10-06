@@ -28,6 +28,7 @@ import com.github.juliarn.npclib.api.Npc;
 import com.github.juliarn.npclib.api.Platform;
 import com.github.juliarn.npclib.api.PlatformVersionAccessor;
 import com.github.juliarn.npclib.api.event.InteractNpcEvent;
+import com.github.juliarn.npclib.api.profile.Profile;
 import com.github.juliarn.npclib.api.profile.ProfileProperty;
 import com.github.juliarn.npclib.api.protocol.OutboundPacket;
 import com.github.juliarn.npclib.api.protocol.PlatformPacketAdapter;
@@ -35,7 +36,6 @@ import com.github.juliarn.npclib.api.protocol.chat.Component;
 import com.github.juliarn.npclib.api.protocol.enums.EntityAnimation;
 import com.github.juliarn.npclib.api.protocol.enums.EntityPose;
 import com.github.juliarn.npclib.api.protocol.enums.ItemSlot;
-import com.github.juliarn.npclib.api.protocol.enums.PlayerInfoAction;
 import com.github.juliarn.npclib.api.protocol.meta.EntityMetadata;
 import com.github.juliarn.npclib.api.protocol.meta.EntityMetadataFactory;
 import com.github.juliarn.npclib.common.event.DefaultAttackNpcEvent;
@@ -245,18 +245,18 @@ public final class MinestomProtocolAdapter implements PlatformPacketAdapter<Inst
   }
 
   @Override
-  public @NotNull OutboundPacket<Instance, Player, ItemStack, Object> createPlayerInfoPacket(
-    @NotNull PlayerInfoAction action
-  ) {
-    return (player, npc) -> npc.settings().profileResolver().resolveNpcProfile(player, npc).thenAcceptAsync(profile -> {
-      if (action == PlayerInfoAction.REMOVE_PLAYER) {
-        // just remove the player from the tablist
-        PlayerInfoRemovePacket removePacket = new PlayerInfoRemovePacket(profile.uniqueId());
-        player.sendPacket(removePacket);
-        return;
-      }
+  public @NotNull OutboundPacket<Instance, Player, ItemStack, Object> createPlayerInfoRemovePacket() {
+    return (player, npc) -> {
+      PlayerInfoRemovePacket removePacket = new PlayerInfoRemovePacket(npc.profile().uniqueId());
+      player.sendPacket(removePacket);
+    };
+  }
 
-      // convert the profile properties
+  @Override
+  public @NotNull OutboundPacket<Instance, Player, ItemStack, Object> createPlayerInfoAddPacket(
+    @NotNull Profile.Resolved profile
+  ) {
+    return (player, npc) -> {
       List<PlayerInfoUpdatePacket.Property> properties = new ArrayList<>();
       for (ProfileProperty property : profile.properties()) {
         PlayerInfoUpdatePacket.Property prop = new PlayerInfoUpdatePacket.Property(
@@ -266,7 +266,6 @@ public final class MinestomProtocolAdapter implements PlatformPacketAdapter<Inst
         properties.add(prop);
       }
 
-      // build the action
       PlayerInfoUpdatePacket updatePacket = new PlayerInfoUpdatePacket(
         ADD_ACTIONS,
         Collections.singletonList(new PlayerInfoUpdatePacket.Entry(
@@ -282,7 +281,7 @@ public final class MinestomProtocolAdapter implements PlatformPacketAdapter<Inst
           true
         )));
       player.sendPacket(updatePacket);
-    });
+    };
   }
 
   @Override

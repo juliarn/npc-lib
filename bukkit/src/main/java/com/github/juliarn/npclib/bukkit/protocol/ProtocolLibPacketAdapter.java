@@ -45,13 +45,13 @@ import com.github.juliarn.npclib.api.Npc;
 import com.github.juliarn.npclib.api.Platform;
 import com.github.juliarn.npclib.api.PlatformVersionAccessor;
 import com.github.juliarn.npclib.api.event.InteractNpcEvent;
+import com.github.juliarn.npclib.api.profile.Profile;
 import com.github.juliarn.npclib.api.protocol.OutboundPacket;
 import com.github.juliarn.npclib.api.protocol.PlatformPacketAdapter;
 import com.github.juliarn.npclib.api.protocol.chat.Component;
 import com.github.juliarn.npclib.api.protocol.enums.EntityAnimation;
 import com.github.juliarn.npclib.api.protocol.enums.EntityPose;
 import com.github.juliarn.npclib.api.protocol.enums.ItemSlot;
-import com.github.juliarn.npclib.api.protocol.enums.PlayerInfoAction;
 import com.github.juliarn.npclib.api.protocol.meta.EntityMetadata;
 import com.github.juliarn.npclib.api.protocol.meta.EntityMetadataFactory;
 import com.github.juliarn.npclib.common.event.DefaultAttackNpcEvent;
@@ -64,14 +64,12 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.AbstractMap;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.function.BiFunction;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
@@ -96,7 +94,6 @@ final class ProtocolLibPacketAdapter implements PlatformPacketAdapter<World, Pla
   private static final EnumMap<EntityPose, Object> ENTITY_POSE_CONVERTER;
   private static final EnumMap<ItemSlot, EnumWrappers.ItemSlot> ITEM_SLOT_CONVERTER;
   private static final EnumMap<EnumWrappers.Hand, InteractNpcEvent.Hand> HAND_CONVERTER;
-  private static final EnumMap<PlayerInfoAction, EnumWrappers.PlayerInfoAction> PLAYER_INFO_ACTION_CONVERTER;
 
   // serializer converters for metadata
   private static final Map<Type, BiFunction<PlatformVersionAccessor, Object, Map.Entry<Type, Object>>> SERIALIZER_CONVERTERS;
@@ -160,11 +157,6 @@ final class ProtocolLibPacketAdapter implements PlatformPacketAdapter<World, Pla
         ENTITY_POSE_CONVERTER.put(EntityPose.INHALING, EnumWrappers.EntityPose.INHALING.toNms());
       }
     }
-
-    // associate player info actions with their respective protocol lib enum
-    PLAYER_INFO_ACTION_CONVERTER = new EnumMap<>(PlayerInfoAction.class);
-    PLAYER_INFO_ACTION_CONVERTER.put(PlayerInfoAction.ADD_PLAYER, EnumWrappers.PlayerInfoAction.ADD_PLAYER);
-    PLAYER_INFO_ACTION_CONVERTER.put(PlayerInfoAction.REMOVE_PLAYER, EnumWrappers.PlayerInfoAction.REMOVE_PLAYER);
 
     // meta serializers
     //noinspection SuspiciousMethodCalls
@@ -329,40 +321,49 @@ final class ProtocolLibPacketAdapter implements PlatformPacketAdapter<World, Pla
   }
 
   @Override
-  public @NotNull OutboundPacket<World, Player, ItemStack, Plugin> createPlayerInfoPacket(
-    @NotNull PlayerInfoAction action
-  ) {
-    return (player, npc) -> npc.settings().profileResolver().resolveNpcProfile(player, npc).thenAcceptAsync(profile -> {
-      // since 1.19.3 removing of players is handled in a separate packet
-      if (action == PlayerInfoAction.REMOVE_PLAYER && MinecraftVersion.FEATURE_PREVIEW_UPDATE.atOrAbove()) {
-        // PlayerRemove (https://wiki.vg/Protocol#Player_Remove)
-        PacketContainer container = new PacketContainer(PacketType.Play.Server.PLAYER_INFO_REMOVE);
+  public @NotNull OutboundPacket<World, Player, ItemStack, Plugin> createPlayerInfoRemovePacket() {
+    return (player, npc) -> {
+      PacketContainer container;
+      if (MinecraftVersion.FEATURE_PREVIEW_UPDATE.atOrAbove()) {
+        // mc 1.19.3: PlayerRemove (https://wiki.vg/Protocol#Player_Remove)
+        container = new PacketContainer(PacketType.Play.Server.PLAYER_INFO_REMOVE);
+        container.getUUIDLists().write(0, Lists.newArrayList(npc.profile().uniqueId()));
+      } else {
+        // mc 1.8: PlayerInfo (https://wiki.vg/Protocol#Player_Info)
+        container = new PacketContainer(PacketType.Play.Server.PLAYER_INFO);
+        container.getPlayerInfoAction().write(0, EnumWrappers.PlayerInfoAction.REMOVE_PLAYER);
 
-        // write the npc uuid to remove
-        List<UUID> uuidsToRemove = Collections.singletonList(profile.uniqueId());
-        container.getUUIDLists().write(0, uuidsToRemove);
-
-        // send the packet without notifying any bound packet listeners
-        PROTOCOL_MANAGER.sendServerPacket(player, container, false);
-        return;
+        // add the player info data, just some very basic info is enough as only the uuid is actually used when removing
+        Profile npcProfile = npc.profile();
+        WrappedGameProfile wrappedGameProfile = new WrappedGameProfile(npcProfile.uniqueId(), npcProfile.name());
+        PlayerInfoData playerInfoData = new PlayerInfoData(wrappedGameProfile, 0, null, null);
+        container.getPlayerInfoDataLists().write(0, Lists.newArrayList(playerInfoData));
       }
 
+      // send the packet without notifying any bound packet listeners
+      PROTOCOL_MANAGER.sendServerPacket(player, container, false);
+    };
+  }
+
+  @Override
+  public @NotNull OutboundPacket<World, Player, ItemStack, Plugin> createPlayerInfoAddPacket(
+    @NotNull Profile.Resolved profile
+  ) {
+    return (player, npc) -> {
       // PlayerInfo (https://wiki.vg/Protocol#Player_Info)
       PacketContainer container = new PacketContainer(PacketType.Play.Server.PLAYER_INFO);
 
       // action
       int playerInfoDataIndex = 0;
       if (MinecraftVersion.FEATURE_PREVIEW_UPDATE.atOrAbove()) {
-        // at this point the only way this could be called is because we want to register a new player
-        playerInfoDataIndex = 1;
+        // mc 1.19.3: multiple actions to update everything related to the player
+        playerInfoDataIndex = 1; // there are now 2 list types in the packets
         container.getPlayerInfoActions().write(0, ADD_ACTIONS);
       } else {
-        // old system, just add the translated action
-        EnumWrappers.PlayerInfoAction playerInfoAction = PLAYER_INFO_ACTION_CONVERTER.get(action);
-        container.getPlayerInfoAction().write(0, playerInfoAction);
+        // mc 1.8: one action which automatically updated everything
+        container.getPlayerInfoAction().write(0, EnumWrappers.PlayerInfoAction.ADD_PLAYER);
       }
 
-      // add the player info data
       WrappedGameProfile wrappedGameProfile = ProtocolLibProfileFactory.wrapProfile(profile);
       PlayerInfoData playerInfoData = new PlayerInfoData(
         profile.uniqueId(),
@@ -375,7 +376,7 @@ final class ProtocolLibPacketAdapter implements PlatformPacketAdapter<World, Pla
 
       // send the packet without notifying any bound packet listeners
       PROTOCOL_MANAGER.sendServerPacket(player, container, false);
-    });
+    };
   }
 
   @Override

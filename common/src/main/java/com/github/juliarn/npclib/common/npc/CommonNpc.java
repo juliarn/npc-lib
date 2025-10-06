@@ -33,7 +33,6 @@ import com.github.juliarn.npclib.api.profile.Profile;
 import com.github.juliarn.npclib.api.protocol.NpcSpecificOutboundPacket;
 import com.github.juliarn.npclib.api.protocol.enums.EntityAnimation;
 import com.github.juliarn.npclib.api.protocol.enums.ItemSlot;
-import com.github.juliarn.npclib.api.protocol.enums.PlayerInfoAction;
 import com.github.juliarn.npclib.api.protocol.meta.EntityMetadataFactory;
 import com.github.juliarn.npclib.api.settings.NpcSettings;
 import com.github.juliarn.npclib.api.util.Util;
@@ -195,10 +194,9 @@ public class CommonNpc<W, P, I, E> extends CommonNpcFlaggedObject implements Npc
         return this;
       }
 
-      // send the player info packet & schedule the actual add of the
-      // player entity into the target world
-      this.platform.packetFactory().createPlayerInfoPacket(PlayerInfoAction.ADD_PLAYER).schedule(player, this);
-      this.platform.taskManager().scheduleDelayedAsync(() -> {
+      // send the player info packet & add packet of the entity into the world after resolving the player profile
+      this.settings().profileResolver().resolveNpcProfile(player, this).thenAccept(profile -> {
+        this.platform.packetFactory().createPlayerInfoAddPacket(profile).schedule(player, this);
         this.platform.packetFactory().createEntitySpawnPacket().schedule(player, this);
         this.platform.eventManager().post(DefaultShowNpcEvent.post(this, player));
 
@@ -206,11 +204,9 @@ public class CommonNpc<W, P, I, E> extends CommonNpcFlaggedObject implements Npc
         //  - legacy versions to remove the player from the tablist
         //  - modern versions to prevent autocomplete of npc names
         this.platform.taskManager().scheduleDelayedAsync(
-          () -> this.platform.packetFactory()
-            .createPlayerInfoPacket(PlayerInfoAction.REMOVE_PLAYER)
-            .schedule(player, this),
+          () -> this.platform.packetFactory().createPlayerInfoRemovePacket().schedule(player, this),
           30);
-      }, 10);
+      });
     }
 
     return this;
@@ -233,7 +229,7 @@ public class CommonNpc<W, P, I, E> extends CommonNpcFlaggedObject implements Npc
 
       // schedule an entity remove (the player list change is not needed normally, but to make sure that the npc is gone)
       this.platform.packetFactory().createEntityRemovePacket().schedule(player, this);
-      this.platform.packetFactory().createPlayerInfoPacket(PlayerInfoAction.REMOVE_PLAYER).schedule(player, this);
+      this.platform.packetFactory().createPlayerInfoRemovePacket().schedule(player, this);
 
       // post the finish of the removal to all plugins
       this.platform.eventManager().post(DefaultHideNpcEvent.post(this, player));

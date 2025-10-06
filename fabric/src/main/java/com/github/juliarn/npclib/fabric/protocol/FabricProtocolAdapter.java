@@ -26,13 +26,13 @@ package com.github.juliarn.npclib.fabric.protocol;
 
 import com.github.juliarn.npclib.api.Platform;
 import com.github.juliarn.npclib.api.event.InteractNpcEvent;
+import com.github.juliarn.npclib.api.profile.Profile;
 import com.github.juliarn.npclib.api.profile.ProfileProperty;
 import com.github.juliarn.npclib.api.protocol.OutboundPacket;
 import com.github.juliarn.npclib.api.protocol.PlatformPacketAdapter;
 import com.github.juliarn.npclib.api.protocol.enums.EntityAnimation;
 import com.github.juliarn.npclib.api.protocol.enums.EntityPose;
 import com.github.juliarn.npclib.api.protocol.enums.ItemSlot;
-import com.github.juliarn.npclib.api.protocol.enums.PlayerInfoAction;
 import com.github.juliarn.npclib.api.protocol.meta.EntityMetadataFactory;
 import com.github.juliarn.npclib.common.event.DefaultAttackNpcEvent;
 import com.github.juliarn.npclib.common.event.DefaultInteractNpcEvent;
@@ -263,37 +263,38 @@ public final class FabricProtocolAdapter
   }
 
   @Override
-  public @NotNull OutboundPacket<ServerLevel, ServerPlayer, ItemStack, Object> createPlayerInfoPacket(
-    @NotNull PlayerInfoAction action
+  public @NotNull OutboundPacket<ServerLevel, ServerPlayer, ItemStack, Object> createPlayerInfoRemovePacket() {
+    return (player, npc) -> {
+      var packet = new ClientboundPlayerInfoRemovePacket(List.of(npc.profile().uniqueId()));
+      player.connection.send(packet);
+    };
+  }
+
+  @Override
+  public @NotNull OutboundPacket<ServerLevel, ServerPlayer, ItemStack, Object> createPlayerInfoAddPacket(
+    @NotNull Profile.Resolved profile
   ) {
     return (player, npc) -> {
-      var packet = switch (action) {
-        case REMOVE_PLAYER -> new ClientboundPlayerInfoRemovePacket(List.of(npc.profile().uniqueId()));
-        case ADD_PLAYER -> {
-          var profile = npc.profile();
-          var gameProfileProperties = profile.properties().stream().collect(Collectors.collectingAndThen(
-            Multimaps.toMultimap(
-              ProfileProperty::name,
-              pp -> new Property(pp.name(), pp.value(), pp.signature()),
-              HashMultimap::create),
-            PropertyMap::new));
-          var gameProfile = new GameProfile(profile.uniqueId(), profile.name(), gameProfileProperties);
+      var gameProfileProperties = profile.properties().stream().collect(Collectors.collectingAndThen(
+        Multimaps.toMultimap(
+          ProfileProperty::name,
+          pp -> new Property(pp.name(), pp.value(), pp.signature()),
+          HashMultimap::create),
+        PropertyMap::new));
+      var gameProfile = new GameProfile(profile.uniqueId(), profile.name(), gameProfileProperties);
 
-          var updatePacket = new ClientboundPlayerInfoUpdatePacket(ADD_ACTIONS, List.of());
-          updatePacket.entries = List.of(new ClientboundPlayerInfoUpdatePacket.Entry(
-            npc.profile().uniqueId(),
-            gameProfile,
-            false,
-            20,
-            GameType.CREATIVE,
-            null,
-            true,
-            0,
-            null));
-          yield updatePacket;
-        }
-      };
-      player.connection.send(packet);
+      var updatePacket = new ClientboundPlayerInfoUpdatePacket(ADD_ACTIONS, List.of());
+      updatePacket.entries = List.of(new ClientboundPlayerInfoUpdatePacket.Entry(
+        profile.uniqueId(),
+        gameProfile,
+        false,
+        20,
+        GameType.CREATIVE,
+        null,
+        true,
+        0,
+        null));
+      player.connection.send(updatePacket);
     };
   }
 
