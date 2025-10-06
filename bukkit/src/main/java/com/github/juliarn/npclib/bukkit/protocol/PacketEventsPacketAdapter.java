@@ -348,20 +348,15 @@ final class PacketEventsPacketAdapter implements PlatformPacketAdapter<World, Pl
   }
 
   @Override
+  @SuppressWarnings("ConstantValue") // PacketEvents.getAPI() can actually return null
   public void initialize(@NotNull Platform<World, Player, ItemStack, Plugin> platform) {
-    // build the packet events api
-    PacketEventsAPI<Plugin> packetEventsApi = SpigotPacketEventsBuilder.buildNoCache(
-      platform.extension(),
-      PACKET_EVENTS_SETTINGS);
-
-    // while I am not the biggest fan of that, it looks like
-    // that packet events is using the instance internally everywhere
-    // instead of passing the created instance around, which leaves us
-    // no choice than setting it as well :/
-    PacketEvents.setAPI(packetEventsApi);
-
-    // ensure that our api instance is initialized
-    packetEventsApi.init();
+    // initialize the packet events api if it wasn't initialized yet
+    PacketEventsAPI<?> packetEventsApi = PacketEvents.getAPI();
+    if (packetEventsApi == null) {
+      packetEventsApi = SpigotPacketEventsBuilder.build(platform.extension(), PACKET_EVENTS_SETTINGS);
+      PacketEvents.setAPI(packetEventsApi);
+      packetEventsApi.init();
+    }
 
     // store the packet player manager & server version
     this.packetPlayerManager = packetEventsApi.getPlayerManager();
