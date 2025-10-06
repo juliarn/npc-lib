@@ -40,13 +40,11 @@ import com.comphenix.protocol.wrappers.WrappedDataValue;
 import com.comphenix.protocol.wrappers.WrappedDataWatcher;
 import com.comphenix.protocol.wrappers.WrappedEnumEntityUseAction;
 import com.comphenix.protocol.wrappers.WrappedGameProfile;
-import com.comphenix.protocol.wrappers.WrappedSignedProperty;
 import com.comphenix.protocol.wrappers.WrappedWatchableObject;
 import com.github.juliarn.npclib.api.Npc;
 import com.github.juliarn.npclib.api.Platform;
 import com.github.juliarn.npclib.api.PlatformVersionAccessor;
 import com.github.juliarn.npclib.api.event.InteractNpcEvent;
-import com.github.juliarn.npclib.api.profile.ProfileProperty;
 import com.github.juliarn.npclib.api.protocol.OutboundPacket;
 import com.github.juliarn.npclib.api.protocol.PlatformPacketAdapter;
 import com.github.juliarn.npclib.api.protocol.chat.Component;
@@ -364,14 +362,8 @@ final class ProtocolLibPacketAdapter implements PlatformPacketAdapter<World, Pla
         container.getPlayerInfoAction().write(0, playerInfoAction);
       }
 
-      // convert to a protocol lib profile
-      WrappedGameProfile wrappedGameProfile = new WrappedGameProfile(profile.uniqueId(), profile.name());
-      for (ProfileProperty prop : profile.properties()) {
-        WrappedSignedProperty wrapped = new WrappedSignedProperty(prop.name(), prop.value(), prop.signature());
-        wrappedGameProfile.getProperties().put(prop.name(), wrapped);
-      }
-
       // add the player info data
+      WrappedGameProfile wrappedGameProfile = ProtocolLibProfileFactory.wrapProfile(profile);
       PlayerInfoData playerInfoData = new PlayerInfoData(
         profile.uniqueId(),
         20,
