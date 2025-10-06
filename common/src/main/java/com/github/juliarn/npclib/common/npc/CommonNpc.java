@@ -45,6 +45,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.UnmodifiableView;
 
@@ -59,7 +61,7 @@ public class CommonNpc<W, P, I, E> extends CommonNpcFlaggedObject implements Npc
   protected final Platform<W, P, I, E> platform;
   protected final NpcSettings<P> npcSettings;
 
-  protected final Set<P> trackedPlayers = Collections.synchronizedSet(new HashSet<>());
+  protected final Map<P, UUID> trackedPlayers = new ConcurrentHashMap<>(); // player -> tracking key
   protected final Set<P> includedPlayers = Collections.synchronizedSet(new HashSet<>());
 
   public CommonNpc(
@@ -149,7 +151,7 @@ public class CommonNpc<W, P, I, E> extends CommonNpcFlaggedObject implements Npc
     this.npcTracker().stopTrackingNpc(this);
 
     // remove this npc for all tracked players
-    Object[] players = this.trackedPlayers.toArray();
+    Object[] players = this.trackedPlayers.keySet().toArray();
     for (Object player : players) {
       this.stopTrackingPlayer((P) player);
     }
@@ -160,12 +162,12 @@ public class CommonNpc<W, P, I, E> extends CommonNpcFlaggedObject implements Npc
 
   @Override
   public @UnmodifiableView @NotNull Collection<P> trackedPlayers() {
-    return Collections.unmodifiableSet(this.trackedPlayers);
+    return Collections.unmodifiableSet(this.trackedPlayers.keySet());
   }
 
   @Override
   public boolean tracksPlayer(@NotNull P player) {
-    return this.trackedPlayers.contains(player);
+    return this.trackedPlayers.containsKey(player);
   }
 
   @Override
@@ -181,8 +183,7 @@ public class CommonNpc<W, P, I, E> extends CommonNpcFlaggedObject implements Npc
 
   @Override
   public @NotNull Npc<W, P, I, E> forceTrackPlayer(@NotNull P player) {
-    // check if the player is not already tracked
-    if (!this.trackedPlayers.contains(player)) {
+    if (!this.trackedPlayers.containsKey(player)) {
       // break early if the add is not wanted by plugin
       if (this.platform.eventManager().post(DefaultShowNpcEvent.pre(this, player)).cancelled()) {
         return this;
@@ -190,35 +191,51 @@ public class CommonNpc<W, P, I, E> extends CommonNpcFlaggedObject implements Npc
 
       // register the player, prevent duplicate spawns in case the entity was spawned
       // by a different thread during processing of the pre-track event
-      if (!this.trackedPlayers.add(player)) {
+      UUID trackingKey = UUID.randomUUID();
+      if (this.trackedPlayers.putIfAbsent(player, trackingKey) != null) {
         return this;
       }
 
-      // send the player info packet & add packet of the entity into the world after resolving the player profile
       this.settings().profileResolver().resolveNpcProfile(player, this).thenAccept(profile -> {
-        // ensure that we keep the same unique id as the base profile of this npc, it
-        // MUST not be changed by the profile resolver as, e.g., the player info remove depends on it
-        Profile.Resolved npcProfileToSend = profile.withUniqueId(this.profile.uniqueId());
-        this.platform.packetFactory().createPlayerInfoAddPacket(npcProfileToSend).schedule(player, this);
-        this.platform.packetFactory().createEntitySpawnPacket().schedule(player, this);
-        this.platform.eventManager().post(DefaultShowNpcEvent.post(this, player));
+        if (this.isSameTrackOperation(player, trackingKey)) {
+          // ensure that we keep the same unique id as the base profile of this npc, it
+          // MUST not be changed by the profile resolver as, e.g., the player info remove depends on it
+          Profile.Resolved npcProfileToSend = profile.withUniqueId(this.profile.uniqueId());
+          this.platform.packetFactory().createPlayerInfoAddPacket(npcProfileToSend).schedule(player, this);
+          this.platform.packetFactory().createEntitySpawnPacket().schedule(player, this);
+          this.platform.eventManager().post(DefaultShowNpcEvent.post(this, player));
 
-        // removes the player info of the spawned npc from the client. this is necessary on
-        //  - legacy versions to remove the player from the tablist
-        //  - modern versions to prevent autocomplete of npc names
-        this.platform.taskManager().scheduleDelayedAsync(
-          () -> this.platform.packetFactory().createPlayerInfoRemovePacket().schedule(player, this),
-          30);
+          // removes the player info of the spawned npc from the client. this is necessary on
+          //  - legacy versions to remove the player from the tablist
+          //  - modern versions to prevent autocomplete of npc names
+          this.platform.taskManager().scheduleDelayedAsync(() -> {
+            if (this.isSameTrackOperation(player, trackingKey)) {
+              this.platform.packetFactory().createPlayerInfoRemovePacket().schedule(player, this);
+            }
+          }, 30);
+        }
       });
     }
 
     return this;
   }
 
+  /**
+   * Checks if the current tracking operation is still the same as the one identified by the given tracking key.
+   *
+   * @param player      the player to check the tracking operation of.
+   * @param trackingKey the key of the tracking operation to check for.
+   * @return true if the current operation is identified by the given tracking key, false otherwise.
+   */
+  private boolean isSameTrackOperation(@NotNull P player, @NotNull UUID trackingKey) {
+    UUID currentTrackingKeyForPlayer = this.trackedPlayers.get(player);
+    return trackingKey.equals(currentTrackingKeyForPlayer);
+  }
+
   @Override
   public @NotNull Npc<W, P, I, E> stopTrackingPlayer(@NotNull P player) {
-    // check if the player was previously tracked
-    if (this.trackedPlayers.contains(player)) {
+    UUID trackingKey = this.trackedPlayers.get(player);
+    if (trackingKey != null) {
       // break early if the removal is not wanted by plugin
       if (this.platform.eventManager().post(DefaultHideNpcEvent.pre(this, player)).cancelled()) {
         return this;
@@ -226,19 +243,16 @@ public class CommonNpc<W, P, I, E> extends CommonNpcFlaggedObject implements Npc
 
       // unregister the player, prevent duplicate remove packets in case the entity
       // was removed by a different thread during processing of the pre-hide event
-      if (!this.trackedPlayers.remove(player)) {
+      if (!this.trackedPlayers.remove(player, trackingKey)) {
         return this;
       }
 
-      // schedule an entity remove (the player list change is not needed normally, but to make sure that the npc is gone)
+      // despawn the entity, remove the player info and notify plugins
       this.platform.packetFactory().createEntityRemovePacket().schedule(player, this);
       this.platform.packetFactory().createPlayerInfoRemovePacket().schedule(player, this);
-
-      // post the finish of the removal to all plugins
       this.platform.eventManager().post(DefaultHideNpcEvent.post(this, player));
     }
 
-    // for chaining
     return this;
   }
 
