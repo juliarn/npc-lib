@@ -34,7 +34,9 @@ import org.jetbrains.annotations.Nullable;
 
 final class DefaultCachedProfileResolver implements ProfileResolver.Cached {
 
-  private static final long ENTRY_KEEP_ALIVE_TIME = TimeUnit.HOURS.toMillis(3);
+  private static final long DEFAULT_CACHE_TIME = TimeUnit.HOURS.toMillis(5);
+  private static final long CACHE_TIME_MS = Long.getLong("npc_lib.profile-cache.keep-ms", DEFAULT_CACHE_TIME);
+  private static final long CACHE_TIME_NS = TimeUnit.MILLISECONDS.toNanos(CACHE_TIME_MS);
 
   private final ProfileResolver delegate;
 
@@ -47,19 +49,16 @@ final class DefaultCachedProfileResolver implements ProfileResolver.Cached {
   }
 
   private static @Nullable <K, V> V findCacheEntry(@NotNull Map<K, CacheEntry<V>> cache, @NotNull K key) {
-    // check if an entry is associated with the given key
     CacheEntry<V> entry = cache.get(key);
     if (entry == null) {
       return null;
     }
 
-    // check if the entry is outdated
-    if (entry.timeoutTime <= System.currentTimeMillis()) {
-      cache.remove(key);
+    if (System.nanoTime() > entry.timeoutTime) {
+      cache.remove(key, entry);
       return null;
     }
 
-    // all fine
     return entry.value;
   }
 
@@ -72,17 +71,14 @@ final class DefaultCachedProfileResolver implements ProfileResolver.Cached {
     }
 
     // try to complete using the delegate resolver
-    return this.delegate.resolveProfile(profile).whenComplete((resolvedProfile, exception) -> {
-      // don't do anything if the operation wasn't successful
-      if (exception == null && resolvedProfile != null) {
-        // cache the result, override possible values which were previously inserted to reset the keep alive time
-        this.nameToUniqueIdCache.put(
-          resolvedProfile.name(),
-          new CacheEntry<>(resolvedProfile.uniqueId(), ENTRY_KEEP_ALIVE_TIME));
-        this.uuidToProfileCache.put(
-          resolvedProfile.uniqueId(),
-          new CacheEntry<>(resolvedProfile, ENTRY_KEEP_ALIVE_TIME));
-      }
+    return this.delegate.resolveProfile(profile).thenApply((resolvedProfile) -> {
+      CacheEntry<UUID> nameCacheEntry = new CacheEntry<>(resolvedProfile.uniqueId(), CACHE_TIME_NS);
+      this.nameToUniqueIdCache.put(resolvedProfile.name(), nameCacheEntry);
+
+      CacheEntry<Profile.Resolved> profileCacheEntry = new CacheEntry<>(resolvedProfile, CACHE_TIME_NS);
+      this.uuidToProfileCache.put(resolvedProfile.uniqueId(), profileCacheEntry);
+
+      return resolvedProfile;
     });
   }
 
@@ -101,7 +97,6 @@ final class DefaultCachedProfileResolver implements ProfileResolver.Cached {
   public @Nullable Profile.Resolved fromCache(@NotNull Profile profile) {
     UUID profileId = profile.uniqueId();
     if (profileId != null) {
-      // check if we can get the resolved profile from the cache by the profile id
       Profile.Resolved cached = this.fromCache(profileId);
       if (cached != null) {
         return cached;
@@ -109,13 +104,7 @@ final class DefaultCachedProfileResolver implements ProfileResolver.Cached {
     }
 
     String name = profile.name();
-    if (name != null) {
-      // check if we can get the resolved profile from the cache by the profile name
-      return this.fromCache(name);
-    }
-
-    // unable to resolve with any possible method
-    return null;
+    return name != null ? this.fromCache(name) : null;
   }
 
   private static final class CacheEntry<T> {
@@ -123,9 +112,9 @@ final class DefaultCachedProfileResolver implements ProfileResolver.Cached {
     private final T value;
     private final long timeoutTime;
 
-    public CacheEntry(@Nullable T value, long keepMillis) {
+    public CacheEntry(@Nullable T value, long cacheTimeNs) {
       this.value = value;
-      this.timeoutTime = System.currentTimeMillis() + keepMillis;
+      this.timeoutTime = System.nanoTime() + cacheTimeNs;
     }
   }
 }
