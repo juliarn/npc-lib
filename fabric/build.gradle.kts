@@ -56,6 +56,7 @@ tasks.shadowJar {
 
 tasks.remapJar {
   dependsOn(tasks.shadowJar)
+  archiveFileName = "npc-lib-mod.jar"
   inputFile = tasks.shadowJar.flatMap { it.archiveFile }
 }
 
