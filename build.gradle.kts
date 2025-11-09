@@ -105,9 +105,12 @@ subprojects {
   extensions.configure<JavaPluginExtension> {
     withSourcesJar()
     withJavadocJar()
-
     disableAutoTargetJvm()
-    toolchain.languageVersion.set(JavaLanguageVersion.of(21))
+
+    toolchain {
+      vendor = JvmVendorSpec.AZUL
+      languageVersion = JavaLanguageVersion.of(25)
+    }
   }
 
   tasks.withType<Checkstyle> {

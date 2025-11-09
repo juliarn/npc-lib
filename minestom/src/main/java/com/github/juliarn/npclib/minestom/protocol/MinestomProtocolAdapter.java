@@ -58,6 +58,7 @@ import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import net.minestom.server.MinecraftServer;
 import net.minestom.server.coordinate.Pos;
+import net.minestom.server.coordinate.Vec;
 import net.minestom.server.entity.EntityType;
 import net.minestom.server.entity.EquipmentSlot;
 import net.minestom.server.entity.GameMode;
@@ -189,7 +190,7 @@ public final class MinestomProtocolAdapter implements PlatformPacketAdapter<Inst
     //noinspection unchecked
     META_ENTRY_FACTORY.put(
       OPTIONAL_CHAT_COMPONENT_TYPE,
-      value -> Metadata.OptChat(((Optional<net.kyori.adventure.text.Component>) value).orElse(null)));
+      value -> Metadata.OptComponent(((Optional<net.kyori.adventure.text.Component>) value).orElse(null)));
   }
 
   private MinestomProtocolAdapter() {
@@ -225,13 +226,11 @@ public final class MinestomProtocolAdapter implements PlatformPacketAdapter<Inst
       SpawnEntityPacket packet = new SpawnEntityPacket(
         npc.entityId(),
         npc.profile().uniqueId(),
-        EntityType.PLAYER.id(),
+        EntityType.PLAYER,
         position,
         position.yaw(),
         0,
-        (short) 0,
-        (short) 0,
-        (short) 0);
+        Vec.ZERO);
       player.sendPacket(packet);
     };
   }

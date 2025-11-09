@@ -30,6 +30,6 @@ dependencies {
   implementation(libs.geantyref)
 }
 
-tasks.withType<JavaCompile> {
-  options.release.set(17)
+tasks.compileJava {
+  options.release = 25
 }
