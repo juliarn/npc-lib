@@ -25,40 +25,107 @@
 package com.github.juliarn.npclib.bukkit;
 
 import com.github.juliarn.npclib.api.PlatformVersionAccessor;
-import io.papermc.lib.PaperLib;
+import io.papermc.paper.ServerBuildInfo;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import org.bukkit.Bukkit;
+import org.jetbrains.annotations.NotNull;
 
-public final class BukkitVersionAccessor {
+public final class BukkitVersionAccessor implements PlatformVersionAccessor {
 
-  private BukkitVersionAccessor() {
-    throw new UnsupportedOperationException();
+  /**
+   * Regex for any {@code number.number.number} combination, where the last number is optional.
+   */
+  private static final Pattern MC_VERSION_PATTERN = Pattern.compile("(\\d+)\\.(\\d+)\\.?(\\d+)?");
+  /**
+   * Regex for the bukkit mc version representation.
+   */
+  private static final Pattern BUKKIT_VERSION_PATTERN = Pattern.compile("\\(MC: (\\d+)\\.(\\d+)\\.?(\\d+)?");
+
+  /**
+   * The version string that couldn't be parsed when no default instance could be constructed. {@code null} in case a
+   * default instance was constructed successfully.
+   */
+  private static final String FAILED_PARSE_INPUT;
+  /**
+   * Default instance parsed from a version string. {@code null} in case the version input string couldn't be converted
+   * to a SemVer version. In this case the failed parse input field is non-null and holds the parse input that failed.
+   */
+  private static final PlatformVersionAccessor DEFAULT_INSTANCE;
+
+  static {
+    Matcher versionMatcher;
+    try {
+      // try to use the modern approach via Paper ServerBuildInfo
+      ServerBuildInfo buildInfo = ServerBuildInfo.buildInfo();
+      versionMatcher = MC_VERSION_PATTERN.matcher(buildInfo.minecraftVersionId());
+    } catch (Throwable throwable) {
+      // use the legacy approach via Bukkit.getVersion()
+      versionMatcher = BUKKIT_VERSION_PATTERN.matcher(Bukkit.getVersion());
+    }
+
+    if (versionMatcher.find()) {
+      String major = versionMatcher.group(1);
+      String minor = versionMatcher.group(2);
+      String patch = versionMatcher.group(3);
+      DEFAULT_INSTANCE = new BukkitVersionAccessor(
+        Integer.parseInt(major),
+        Integer.parseInt(minor),
+        patch == null ? 0 : Integer.parseInt(patch));
+      FAILED_PARSE_INPUT = null;
+    } else {
+      DEFAULT_INSTANCE = null;
+      FAILED_PARSE_INPUT = versionMatcher.replaceAll(""); // this returns the full text when there is no match
+    }
   }
 
-  public static PlatformVersionAccessor versionAccessor() {
-    return PaperLibPlatformVersionAccessor.INSTANCE;
+  private final int major;
+  private final int minor;
+  private final int patch;
+
+  public BukkitVersionAccessor(int major, int minor, int patch) {
+    this.major = major;
+    this.minor = minor;
+    this.patch = patch;
   }
 
-  private static final class PaperLibPlatformVersionAccessor implements PlatformVersionAccessor {
+  public static boolean hasDefaultAccessor() {
+    return DEFAULT_INSTANCE != null;
+  }
 
-    private static final PaperLibPlatformVersionAccessor INSTANCE = new PaperLibPlatformVersionAccessor();
-
-    @Override
-    public int major() {
-      return 1;
+  public static @NotNull PlatformVersionAccessor versionAccessor() {
+    if (DEFAULT_INSTANCE != null) {
+      return DEFAULT_INSTANCE;
     }
 
-    @Override
-    public int minor() {
-      return PaperLib.getMinecraftVersion();
+    throw new IllegalStateException("Version is not available as '" + FAILED_PARSE_INPUT + "' couldn't be parsed");
+  }
+
+  @Override
+  public int major() {
+    return this.major;
+  }
+
+  @Override
+  public int minor() {
+    return this.minor;
+  }
+
+  @Override
+  public int patch() {
+    return this.patch;
+  }
+
+  @Override
+  public boolean atLeast(int major, int minor, int patch) {
+    if (this.major != major) {
+      return this.major > major;
     }
 
-    @Override
-    public int patch() {
-      return PaperLib.getMinecraftPatchVersion();
+    if (this.minor != minor) {
+      return this.minor > minor;
     }
 
-    @Override
-    public boolean atLeast(int major, int minor, int patch) {
-      return PaperLib.isVersion(minor, patch);
-    }
+    return this.patch >= patch;
   }
 }

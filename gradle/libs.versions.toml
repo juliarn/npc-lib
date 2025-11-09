@@ -24,7 +24,6 @@ fabricLoader = "0.17.2"
 fabricApi = "0.133.14+1.21.9"
 
 # platform extensions
-paperLib = "1.0.8"
 packetEvents = "2.9.5"
 protocolLib = "9417eee444"
 
@@ -49,7 +48,6 @@ fabricApiBom = { module = "net.fabricmc.fabric-api:fabric-api-bom", version.ref 
 fabricApiNetworkingV1 = { module = "net.fabricmc.fabric-api:fabric-networking-api-v1" }
 
 # platform extensions
-paperLib = { group = "io.papermc", name = "paperlib", version.ref = "paperLib" }
 protocolLib = { group = "com.github.dmulloy2", name = "ProtocolLib", version.ref = "protocolLib" }
 packetEvents = { group = "com.github.retrooper", name = "packetevents-spigot", version.ref = "packetEvents" }
 

@@ -25,7 +25,6 @@
 package com.github.juliarn.npclib.bukkit;
 
 import com.github.juliarn.npclib.api.PlatformWorldAccessor;
-import io.papermc.lib.PaperLib;
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
 import org.bukkit.World;
@@ -39,10 +38,11 @@ public final class BukkitWorldAccessor {
   }
 
   public static @NotNull PlatformWorldAccessor<World> worldAccessor() {
-    // check if we are on paper and newer (or equal) to 1.16.5
-    if (PaperLib.isPaper() && PaperLib.isVersion(16, 5)) {
+    try {
+      // default to the modern accessor on 1.16.5 and above
+      Bukkit.class.getMethod("getWorld", NamespacedKey.class);
       return ModernAccessor.INSTANCE;
-    } else {
+    } catch (Throwable throwable) {
       return LegacyAccessor.INSTANCE;
     }
   }

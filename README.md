@@ -65,7 +65,6 @@ implementation("io.github.juliarn", "(module name from the list above)", "(lates
 Depending on your setup you might need to add the following repositories as well to download all the transitive
 dependencies coming from the modules:
 
-- `https://repo.papermc.io/repository/maven-public/` (For [PaperLib](https://github.com/PaperMC/PaperLib))
 - `https://repository.derklaro.dev/releases/` (You can also use `https://jitpack.io` instead, used e.g.
   for [ProtocolLib](https://github.com/dmulloy2/ProtocolLib)).
 - `https://repo.codemc.io/repository/maven-releases/` (For [PacketEvents](https://github.com/retrooper/packetevents))
@@ -76,7 +75,6 @@ are used by this library and that you probably want to relocate to prevent depen
 including the same libraries. You can use the gradle or maven shade plugin to achieve this:
 
 - `net.kyori`
-- `io.papermc.lib`
 - `io.leangen.geantyref`
 - `io.github.retrooper`
 - `com.github.retrooper`
@@ -165,7 +163,7 @@ BukkitPlatform.bukkitNpcPlatformBuilder()
   // when on paper 1.12 or later the paper profile resolver is used, when on spigot
   // 1.18.2 or later the spigot profile resolver is used, else a fallback mojang api
   // based access is used.
-  // see BukkitVersionAccessor for the bukkit implementations (PaperLib based)
+  // see BukkitVersionAccessor for the bukkit implementation
   // see MinestomVersionAccessor for the minestom implementation
   // Defaults to a platform-specific implementation.
   .versionAccessor()

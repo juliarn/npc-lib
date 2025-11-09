@@ -26,7 +26,6 @@ dependencies {
   api(projects.npcLibApi)
   api(projects.npcLibCommon)
 
-  implementation(libs.paperLib)
   implementation(libs.geantyref)
   implementation(libs.packetEvents)
 
