@@ -4,7 +4,7 @@
 shadow = "9.2.2"
 spotless = "8.0.0"
 nexusPublish = "2.0.0"
-checkstyleTools = "11.1.0"
+checkstyleTools = "12.1.1"
 
 # general
 gson = "2.13.2"
@@ -14,17 +14,17 @@ netty = "4.1.117.Final"
 
 # platform api versions
 sponge = "10.0.0"
+paper = "1.21.10-R0.1-SNAPSHOT"
 minestom = "2025.09.13-1.21.8"
-paper = "1.21.9-R0.1-SNAPSHOT"
 
 # fabric
 minecraft = "1.21.9"
-fabricLoom = "1.11.8"
-fabricLoader = "0.17.2"
+fabricLoom = "1.13.4"
+fabricLoader = "0.18.0"
 fabricApi = "0.133.14+1.21.9"
 
 # platform extensions
-packetEvents = "2.9.5"
+packetEvents = "2.10.1"
 protocolLib = "9417eee444"
 
 
