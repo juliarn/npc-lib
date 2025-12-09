@@ -18,10 +18,10 @@ paper = "1.21.10-R0.1-SNAPSHOT"
 minestom = "2025.10.31-1.21.10"
 
 # fabric
-minecraft = "1.21.9"
-fabricLoom = "1.13.4"
-fabricLoader = "0.18.0"
-fabricApi = "0.133.14+1.21.9"
+minecraft = "1.21.11"
+fabricLoom = "1.14.5"
+fabricLoader = "0.18.2"
+fabricApi = "0.139.4+1.21.11"
 
 # platform extensions
 packetEvents = "2.10.1"
@@ -57,6 +57,6 @@ checkstyleTools = { group = "com.puppycrawl.tools", name = "checkstyle", version
 [plugins]
 
 shadow = { id = "com.gradleup.shadow", version.ref = "shadow" }
-fabricLoom = { id = "fabric-loom", version.ref = "fabricLoom" }
 spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
+fabricLoom = { id = "net.fabricmc.fabric-loom-remap", version.ref = "fabricLoom" }
 nexusPublish = { id = "io.github.gradle-nexus.publish-plugin", version.ref = "nexusPublish" }

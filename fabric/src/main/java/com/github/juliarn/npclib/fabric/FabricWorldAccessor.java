@@ -42,7 +42,7 @@ public final class FabricWorldAccessor {
 
     @Override
     public @NotNull String extractWorldIdentifier(@NotNull ServerLevel world) {
-      return world.dimension().location().toString();
+      return world.dimension().identifier().toString();
     }
 
     @Override

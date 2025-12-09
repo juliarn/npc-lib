@@ -68,7 +68,7 @@ public final class FabricUtil {
     @NotNull Vec3 pos,
     @NotNull Vec2 rot
   ) {
-    var worldId = level.dimension().location().toString();
+    var worldId = level.dimension().identifier().toString();
     return Position.position(pos.x(), pos.y(), pos.z(), rot.x, rot.y, worldId);
   }
 }

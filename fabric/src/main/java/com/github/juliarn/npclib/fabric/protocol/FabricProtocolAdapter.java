@@ -74,7 +74,7 @@ import net.minecraft.network.protocol.game.ClientboundSetEntityDataPacket;
 import net.minecraft.network.protocol.game.ClientboundSetEquipmentPacket;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
@@ -349,7 +349,7 @@ public final class FabricProtocolAdapter
   ) {
     return (player, npc) -> {
       // construct the custom payload to send
-      var channelLocation = ResourceLocation.parse(channelId);
+      var channelLocation = Identifier.parse(channelId);
       var payloadType = new CustomPacketPayload.Type<ByteArrayCustomPayload>(channelLocation);
       var customPayload = new ByteArrayCustomPayload(payloadType, payload);
 
