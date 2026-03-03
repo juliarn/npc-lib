@@ -44,10 +44,9 @@ import net.minestom.server.coordinate.Pos;
 import net.minestom.server.entity.Player;
 import net.minestom.server.event.player.PlayerDisconnectEvent;
 import net.minestom.server.event.player.PlayerHandAnimationEvent;
+import net.minestom.server.event.player.PlayerInputEvent;
 import net.minestom.server.event.player.PlayerMoveEvent;
 import net.minestom.server.event.player.PlayerSpawnEvent;
-import net.minestom.server.event.player.PlayerStartSneakingEvent;
-import net.minestom.server.event.player.PlayerStopSneakingEvent;
 import net.minestom.server.instance.Instance;
 import net.minestom.server.item.ItemStack;
 import org.jetbrains.annotations.NotNull;
@@ -83,7 +82,7 @@ public final class MinestomActionController extends CommonNpcActionController {
         Instance instance = player.getInstance();
 
         // check if the player is within the imitate distance and spawned into an instance
-        // in normal cases the instance check should no evaluate to false at this point
+        // in normal cases the instance check should not evaluate to false at this point
         double distance = MinestomUtil.distance(event.npc(), to);
         if (instance != null
           && distance <= this.imitateDistance
@@ -109,11 +108,10 @@ public final class MinestomActionController extends CommonNpcActionController {
 
   private void registerListeners() {
     MinecraftServer.getGlobalEventHandler().addListener(PlayerMoveEvent.class, this::handleMove);
+    MinecraftServer.getGlobalEventHandler().addListener(PlayerInputEvent.class, this::handlePlayerInput);
     MinecraftServer.getGlobalEventHandler().addListener(PlayerSpawnEvent.class, this::handlePlayerInstanceSpawn);
-    MinecraftServer.getGlobalEventHandler().addListener(PlayerStartSneakingEvent.class, this::handleStartSneak);
-    MinecraftServer.getGlobalEventHandler().addListener(PlayerStopSneakingEvent.class, this::handleStopSneak);
-    MinecraftServer.getGlobalEventHandler().addListener(PlayerHandAnimationEvent.class, this::handleHandAnimation);
     MinecraftServer.getGlobalEventHandler().addListener(PlayerDisconnectEvent.class, this::handleQuit);
+    MinecraftServer.getGlobalEventHandler().addListener(PlayerHandAnimationEvent.class, this::handleHandAnimation);
   }
 
   private void handleMove(@NotNull PlayerMoveEvent event) {
@@ -175,12 +173,12 @@ public final class MinestomActionController extends CommonNpcActionController {
     }
   }
 
-  private void handleStartSneak(@NotNull PlayerStartSneakingEvent event) {
-    this.handleToggleSneak(event.getPlayer(), true);
-  }
-
-  private void handleStopSneak(@NotNull PlayerStopSneakingEvent event) {
-    this.handleToggleSneak(event.getPlayer(), false);
+  private void handlePlayerInput(@NotNull PlayerInputEvent event) {
+    var startedSneaking = event.hasPressedShiftKey();
+    var stoppedSneaking = event.hasReleasedShiftKey();
+    if (startedSneaking || stoppedSneaking) {
+      this.handleToggleSneak(event.getPlayer(), startedSneaking);
+    }
   }
 
   private void handleToggleSneak(@NotNull Player player, boolean sneakActive) {

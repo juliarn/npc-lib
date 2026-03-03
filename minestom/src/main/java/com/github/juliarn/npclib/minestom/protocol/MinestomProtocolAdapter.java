@@ -201,7 +201,7 @@ public final class MinestomProtocolAdapter implements PlatformPacketAdapter<Inst
   }
 
   private static @NotNull Metadata.Entry<?> createMetadataEntry(@NotNull Type type, @NotNull Object value) {
-    // check if we need to convert the value before creating the meta object
+    // check if we need to convert the value before creating the metaobject
     Map.Entry<Type, UnaryOperator<Object>> converter = SERIALIZER_CONVERTERS.get(type);
     if (converter != null) {
       type = converter.getKey();
@@ -255,7 +255,7 @@ public final class MinestomProtocolAdapter implements PlatformPacketAdapter<Inst
   public @NotNull OutboundPacket<Instance, Player, ItemStack, Object> createPlayerInfoAddPacket(
     @NotNull Profile.Resolved profile
   ) {
-    return (player, npc) -> {
+    return (player, _) -> {
       List<PlayerInfoUpdatePacket.Property> properties = new ArrayList<>();
       for (ProfileProperty property : profile.properties()) {
         PlayerInfoUpdatePacket.Property prop = new PlayerInfoUpdatePacket.Property(
@@ -327,7 +327,7 @@ public final class MinestomProtocolAdapter implements PlatformPacketAdapter<Inst
     @NotNull String channelId,
     byte[] payload
   ) {
-    return (player, npc) -> {
+    return (player, _) -> {
       PluginMessagePacket packet = new PluginMessagePacket(channelId, payload);
       player.sendPacket(packet);
     };
@@ -368,20 +368,14 @@ public final class MinestomProtocolAdapter implements PlatformPacketAdapter<Inst
   @Override
   public void initialize(@NotNull Platform<Instance, Player, ItemStack, Object> platform) {
     MinecraftServer.getGlobalEventHandler().addListener(PlayerPacketEvent.class, event -> {
-      // check if the inbound packet is USE_ENTITY, it's the only interesting for us
       if (event.getPacket() instanceof ClientInteractEntityPacket packet) {
-        // get the associated npc from the tracked entities
         Npc<Instance, Player, ItemStack, Object> npc = platform.npcTracker().npcById(packet.targetId());
         if (npc != null) {
-          // call the correct event based on the taken action
           if (packet.type() instanceof ClientInteractEntityPacket.Attack) {
             platform.eventManager().post(DefaultAttackNpcEvent.attackNpc(npc, event.getPlayer()));
-          } else if (packet.type() instanceof ClientInteractEntityPacket.Interact interact) {
-            // extract the used hand from the packet
-            InteractNpcEvent.Hand hand = HAND_CONVERTER.get(interact.hand());
-
-            // call the event
-            platform.eventManager().post(DefaultInteractNpcEvent.interactNpc(npc, event.getPlayer(), hand));
+          } else if (packet.type() instanceof ClientInteractEntityPacket.Interact(var hand)) {
+            var convertedHand = HAND_CONVERTER.get(hand);
+            platform.eventManager().post(DefaultInteractNpcEvent.interactNpc(npc, event.getPlayer(), convertedHand));
           }
 
           // don't pass the packet to the server

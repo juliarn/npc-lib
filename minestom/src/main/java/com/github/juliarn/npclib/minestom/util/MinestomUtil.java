@@ -32,7 +32,6 @@ import net.minestom.server.coordinate.Pos;
 import net.minestom.server.instance.Instance;
 import org.jetbrains.annotations.NotNull;
 
-@SuppressWarnings("UnstableApiUsage")
 public final class MinestomUtil {
 
   private MinestomUtil() {
