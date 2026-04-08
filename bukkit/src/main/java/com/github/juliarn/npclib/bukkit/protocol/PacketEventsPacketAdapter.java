@@ -384,14 +384,15 @@ final class PacketEventsPacketAdapter implements PlatformPacketAdapter<World, Pl
     public void onPacketPlayReceive(@NotNull PacketPlayReceiveEvent event) {
       // check for an entity use packet
       Object player = event.getPlayer();
-      if (event.getPacketType() == PacketType.Play.Client.INTERACT_ENTITY) {
+      if (event.getPacketType() == PacketType.Play.Client.INTERACT_ENTITY
+        || event.getPacketType() == PacketType.Play.Client.ATTACK) {
         WrapperPlayClientInteractEntity packet = new WrapperPlayClientInteractEntity(event);
 
         // get the associated npc from the tracked entities
         Npc<World, Player, ItemStack, Plugin> npc = this.platform.npcTracker().npcById(packet.getEntityId());
         if (npc != null) {
           // call the event
-          switch (packet.getAction()) {
+          switch (findAction(event.getPacketType(), packet)) {
             case ATTACK:
               this.platform.eventManager().post(DefaultAttackNpcEvent.attackNpc(npc, player));
               break;
@@ -408,6 +409,21 @@ final class PacketEventsPacketAdapter implements PlatformPacketAdapter<World, Pl
           event.setCancelled(true);
         }
       }
+    }
+
+    private static @NotNull WrapperPlayClientInteractEntity.InteractAction findAction(
+      @NotNull PacketType.Play.Client packetType,
+      @NotNull WrapperPlayClientInteractEntity packet
+    ) {
+      if (packet.getServerVersion().isOlderThan(ServerVersion.V_26_1)) {
+        return packet.getAction();
+      }
+
+      if (packetType == PacketType.Play.Client.ATTACK) {
+        return WrapperPlayClientInteractEntity.InteractAction.ATTACK;
+      }
+
+      return WrapperPlayClientInteractEntity.InteractAction.INTERACT;
     }
   }
 
