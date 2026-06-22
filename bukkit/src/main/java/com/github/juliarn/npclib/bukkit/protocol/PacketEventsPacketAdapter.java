@@ -383,47 +383,47 @@ final class PacketEventsPacketAdapter implements PlatformPacketAdapter<World, Pl
 
     @Override
     public void onPacketPlayReceive(@NotNull PacketPlayReceiveEvent event) {
-      // check for an entity use packet
       Object player = event.getPlayer();
-      if (event.getPacketType() == PacketType.Play.Client.INTERACT_ENTITY
-        || event.getPacketType() == PacketType.Play.Client.ATTACK) {
 
-        WrapperPlayClientInteractEntity.InteractAction action;
-        int entityId;
+      int entityId;
+      InteractNpcEvent.Hand hand = null;
+      WrapperPlayClientInteractEntity.InteractAction action;
 
-        if (event.getPacketType() == PacketType.Play.Client.ATTACK) {
-          WrapperPlayClientAttack packet = new WrapperPlayClientAttack(event);
-          action = WrapperPlayClientInteractEntity.InteractAction.ATTACK;
-          entityId = packet.getEntityId();
-        } else {
-          WrapperPlayClientInteractEntity packet = new WrapperPlayClientInteractEntity(event);
-          action = packet.getAction();
-          entityId = packet.getEntityId();
+      if (event.getPacketType() == PacketType.Play.Client.ATTACK) {
+        WrapperPlayClientAttack packet = new WrapperPlayClientAttack(event);
+        action = WrapperPlayClientInteractEntity.InteractAction.ATTACK;
+        entityId = packet.getEntityId();
+      } else if (event.getPacketType() == PacketType.Play.Client.INTERACT_ENTITY) {
+        WrapperPlayClientInteractEntity packet = new WrapperPlayClientInteractEntity(event);
+        entityId = packet.getEntityId();
+        hand = Lazy.HAND_CONVERTER.get(packet.getHand());
+
+        action = packet.getAction();
+        if (packet.getServerVersion().isNewerThanOrEquals(ServerVersion.V_26_1)) {
+          action = WrapperPlayClientInteractEntity.InteractAction.INTERACT;
+        }
+      } else {
+        return;
+      }
+
+      // get the associated npc from the tracked entities
+      Npc<World, Player, ItemStack, Plugin> npc = this.platform.npcTracker().npcById(entityId);
+      if (npc != null) {
+        // call the event
+        switch (action) {
+          case ATTACK:
+            this.platform.eventManager().post(DefaultAttackNpcEvent.attackNpc(npc, player));
+            break;
+          case INTERACT:
+            this.platform.eventManager().post(DefaultInteractNpcEvent.interactNpc(npc, player, hand));
+            break;
+          default:
+            // we don't handle INTERACT_AT as the client sends it alongside the interact packet
+            break;
         }
 
-        // get the associated npc from the tracked entities
-        Npc<World, Player, ItemStack, Plugin> npc = this.platform.npcTracker().npcById(entityId);
-        if (npc != null) {
-          // call the event
-          switch (action) {
-            case ATTACK:
-              this.platform.eventManager().post(DefaultAttackNpcEvent.attackNpc(npc, player));
-              break;
-            case INTERACT:
-              if (event.getPacketType() == PacketType.Play.Client.INTERACT_ENTITY) {
-                WrapperPlayClientInteractEntity packet = new WrapperPlayClientInteractEntity(event);
-                InteractNpcEvent.Hand hand = Lazy.HAND_CONVERTER.get(packet.getHand());
-                this.platform.eventManager().post(DefaultInteractNpcEvent.interactNpc(npc, player, hand));
-              }
-              break;
-            default:
-              // we don't handle INTERACT_AT as the client sends it alongside the interact packet (duplicate event call)
-              break;
-          }
-
-          // don't pass the packet to the server
-          event.setCancelled(true);
-        }
+        // don't pass the packet to the server
+        event.setCancelled(true);
       }
     }
   }
