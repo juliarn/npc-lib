@@ -14,7 +14,7 @@ netty = "4.1.117.Final"
 
 # platform api versions
 sponge = "10.0.0"
-paper = "1.21.11-R0.1-SNAPSHOT"
+paper = "26.1.1.build.29-alpha"
 minestom = "2026.03.03-1.21.11"
 
 # fabric
@@ -24,8 +24,8 @@ fabricLoader = "0.18.4"
 fabricApi = "0.141.3+1.21.11"
 
 # platform extensions
-packetEvents = "2.11.2"
-protocolLib = "9417eee444"
+packetEvents = "2.13.0"
+protocolLib = "8eeb82f89d"
 
 
 [libraries]
