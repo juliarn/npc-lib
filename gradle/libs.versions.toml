@@ -15,7 +15,7 @@ netty = "4.1.117.Final"
 # platform api versions
 sponge = "10.0.0"
 paper = "26.1.1.build.29-alpha"
-minestom = "2026.03.03-1.21.11"
+minestom = "2026.07.01-26.1.2"
 
 # fabric
 minecraft = "1.21.11"
