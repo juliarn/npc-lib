@@ -354,7 +354,7 @@ public final class FabricProtocolAdapter
       var customPayload = new ByteArrayCustomPayload(payloadType, payload);
 
       // ensure that the payload codec is registered for the payload type
-      var payloadTypeRegistry = PayloadTypeRegistryImpl.PLAY_S2C;
+      var payloadTypeRegistry = PayloadTypeRegistryImpl.CLIENTBOUND_PLAY;
       var registered = payloadTypeRegistry.get(channelLocation);
       if (registered == null) {
         payloadTypeRegistry.register(payloadType, ByteArrayCustomPayload.CODEC);
@@ -400,18 +400,14 @@ public final class FabricProtocolAdapter
     FabricActionControllerEvents.SERVER_PLAYER_ENTITY_INTERACT.register((entityId, player, actionType, hand) -> {
       var npc = platform.npcTracker().npcById(entityId);
       if (npc != null) {
-        return switch (actionType) {
-          case ATTACK -> {
-            platform.eventManager().post(DefaultAttackNpcEvent.attackNpc(npc, player));
-            yield true;
-          }
+        switch (actionType) {
+          case ATTACK -> platform.eventManager().post(DefaultAttackNpcEvent.attackNpc(npc, player));
           case INTERACT -> {
             var convertedHand = HAND_CONVERTER.get(hand);
             platform.eventManager().post(DefaultInteractNpcEvent.interactNpc(npc, player, convertedHand));
-            yield true;
           }
-          default -> false;
-        };
+        }
+        return true;
       }
 
       return false;
