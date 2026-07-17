@@ -25,6 +25,7 @@
 package com.github.juliarn.npclib.minestom;
 
 import com.github.juliarn.npclib.api.log.PlatformLogger;
+import net.kyori.adventure.text.Component;
 import net.minestom.server.MinecraftServer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,21 +43,21 @@ public final class MinestomPlatformLogger implements PlatformLogger {
 
   @Override
   public void info(@NotNull String message) {
-    MinecraftServer.LOGGER.info(message);
+    MinecraftServer.LOGGER.info(Component.text(message));
   }
 
   @Override
   public void warning(@NotNull String message) {
-    MinecraftServer.LOGGER.warn(message);
+    MinecraftServer.LOGGER.warn(Component.text(message));
   }
 
   @Override
   public void error(@NotNull String message) {
-    MinecraftServer.LOGGER.error(message);
+    MinecraftServer.LOGGER.error(Component.text(message));
   }
 
   @Override
   public void error(@NotNull String message, @Nullable Throwable exception) {
-    MinecraftServer.LOGGER.error(message, exception);
+    MinecraftServer.LOGGER.error(Component.text(message), exception);
   }
 }

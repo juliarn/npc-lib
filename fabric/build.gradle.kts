@@ -34,12 +34,11 @@ configurations {
 
 dependencies {
   minecraft(libs.minecraft)
-  mappings(loom.officialMojangMappings())
 
-  modImplementation(libs.geantyref)
-  modImplementation(libs.fabricLoader)
-  modImplementation(platform(libs.fabricApiBom))
-  modImplementation(libs.fabricApiNetworkingV1)
+  implementation(libs.geantyref)
+  implementation(libs.fabricLoader)
+  implementation(platform(libs.fabricApiBom))
+  implementation(libs.fabricApiNetworkingV1)
 
   "shaded"(projects.npcLibApi)
   "shaded"(projects.npcLibCommon)
@@ -52,12 +51,7 @@ loom {
 tasks.shadowJar {
   exclude("META-INF/maven/**")
   configurations = setOf(project.configurations["shaded"])
-}
-
-tasks.remapJar {
-  dependsOn(tasks.shadowJar)
   archiveFileName = "npc-lib-mod.jar"
-  inputFile = tasks.shadowJar.flatMap { it.archiveFile }
 }
 
 tasks.compileJava {
