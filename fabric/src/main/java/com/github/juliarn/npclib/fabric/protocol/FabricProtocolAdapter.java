@@ -79,7 +79,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.Pose;
 import net.minecraft.world.item.ItemStack;
@@ -216,7 +216,7 @@ public final class FabricProtocolAdapter
     @NotNull Object value,
     int index
   ) {
-    // check if we need to convert the value before creating the meta object
+    // check if we need to convert the value before creating the metaobject
     var converter = SERIALIZER_CONVERTERS.get(type);
     if (converter != null) {
       type = converter.getKey();
@@ -246,7 +246,7 @@ public final class FabricProtocolAdapter
         pos.z(),
         pos.pitch(),
         pos.yaw(),
-        EntityType.PLAYER,
+        EntityTypes.PLAYER,
         0,
         Vec3.ZERO,
         pos.yaw());

@@ -386,20 +386,22 @@ final class PacketEventsPacketAdapter implements PlatformPacketAdapter<World, Pl
       Object player = event.getPlayer();
 
       int entityId;
-      InteractNpcEvent.Hand hand = null;
+      InteractNpcEvent.Hand hand;
       WrapperPlayClientInteractEntity.InteractAction action;
 
       if (event.getPacketType() == PacketType.Play.Client.ATTACK) {
         WrapperPlayClientAttack packet = new WrapperPlayClientAttack(event);
-        action = WrapperPlayClientInteractEntity.InteractAction.ATTACK;
         entityId = packet.getEntityId();
+        hand = InteractNpcEvent.Hand.MAIN_HAND;
+        action = WrapperPlayClientInteractEntity.InteractAction.ATTACK;
       } else if (event.getPacketType() == PacketType.Play.Client.INTERACT_ENTITY) {
         WrapperPlayClientInteractEntity packet = new WrapperPlayClientInteractEntity(event);
         entityId = packet.getEntityId();
         hand = Lazy.HAND_CONVERTER.get(packet.getHand());
-
         action = packet.getAction();
-        if (packet.getServerVersion().isNewerThanOrEquals(ServerVersion.V_26_1)) {
+
+        // special case for 26.1+: attack is now a separate packet, so this has to be interact
+        if (event.getServerVersion().isNewerThanOrEquals(ServerVersion.V_26_1)) {
           action = WrapperPlayClientInteractEntity.InteractAction.INTERACT;
         }
       } else {

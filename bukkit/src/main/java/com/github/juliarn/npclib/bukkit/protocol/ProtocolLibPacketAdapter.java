@@ -596,7 +596,6 @@ final class ProtocolLibPacketAdapter implements PlatformPacketAdapter<World, Pla
         if (MinecraftVersion.v26_1.atOrAbove()) {
           // mc 26.1: action does not exist anymore as there are two separate packets
           if (packet.getType() == PacketType.Play.Client.ATTACK) {
-            // attack packets always result in an attack action with the main hand
             action = EnumWrappers.EntityUseAction.ATTACK;
           } else {
             action = EnumWrappers.EntityUseAction.INTERACT;

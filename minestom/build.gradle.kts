@@ -26,6 +26,7 @@ dependencies {
   api(projects.npcLibApi)
   api(projects.npcLibCommon)
 
+  compileOnly(libs.slf4jApi)
   compileOnly(libs.minestom)
   implementation(libs.geantyref)
 }
