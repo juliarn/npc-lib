@@ -32,5 +32,17 @@ public interface PlatformVersionAccessor {
 
   int patch();
 
-  boolean atLeast(int major, int minor, int patch);
+  default boolean atLeast(int major, int minor, int patch) {
+    int majorCompare = Integer.compare(this.major(), major);
+    if (majorCompare != 0) {
+      return majorCompare > 0;
+    }
+
+    int minorCompare = Integer.compare(this.minor(), minor);
+    if (minorCompare != 0) {
+      return minorCompare > 0;
+    }
+
+    return this.patch() >= patch;
+  }
 }

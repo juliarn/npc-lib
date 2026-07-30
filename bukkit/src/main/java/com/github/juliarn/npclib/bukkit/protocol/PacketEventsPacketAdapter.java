@@ -64,6 +64,7 @@ import com.github.retrooper.packetevents.settings.PacketEventsSettings;
 import com.github.retrooper.packetevents.util.TimeStampMode;
 import com.github.retrooper.packetevents.util.adventure.AdventureSerializer;
 import com.github.retrooper.packetevents.wrapper.PacketWrapper;
+import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientAttack;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientInteractEntity;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerDestroyEntities;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityAnimation;
@@ -382,31 +383,49 @@ final class PacketEventsPacketAdapter implements PlatformPacketAdapter<World, Pl
 
     @Override
     public void onPacketPlayReceive(@NotNull PacketPlayReceiveEvent event) {
-      // check for an entity use packet
       Object player = event.getPlayer();
-      if (event.getPacketType() == PacketType.Play.Client.INTERACT_ENTITY) {
+
+      int entityId;
+      InteractNpcEvent.Hand hand;
+      WrapperPlayClientInteractEntity.InteractAction action;
+
+      if (event.getPacketType() == PacketType.Play.Client.ATTACK) {
+        WrapperPlayClientAttack packet = new WrapperPlayClientAttack(event);
+        entityId = packet.getEntityId();
+        hand = InteractNpcEvent.Hand.MAIN_HAND;
+        action = WrapperPlayClientInteractEntity.InteractAction.ATTACK;
+      } else if (event.getPacketType() == PacketType.Play.Client.INTERACT_ENTITY) {
         WrapperPlayClientInteractEntity packet = new WrapperPlayClientInteractEntity(event);
+        entityId = packet.getEntityId();
+        hand = Lazy.HAND_CONVERTER.get(packet.getHand());
+        action = packet.getAction();
 
-        // get the associated npc from the tracked entities
-        Npc<World, Player, ItemStack, Plugin> npc = this.platform.npcTracker().npcById(packet.getEntityId());
-        if (npc != null) {
-          // call the event
-          switch (packet.getAction()) {
-            case ATTACK:
-              this.platform.eventManager().post(DefaultAttackNpcEvent.attackNpc(npc, player));
-              break;
-            case INTERACT:
-              InteractNpcEvent.Hand hand = Lazy.HAND_CONVERTER.get(packet.getHand());
-              this.platform.eventManager().post(DefaultInteractNpcEvent.interactNpc(npc, player, hand));
-              break;
-            default:
-              // we don't handle INTERACT_AT as the client sends it alongside the interact packet (duplicate event call)
-              break;
-          }
-
-          // don't pass the packet to the server
-          event.setCancelled(true);
+        // special case for 26.1+: attack is now a separate packet, so this has to be interact
+        if (event.getServerVersion().isNewerThanOrEquals(ServerVersion.V_26_1)) {
+          action = WrapperPlayClientInteractEntity.InteractAction.INTERACT;
         }
+      } else {
+        return;
+      }
+
+      // get the associated npc from the tracked entities
+      Npc<World, Player, ItemStack, Plugin> npc = this.platform.npcTracker().npcById(entityId);
+      if (npc != null) {
+        // call the event
+        switch (action) {
+          case ATTACK:
+            this.platform.eventManager().post(DefaultAttackNpcEvent.attackNpc(npc, player));
+            break;
+          case INTERACT:
+            this.platform.eventManager().post(DefaultInteractNpcEvent.interactNpc(npc, player, hand));
+            break;
+          default:
+            // we don't handle INTERACT_AT as the client sends it alongside the interact packet
+            break;
+        }
+
+        // don't pass the packet to the server
+        event.setCancelled(true);
       }
     }
   }

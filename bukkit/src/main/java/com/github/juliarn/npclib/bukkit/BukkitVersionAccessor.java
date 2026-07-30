@@ -115,17 +115,4 @@ public final class BukkitVersionAccessor implements PlatformVersionAccessor {
   public int patch() {
     return this.patch;
   }
-
-  @Override
-  public boolean atLeast(int major, int minor, int patch) {
-    if (this.major != major) {
-      return this.major > major;
-    }
-
-    if (this.minor != minor) {
-      return this.minor > minor;
-    }
-
-    return this.patch >= patch;
-  }
 }

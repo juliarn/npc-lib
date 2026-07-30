@@ -1,37 +1,39 @@
 [versions]
 
 # plugins
-shadow = "9.3.2"
-spotless = "8.3.0"
+shadow = "9.6.0"
+spotless = "8.8.0"
 nexusPublish = "2.0.0"
-checkstyleTools = "13.3.0"
+checkstyleTools = "13.8.0"
 
 # general
-gson = "2.13.2"
+gson = "2.14.0"
+slf4j = "2.0.18"
 geantyref = "1.3.16"
 annotations = "26.1.0"
 netty = "4.1.117.Final"
 
 # platform api versions
 sponge = "10.0.0"
-paper = "1.21.11-R0.1-SNAPSHOT"
-minestom = "2026.03.03-1.21.11"
+paper = "26.2.build.62-beta"
+minestom = "2026.07.12-26.2"
 
 # fabric
-minecraft = "1.21.11"
-fabricLoom = "1.15.4"
-fabricLoader = "0.18.4"
-fabricApi = "0.141.3+1.21.11"
+minecraft = "26.2"
+fabricLoom = "1.17.16"
+fabricLoader = "0.19.3"
+fabricApi = "0.155.2+26.2"
 
 # platform extensions
-packetEvents = "2.11.2"
-protocolLib = "9417eee444"
+packetEvents = "2.13.0"
+protocolLib = "8eeb82f89d"
 
 
 [libraries]
 
 # general
 netty = { group = "io.netty", name = "netty-buffer", version.ref = "netty" }
+slf4jApi = { group = "org.slf4j", name = "slf4j-api", version.ref = "slf4j" }
 gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
 annotations = { group = "org.jetbrains", name = "annotations", version.ref = "annotations" }
 geantyref = { group = "io.leangen.geantyref", name = "geantyref", version.ref = "geantyref" }
@@ -58,5 +60,5 @@ checkstyleTools = { group = "com.puppycrawl.tools", name = "checkstyle", version
 
 shadow = { id = "com.gradleup.shadow", version.ref = "shadow" }
 spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
-fabricLoom = { id = "net.fabricmc.fabric-loom-remap", version.ref = "fabricLoom" }
+fabricLoom = { id = "net.fabricmc.fabric-loom", version.ref = "fabricLoom" }
 nexusPublish = { id = "io.github.gradle-nexus.publish-plugin", version.ref = "nexusPublish" }

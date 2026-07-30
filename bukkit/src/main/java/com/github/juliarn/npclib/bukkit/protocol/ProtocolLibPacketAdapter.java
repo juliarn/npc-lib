@@ -572,7 +572,10 @@ final class ProtocolLibPacketAdapter implements PlatformPacketAdapter<World, Pla
     private final Platform<World, Player, ItemStack, Plugin> platform;
 
     public NpcUsePacketAdapter(@NotNull Platform<World, Player, ItemStack, Plugin> platform) {
-      super(PacketAdapter.params(platform.extension(), PacketType.Play.Client.USE_ENTITY).optionAsync());
+      super(PacketAdapter.params(
+        platform.extension(),
+        PacketType.Play.Client.USE_ENTITY,
+        PacketType.Play.Client.ATTACK).optionAsync());
       this.platform = platform;
     }
 
@@ -590,7 +593,15 @@ final class ProtocolLibPacketAdapter implements PlatformPacketAdapter<World, Pla
         EnumWrappers.EntityUseAction action;
         EnumWrappers.Hand hand = EnumWrappers.Hand.MAIN_HAND;
 
-        if (MinecraftVersion.CAVES_CLIFFS_1.atOrAbove()) {
+        if (MinecraftVersion.v26_1.atOrAbove()) {
+          // mc 26.1: action does not exist anymore as there are two separate packets
+          if (packet.getType() == PacketType.Play.Client.ATTACK) {
+            action = EnumWrappers.EntityUseAction.ATTACK;
+          } else {
+            action = EnumWrappers.EntityUseAction.INTERACT;
+            hand = packet.getHands().read(0);
+          }
+        } else if (MinecraftVersion.CAVES_CLIFFS_1.atOrAbove()) {
           // mc 1.17: hand & action are now in an internal wrapper class
           WrappedEnumEntityUseAction useAction = packet.getEnumEntityUseActions().read(0);
           action = useAction.getAction();

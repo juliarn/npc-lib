@@ -68,6 +68,7 @@ import net.minestom.server.entity.PlayerHand;
 import net.minestom.server.event.player.PlayerPacketEvent;
 import net.minestom.server.instance.Instance;
 import net.minestom.server.item.ItemStack;
+import net.minestom.server.network.packet.client.play.ClientAttackPacket;
 import net.minestom.server.network.packet.client.play.ClientInteractEntityPacket;
 import net.minestom.server.network.packet.server.common.PluginMessagePacket;
 import net.minestom.server.network.packet.server.play.DestroyEntitiesPacket;
@@ -368,17 +369,17 @@ public final class MinestomProtocolAdapter implements PlatformPacketAdapter<Inst
   @Override
   public void initialize(@NotNull Platform<Instance, Player, ItemStack, Object> platform) {
     MinecraftServer.getGlobalEventHandler().addListener(PlayerPacketEvent.class, event -> {
-      if (event.getPacket() instanceof ClientInteractEntityPacket packet) {
-        Npc<Instance, Player, ItemStack, Object> npc = platform.npcTracker().npcById(packet.targetId());
+      if (event.getPacket() instanceof ClientAttackPacket(int targetId)) {
+        Npc<Instance, Player, ItemStack, Object> npc = platform.npcTracker().npcById(targetId);
         if (npc != null) {
-          if (packet.type() instanceof ClientInteractEntityPacket.Attack) {
-            platform.eventManager().post(DefaultAttackNpcEvent.attackNpc(npc, event.getPlayer()));
-          } else if (packet.type() instanceof ClientInteractEntityPacket.Interact(var hand)) {
-            var convertedHand = HAND_CONVERTER.get(hand);
-            platform.eventManager().post(DefaultInteractNpcEvent.interactNpc(npc, event.getPlayer(), convertedHand));
-          }
-
-          // don't pass the packet to the server
+          platform.eventManager().post(DefaultAttackNpcEvent.attackNpc(npc, event.getPlayer()));
+          event.setCancelled(true);
+        }
+      } else if (event.getPacket() instanceof ClientInteractEntityPacket(int targetId, PlayerHand hand, _, _)) {
+        Npc<Instance, Player, ItemStack, Object> npc = platform.npcTracker().npcById(targetId);
+        if (npc != null) {
+          var convertedHand = HAND_CONVERTER.get(hand);
+          platform.eventManager().post(DefaultInteractNpcEvent.interactNpc(npc, event.getPlayer(), convertedHand));
           event.setCancelled(true);
         }
       }

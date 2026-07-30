@@ -79,7 +79,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.Pose;
 import net.minecraft.world.item.ItemStack;
@@ -216,7 +216,7 @@ public final class FabricProtocolAdapter
     @NotNull Object value,
     int index
   ) {
-    // check if we need to convert the value before creating the meta object
+    // check if we need to convert the value before creating the metaobject
     var converter = SERIALIZER_CONVERTERS.get(type);
     if (converter != null) {
       type = converter.getKey();
@@ -246,7 +246,7 @@ public final class FabricProtocolAdapter
         pos.z(),
         pos.pitch(),
         pos.yaw(),
-        EntityType.PLAYER,
+        EntityTypes.PLAYER,
         0,
         Vec3.ZERO,
         pos.yaw());
@@ -354,7 +354,7 @@ public final class FabricProtocolAdapter
       var customPayload = new ByteArrayCustomPayload(payloadType, payload);
 
       // ensure that the payload codec is registered for the payload type
-      var payloadTypeRegistry = PayloadTypeRegistryImpl.PLAY_S2C;
+      var payloadTypeRegistry = PayloadTypeRegistryImpl.CLIENTBOUND_PLAY;
       var registered = payloadTypeRegistry.get(channelLocation);
       if (registered == null) {
         payloadTypeRegistry.register(payloadType, ByteArrayCustomPayload.CODEC);
@@ -397,24 +397,18 @@ public final class FabricProtocolAdapter
 
   @Override
   public void initialize(@NotNull Platform<ServerLevel, ServerPlayer, ItemStack, Object> platform) {
-    FabricActionControllerEvents.SERVER_PLAYER_ENTITY_INTERACT.register((entityId, player, actionType, hand) -> {
+    FabricActionControllerEvents.SERVER_PLAYER_ENTITY_INTERACT.register((entityId, isAttack, player, hand) -> {
       var npc = platform.npcTracker().npcById(entityId);
-      if (npc != null) {
-        return switch (actionType) {
-          case ATTACK -> {
-            platform.eventManager().post(DefaultAttackNpcEvent.attackNpc(npc, player));
-            yield true;
-          }
-          case INTERACT -> {
-            var convertedHand = HAND_CONVERTER.get(hand);
-            platform.eventManager().post(DefaultInteractNpcEvent.interactNpc(npc, player, convertedHand));
-            yield true;
-          }
-          default -> false;
-        };
+      if (npc == null) {
+        return false;
       }
 
-      return false;
+      var convertedHand = HAND_CONVERTER.get(hand);
+      var event = isAttack
+        ? DefaultAttackNpcEvent.attackNpc(npc, player)
+        : DefaultInteractNpcEvent.interactNpc(npc, player, convertedHand);
+      platform.eventManager().post(event);
+      return true;
     });
   }
 }

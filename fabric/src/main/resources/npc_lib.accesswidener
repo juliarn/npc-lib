@@ -1,4 +1,4 @@
-accessWidener	v2 named
+accessWidener	v2 official
 accessible    field     net/minecraft/network/protocol/game/ClientboundPlayerInfoUpdatePacket     entries     Ljava/util/List;
 mutable       field     net/minecraft/network/protocol/game/ClientboundPlayerInfoUpdatePacket     entries     Ljava/util/List;
 
@@ -7,10 +7,3 @@ mutable       field     net/minecraft/network/protocol/game/ClientboundRotateHea
 
 accessible    field     net/minecraft/network/protocol/game/ClientboundAnimatePacket              id          I
 mutable       field     net/minecraft/network/protocol/game/ClientboundAnimatePacket              id          I
-
-accessible    class     net/minecraft/network/protocol/game/ServerboundInteractPacket$Action
-accessible    class     net/minecraft/network/protocol/game/ServerboundInteractPacket$ActionType
-accessible    class     net/minecraft/network/protocol/game/ServerboundInteractPacket$InteractionAction
-accessible    field     net/minecraft/network/protocol/game/ServerboundInteractPacket                         entityId    I
-accessible    field     net/minecraft/network/protocol/game/ServerboundInteractPacket$InteractionAction       hand        Lnet/minecraft/world/InteractionHand;
-accessible    field     net/minecraft/network/protocol/game/ServerboundInteractPacket                         action      Lnet/minecraft/network/protocol/game/ServerboundInteractPacket$Action;

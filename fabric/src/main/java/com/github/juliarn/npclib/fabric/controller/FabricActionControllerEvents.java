@@ -26,7 +26,6 @@ package com.github.juliarn.npclib.fabric.controller;
 
 import net.fabricmc.fabric.api.event.Event;
 import net.fabricmc.fabric.api.event.EventFactory;
-import net.minecraft.network.protocol.game.ServerboundInteractPacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
@@ -152,10 +151,6 @@ public interface FabricActionControllerEvents {
   @FunctionalInterface
   interface ServerPlayerEntityInteract {
 
-    boolean interact(
-      int entityId,
-      @NotNull ServerPlayer player,
-      @NotNull ServerboundInteractPacket.ActionType actionType,
-      @NotNull InteractionHand hand);
+    boolean interact(int entityId, boolean isAttack, @NotNull ServerPlayer player, @NotNull InteractionHand hand);
   }
 }

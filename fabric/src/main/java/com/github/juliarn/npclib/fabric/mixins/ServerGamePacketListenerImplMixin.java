@@ -25,6 +25,7 @@
 package com.github.juliarn.npclib.fabric.mixins;
 
 import com.github.juliarn.npclib.fabric.controller.FabricActionControllerEvents;
+import net.minecraft.network.protocol.game.ServerboundAttackPacket;
 import net.minecraft.network.protocol.game.ServerboundInteractPacket;
 import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
 import net.minecraft.network.protocol.game.ServerboundMoveVehiclePacket;
@@ -80,7 +81,7 @@ public abstract class ServerGamePacketListenerImplMixin {
       target = "Lnet/minecraft/network/protocol/game/ServerboundMovePlayerPacket;getYRot(F)F"
     ),
     slice = @Slice(
-      from = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerPlayer;hasClientLoaded()Z"),
+      from = @At(value = "INVOKE", target = "Lnet/minecraft/server/network/ServerGamePacketListenerImpl;hasClientLoaded()Z"),
       to = @At(value = "INVOKE", target = "Lnet/minecraft/server/network/ServerGamePacketListenerImpl;updateAwaitingTeleport()Z")
     )
   )
@@ -153,20 +154,25 @@ public abstract class ServerGamePacketListenerImplMixin {
   public void npc_lib$handleInteract(ServerboundInteractPacket packet, CallbackInfo ci) {
     var player = this.getPlayer();
     var invoker = FabricActionControllerEvents.SERVER_PLAYER_ENTITY_INTERACT.invoker();
+    if (invoker.interact(packet.entityId(), false, player, packet.hand())) {
+      ci.cancel();
+    }
+  }
 
-    // call the interact event if the action is either interact or attack
-    var action = packet.action;
-    var actionType = action.getType();
-    if (action instanceof ServerboundInteractPacket.InteractionAction interactionAction) {
-      var hand = interactionAction.hand;
-      if (invoker.interact(packet.entityId, player, ServerboundInteractPacket.ActionType.INTERACT, hand)) {
-        ci.cancel();
-      }
-    } else if (actionType == ServerboundInteractPacket.ActionType.ATTACK) {
-      var hand = InteractionHand.MAIN_HAND;
-      if (invoker.interact(packet.entityId, player, ServerboundInteractPacket.ActionType.ATTACK, hand)) {
-        ci.cancel();
-      }
+  @Inject(
+    method = "handleAttack",
+    at = @At(
+      value = "INVOKE",
+      shift = At.Shift.AFTER,
+      target = "Lnet/minecraft/server/network/ServerGamePacketListenerImpl;hasClientLoaded()Z"
+    ),
+    cancellable = true
+  )
+  public void npc_lib$handleAttack(ServerboundAttackPacket packet, CallbackInfo ci) {
+    var player = this.getPlayer();
+    var invoker = FabricActionControllerEvents.SERVER_PLAYER_ENTITY_INTERACT.invoker();
+    if (invoker.interact(packet.entityId(), true, player, InteractionHand.MAIN_HAND)) {
+      ci.cancel();
     }
   }
 }
