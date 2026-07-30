@@ -397,20 +397,18 @@ public final class FabricProtocolAdapter
 
   @Override
   public void initialize(@NotNull Platform<ServerLevel, ServerPlayer, ItemStack, Object> platform) {
-    FabricActionControllerEvents.SERVER_PLAYER_ENTITY_INTERACT.register((entityId, player, actionType, hand) -> {
+    FabricActionControllerEvents.SERVER_PLAYER_ENTITY_INTERACT.register((entityId, isAttack, player, hand) -> {
       var npc = platform.npcTracker().npcById(entityId);
-      if (npc != null) {
-        switch (actionType) {
-          case ATTACK -> platform.eventManager().post(DefaultAttackNpcEvent.attackNpc(npc, player));
-          case INTERACT -> {
-            var convertedHand = HAND_CONVERTER.get(hand);
-            platform.eventManager().post(DefaultInteractNpcEvent.interactNpc(npc, player, convertedHand));
-          }
-        }
-        return true;
+      if (npc == null) {
+        return false;
       }
 
-      return false;
+      var convertedHand = HAND_CONVERTER.get(hand);
+      var event = isAttack
+        ? DefaultAttackNpcEvent.attackNpc(npc, player)
+        : DefaultInteractNpcEvent.interactNpc(npc, player, convertedHand);
+      platform.eventManager().post(event);
+      return true;
     });
   }
 }

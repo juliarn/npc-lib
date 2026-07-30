@@ -154,14 +154,7 @@ public abstract class ServerGamePacketListenerImplMixin {
   public void npc_lib$handleInteract(ServerboundInteractPacket packet, CallbackInfo ci) {
     var player = this.getPlayer();
     var invoker = FabricActionControllerEvents.SERVER_PLAYER_ENTITY_INTERACT.invoker();
-
-    var hand = packet.hand();
-    if (invoker.interact(
-      packet.entityId(),
-      player,
-      FabricActionControllerEvents.ServerPlayerEntityInteract.ActionType.INTERACT,
-      hand
-    )) {
+    if (invoker.interact(packet.entityId(), false, player, packet.hand())) {
       ci.cancel();
     }
   }
@@ -178,13 +171,7 @@ public abstract class ServerGamePacketListenerImplMixin {
   public void npc_lib$handleAttack(ServerboundAttackPacket packet, CallbackInfo ci) {
     var player = this.getPlayer();
     var invoker = FabricActionControllerEvents.SERVER_PLAYER_ENTITY_INTERACT.invoker();
-
-    if (invoker.interact(
-      packet.entityId(),
-      player,
-      FabricActionControllerEvents.ServerPlayerEntityInteract.ActionType.ATTACK,
-      InteractionHand.MAIN_HAND
-    )) {
+    if (invoker.interact(packet.entityId(), true, player, InteractionHand.MAIN_HAND)) {
       ci.cancel();
     }
   }
