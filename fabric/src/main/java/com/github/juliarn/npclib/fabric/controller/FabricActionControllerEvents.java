@@ -151,10 +151,6 @@ public interface FabricActionControllerEvents {
   @FunctionalInterface
   interface ServerPlayerEntityInteract {
 
-    boolean interact(
-      int entityId,
-      boolean isAttack,
-      @NotNull ServerPlayer player,
-      @NotNull InteractionHand hand);
+    boolean interact(int entityId, boolean isAttack, @NotNull ServerPlayer player, @NotNull InteractionHand hand);
   }
 }
