@@ -76,10 +76,5 @@ public final class FabricVersionAccessor {
     public int patch() {
       return safeGetPart(2, 0);
     }
-
-    @Override
-    public boolean atLeast(int major, int minor, int patch) {
-      return this.major() >= major && this.minor() >= major && this.patch() >= patch;
-    }
   }
 }
