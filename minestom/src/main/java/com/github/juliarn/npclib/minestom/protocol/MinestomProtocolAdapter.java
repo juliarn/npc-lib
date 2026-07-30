@@ -373,7 +373,6 @@ public final class MinestomProtocolAdapter implements PlatformPacketAdapter<Inst
         Npc<Instance, Player, ItemStack, Object> npc = platform.npcTracker().npcById(targetId);
         if (npc != null) {
           platform.eventManager().post(DefaultAttackNpcEvent.attackNpc(npc, event.getPlayer()));
-
           event.setCancelled(true);
         }
       } else if (event.getPacket() instanceof ClientInteractEntityPacket(int targetId, PlayerHand hand, _, _)) {
@@ -381,7 +380,6 @@ public final class MinestomProtocolAdapter implements PlatformPacketAdapter<Inst
         if (npc != null) {
           var convertedHand = HAND_CONVERTER.get(hand);
           platform.eventManager().post(DefaultInteractNpcEvent.interactNpc(npc, event.getPlayer(), convertedHand));
-
           event.setCancelled(true);
         }
       }
