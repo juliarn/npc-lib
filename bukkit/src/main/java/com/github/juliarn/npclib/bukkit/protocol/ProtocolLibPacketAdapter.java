@@ -79,6 +79,7 @@ import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
+import org.bukkit.util.Vector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -326,6 +327,11 @@ final class ProtocolLibPacketAdapter implements PlatformPacketAdapter<World, Pla
       // metadata if on an old server version (< 15)
       if (MinecraftVersion.VILLAGE_UPDATE.isAtLeast(SERVER_VERSION)) {
         container.getDataWatcherModifier().write(0, new WrappedDataWatcher());
+      }
+
+      // 1.21.9+: write the movement vector, prevents a rare ProtocolLib bug where the vector becomes null
+      if (MinecraftVersion.v1_21_9.atOrAbove()) {
+        container.getVectors().write(0, new Vector());
       }
 
       // send the packet without notifying any bound packet listeners
