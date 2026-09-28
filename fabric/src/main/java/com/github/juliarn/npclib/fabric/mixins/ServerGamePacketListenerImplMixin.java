@@ -30,7 +30,7 @@ import net.minecraft.network.protocol.game.ServerboundInteractPacket;
 import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
 import net.minecraft.network.protocol.game.ServerboundMoveVehiclePacket;
 import net.minecraft.network.protocol.game.ServerboundPlayerInputPacket;
-import net.minecraft.network.protocol.game.ServerboundSwingPacket;
+import net.minecraft.network.protocol.game.ServerboundPunchPacket;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.minecraft.world.InteractionHand;
@@ -67,8 +67,8 @@ public abstract class ServerGamePacketListenerImplMixin {
     }
   }
 
-  @Inject(method = "handleAnimate", at = @At("TAIL"))
-  public void npc_lib$handleAnimate(ServerboundSwingPacket packet, CallbackInfo ci) {
+  @Inject(method = "handlePunch", at = @At("TAIL"))
+  public void npc_lib$handlePunch(ServerboundPunchPacket packet, CallbackInfo ci) {
     var player = this.getPlayer();
     var invoker = FabricActionControllerEvents.SERVER_PLAYER_HAND_SWING.invoker();
     invoker.swingHand(player);
@@ -120,17 +120,18 @@ public abstract class ServerGamePacketListenerImplMixin {
   public void npc_lib$handleMoveVehicle(ServerboundMoveVehiclePacket packet, CallbackInfo ci) {
     var player = this.getPlayer();
     var rootVehicle = player.getRootVehicle();
+    var newPosAndRot = packet.movingTo();
 
     // get the target position, set to null in case it didn't change
     var posFrom = rootVehicle.position();
-    var posTo = packet.position();
+    var posTo = newPosAndRot.position();
     if (posTo.equals(posFrom)) {
       posTo = null;
     }
 
     // get the target rotation, set to null in case it didn't change
     var rotFrom = rootVehicle.getRotationVector();
-    var rotTo = new Vec2(packet.xRot(), packet.yRot());
+    var rotTo = new Vec2(newPosAndRot.xRot(), newPosAndRot.yRot());
     if (rotTo.equals(rotFrom)) {
       rotTo = null;
     }

@@ -26,20 +26,18 @@ package com.github.juliarn.npclib.api.protocol.enums;
 
 public enum EntityAnimation {
 
-  SWING_MAIN_ARM(0),
-  TAKE_DAMAGE(1),
-  LEAVE_BED(2),
-  SWING_OFF_HAND(3),
-  CRITICAL_EFFECT(4),
-  MAGIC_CRITICAL_EFFECT(5);
+  SWING_MAIN_ARM,
+  TAKE_DAMAGE,
+  LEAVE_BED,
+  SWING_OFF_HAND,
+  CRITICAL_EFFECT,
+  MAGIC_CRITICAL_EFFECT;
 
-  private final int id;
-
-  EntityAnimation(int id) {
-    this.id = id;
-  }
-
+  /**
+   * @deprecated ids are different starting with 26.3, don't use them.
+   */
+  @Deprecated
   public int id() {
-    return this.id;
+    return this.ordinal();
   }
 }

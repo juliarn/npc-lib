@@ -46,12 +46,12 @@ public abstract class PlayerListMixin {
   @Inject(method = "placeNewPlayer", at = @At("TAIL"))
   public void npc_lib$placeNewPlayer(
     Connection connection,
-    ServerPlayer serverPlayer,
-    CommonListenerCookie commonListenerCookie,
+    ServerPlayer player,
+    CommonListenerCookie cookie,
     CallbackInfo ci
   ) {
-    var newLevel = serverPlayer.level();
+    var newLevel = player.level();
     var invoker = FabricActionControllerEvents.SERVER_PLAYER_LEVEL_CHANGE.invoker();
-    invoker.levelChange(serverPlayer, null, newLevel);
+    invoker.levelChange(player, null, newLevel);
   }
 }
