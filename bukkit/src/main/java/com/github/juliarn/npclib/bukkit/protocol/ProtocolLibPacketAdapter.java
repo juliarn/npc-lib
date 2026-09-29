@@ -329,7 +329,9 @@ final class ProtocolLibPacketAdapter implements PlatformPacketAdapter<World, Pla
         container.getDataWatcherModifier().write(0, new WrappedDataWatcher());
       }
 
-      // 1.21.9+: write the movement vector, prevents a rare ProtocolLib bug where the vector becomes null
+      // 1.21.9+: write the movement vector, prevents a rare
+      // ProtocolLib bug where the vector becomes null depending
+      // on the order the init constructors are selected
       if (MinecraftVersion.v1_21_9.atOrAbove()) {
         container.getVectors().write(0, new Vector());
       }
