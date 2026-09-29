@@ -72,6 +72,7 @@ import net.minecraft.network.protocol.game.ClientboundRemoveEntitiesPacket;
 import net.minecraft.network.protocol.game.ClientboundRotateHeadPacket;
 import net.minecraft.network.protocol.game.ClientboundSetEntityDataPacket;
 import net.minecraft.network.protocol.game.ClientboundSetEquipmentPacket;
+import net.minecraft.network.protocol.game.ClientboundSwingAnimationPacket;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.resources.Identifier;
@@ -83,6 +84,7 @@ import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.Pose;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.SwingAnimation;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
@@ -322,7 +324,20 @@ public final class FabricProtocolAdapter
     @NotNull EntityAnimation animation
   ) {
     return (player, npc) -> {
-      var packet = new ClientboundAnimatePacket(player, animation.id());
+      if (animation == EntityAnimation.SWING_MAIN_ARM || animation == EntityAnimation.SWING_OFF_HAND) {
+        var hand = animation == EntityAnimation.SWING_MAIN_ARM ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND;
+        var packet = new ClientboundSwingAnimationPacket(npc.entityId(), hand, SwingAnimation.DEFAULT);
+        player.connection.send(packet);
+        return;
+      }
+
+      var animationId = switch (animation) {
+        case LEAVE_BED -> ClientboundAnimatePacket.WAKE_UP;
+        case MAGIC_CRITICAL_EFFECT -> ClientboundAnimatePacket.MAGIC_CRITICAL_HIT;
+        case CRITICAL_EFFECT, TAKE_DAMAGE -> ClientboundAnimatePacket.CRITICAL_HIT;
+        case SWING_MAIN_ARM, SWING_OFF_HAND -> throw new AssertionError("Must not reach here");
+      };
+      var packet = new ClientboundAnimatePacket(player, animationId);
       packet.id = npc.entityId();
       player.connection.send(packet);
     };

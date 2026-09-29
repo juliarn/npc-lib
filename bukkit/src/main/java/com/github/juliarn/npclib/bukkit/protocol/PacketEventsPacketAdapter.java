@@ -48,6 +48,7 @@ import com.github.retrooper.packetevents.event.SimplePacketListenerAbstract;
 import com.github.retrooper.packetevents.event.simple.PacketPlayReceiveEvent;
 import com.github.retrooper.packetevents.manager.player.PlayerManager;
 import com.github.retrooper.packetevents.manager.server.ServerVersion;
+import com.github.retrooper.packetevents.protocol.component.builtin.item.ItemSwingAnimation;
 import com.github.retrooper.packetevents.protocol.entity.data.EntityData;
 import com.github.retrooper.packetevents.protocol.entity.data.EntityDataType;
 import com.github.retrooper.packetevents.protocol.entity.data.EntityDataTypes;
@@ -79,6 +80,7 @@ import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPl
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPluginMessage;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSpawnEntity;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSpawnPlayer;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSwingAnimation;
 import com.google.common.collect.ImmutableMap;
 import io.github.retrooper.packetevents.factory.spigot.SpigotPacketEventsBuilder;
 import io.github.retrooper.packetevents.util.SpigotReflectionUtil;
@@ -104,7 +106,6 @@ final class PacketEventsPacketAdapter implements PlatformPacketAdapter<World, Pl
 
   static final PacketEventsPacketAdapter INSTANCE = new PacketEventsPacketAdapter();
 
-  @SuppressWarnings("UnstableApiUsage") // fine for now
   private static final PacketEventsSettings PACKET_EVENTS_SETTINGS = new PacketEventsSettings()
     .debug(false)
     .checkForUpdates(false)
@@ -114,7 +115,6 @@ final class PacketEventsPacketAdapter implements PlatformPacketAdapter<World, Pl
   private static final Type OPTIONAL_CHAT_COMPONENT_TYPE = TypeFactory.parameterizedClass(
     Optional.class,
     net.kyori.adventure.text.Component.class);
-
 
   // lazy initialized, then never null again
   private ServerVersion serverVersion;
@@ -274,12 +274,28 @@ final class PacketEventsPacketAdapter implements PlatformPacketAdapter<World, Pl
     @NotNull EntityAnimation animation
   ) {
     return (player, npc) -> {
-      // EntityAnimation (https://wiki.vg/Protocol#Entity_Animation_.28clientbound.29)
-      WrapperPlayServerEntityAnimation.EntityAnimationType animationType
-        = Lazy.ENTITY_ANIMATION_CONVERTER.get(animation);
-      PacketWrapper<?> wrapper = new WrapperPlayServerEntityAnimation(npc.entityId(), animationType);
+      if (this.serverVersion.isNewerThanOrEquals(ServerVersion.V_26_3)
+        && (animation == EntityAnimation.SWING_MAIN_ARM || animation == EntityAnimation.SWING_OFF_HAND)) {
+        // main-/offhand swing is a separate packet
+        InteractionHand hand =
+          animation == EntityAnimation.SWING_MAIN_ARM ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND;
+        PacketWrapper<?> wrapper = new WrapperPlayServerSwingAnimation(
+          npc.entityId(),
+          hand,
+          Lazy.DEFAULT_SWING_ANIMATION);
+        this.packetPlayerManager.sendPacketSilently(player, wrapper);
+        return;
+      }
 
-      // send the packet without notifying any listeners
+      // remap TAKE_DAMAGE to CRITICAL_EFFECT as it was removed in 1.19.3
+      EntityAnimation finalAnimation = animation;
+      if (this.serverVersion.isNewerThanOrEquals(ServerVersion.V_1_19_3) && animation == EntityAnimation.TAKE_DAMAGE) {
+        finalAnimation = EntityAnimation.CRITICAL_EFFECT;
+      }
+
+      WrapperPlayServerEntityAnimation.EntityAnimationType animationType
+        = Lazy.ENTITY_ANIMATION_CONVERTER.get(finalAnimation);
+      PacketWrapper<?> wrapper = new WrapperPlayServerEntityAnimation(npc.entityId(), animationType);
       this.packetPlayerManager.sendPacketSilently(player, wrapper);
     };
   }
@@ -449,6 +465,10 @@ final class PacketEventsPacketAdapter implements PlatformPacketAdapter<World, Pl
       WrapperPlayServerPlayerInfoUpdate.Action.UPDATE_LATENCY,
       WrapperPlayServerPlayerInfoUpdate.Action.UPDATE_GAME_MODE,
       WrapperPlayServerPlayerInfoUpdate.Action.UPDATE_DISPLAY_NAME);
+
+    // default item swing animation (since 26.3)
+    private static final ItemSwingAnimation DEFAULT_SWING_ANIMATION =
+      new ItemSwingAnimation(ItemSwingAnimation.Type.WHACK, 6);
 
     static {
       // associate item slots actions with their respective packet events enum

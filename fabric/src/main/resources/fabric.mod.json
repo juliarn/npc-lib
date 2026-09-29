@@ -19,8 +19,8 @@
   "accessWidener": "npc_lib.accesswidener",
   "depends": {
     "fabricloader": ">=0.17.0",
-    "minecraft": "~26.2",
-    "java": ">=21",
+    "minecraft": "~26.3",
+    "java": ">=25",
     "fabric-networking-api-v1": "*"
   }
 }

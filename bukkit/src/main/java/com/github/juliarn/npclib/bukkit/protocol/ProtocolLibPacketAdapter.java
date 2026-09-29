@@ -27,9 +27,11 @@ package com.github.juliarn.npclib.bukkit.protocol;
 import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.ProtocolManager;
+import com.comphenix.protocol.events.InternalStructure;
 import com.comphenix.protocol.events.PacketAdapter;
 import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.events.PacketEvent;
+import com.comphenix.protocol.reflect.StructureModifier;
 import com.comphenix.protocol.utility.MinecraftReflection;
 import com.comphenix.protocol.utility.MinecraftVersion;
 import com.comphenix.protocol.wrappers.EnumWrappers;
@@ -77,6 +79,7 @@ import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
+import org.bukkit.util.Vector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -92,6 +95,7 @@ final class ProtocolLibPacketAdapter implements PlatformPacketAdapter<World, Pla
   private static final MinecraftVersion SERVER_VERSION = MinecraftVersion.fromServerVersion(Bukkit.getVersion());
 
   private static final EnumMap<EntityPose, Object> ENTITY_POSE_CONVERTER;
+  private static final EnumMap<EntityAnimation, Integer> ENTITY_ANIMATION_ID_LOOKUP;
   private static final EnumMap<ItemSlot, EnumWrappers.ItemSlot> ITEM_SLOT_CONVERTER;
   private static final EnumMap<EnumWrappers.Hand, InteractNpcEvent.Hand> HAND_CONVERTER;
 
@@ -105,6 +109,9 @@ final class ProtocolLibPacketAdapter implements PlatformPacketAdapter<World, Pla
     EnumWrappers.PlayerInfoAction.UPDATE_LATENCY,
     EnumWrappers.PlayerInfoAction.UPDATE_GAME_MODE,
     EnumWrappers.PlayerInfoAction.UPDATE_DISPLAY_NAME);
+
+  // net.minecraft.world.item.SwingAnimationType.WHACK (since 26.3)
+  private static final Enum<?> WHACK_ANIMATION_TYPE;
 
   static {
     // associate item slots with their respective protocol lib enum
@@ -193,6 +200,33 @@ final class ProtocolLibPacketAdapter implements PlatformPacketAdapter<World, Pla
           }
         })
       .build();
+
+    // associate the entity animation with their respective id
+    ENTITY_ANIMATION_ID_LOOKUP = new EnumMap<>(EntityAnimation.class);
+    ENTITY_ANIMATION_ID_LOOKUP.put(EntityAnimation.SWING_MAIN_ARM, 0);
+    ENTITY_ANIMATION_ID_LOOKUP.put(EntityAnimation.TAKE_DAMAGE, 1);
+    ENTITY_ANIMATION_ID_LOOKUP.put(EntityAnimation.LEAVE_BED, 2);
+    ENTITY_ANIMATION_ID_LOOKUP.put(EntityAnimation.SWING_OFF_HAND, 3);
+    ENTITY_ANIMATION_ID_LOOKUP.put(EntityAnimation.CRITICAL_EFFECT, 4);
+    ENTITY_ANIMATION_ID_LOOKUP.put(EntityAnimation.MAGIC_CRITICAL_EFFECT, 5);
+    if (MinecraftVersion.FEATURE_PREVIEW_UPDATE.atOrAbove()) {
+      // 1.19.3+: TAKE_DAMAGE was removed, use CRITICAL_EFFECT instead
+      ENTITY_ANIMATION_ID_LOOKUP.put(EntityAnimation.TAKE_DAMAGE, 4);
+    }
+    if (MinecraftVersion.v26_3.atOrAbove()) {
+      // 26.3+: SWING_MAIN_HAND/SWING_OFF_HAND were removed, all ids were shifted
+      ENTITY_ANIMATION_ID_LOOKUP.put(EntityAnimation.LEAVE_BED, 0);
+      ENTITY_ANIMATION_ID_LOOKUP.put(EntityAnimation.TAKE_DAMAGE, 1);
+      ENTITY_ANIMATION_ID_LOOKUP.put(EntityAnimation.CRITICAL_EFFECT, 1);
+      ENTITY_ANIMATION_ID_LOOKUP.put(EntityAnimation.MAGIC_CRITICAL_EFFECT, 2);
+      ENTITY_ANIMATION_ID_LOOKUP.remove(EntityAnimation.SWING_MAIN_ARM);
+      ENTITY_ANIMATION_ID_LOOKUP.remove(EntityAnimation.SWING_OFF_HAND);
+    }
+
+    // WHACK animation type
+    Class<?> swingAnimType = MinecraftReflection.getNullableNMS("world.item.SwingAnimationType");
+    //noinspection unchecked,rawtypes
+    WHACK_ANIMATION_TYPE = swingAnimType == null ? null : Enum.valueOf((Class<? extends Enum>) swingAnimType, "WHACK");
   }
 
   // MonotonicNonNull, lazily initialized
@@ -295,6 +329,13 @@ final class ProtocolLibPacketAdapter implements PlatformPacketAdapter<World, Pla
         container.getDataWatcherModifier().write(0, new WrappedDataWatcher());
       }
 
+      // 1.21.9+: write the movement vector, prevents a rare
+      // ProtocolLib bug where the vector becomes null depending
+      // on the order the init constructors are selected
+      if (MinecraftVersion.v1_21_9.atOrAbove()) {
+        container.getVectors().write(0, new Vector());
+      }
+
       // send the packet without notifying any bound packet listeners
       PROTOCOL_MANAGER.sendServerPacket(player, container, false);
     };
@@ -354,10 +395,8 @@ final class ProtocolLibPacketAdapter implements PlatformPacketAdapter<World, Pla
       PacketContainer container = new PacketContainer(PacketType.Play.Server.PLAYER_INFO);
 
       // action
-      int playerInfoDataIndex = 0;
       if (MinecraftVersion.FEATURE_PREVIEW_UPDATE.atOrAbove()) {
         // mc 1.19.3: multiple actions to update everything related to the player
-        playerInfoDataIndex = 1; // there are now 2 list types in the packets
         container.getPlayerInfoActions().write(0, ADD_ACTIONS);
       } else {
         // mc 1.8: one action which automatically updated everything
@@ -372,7 +411,7 @@ final class ProtocolLibPacketAdapter implements PlatformPacketAdapter<World, Pla
         EnumWrappers.NativeGameMode.CREATIVE,
         wrappedGameProfile,
         null);
-      container.getPlayerInfoDataLists().write(playerInfoDataIndex, Lists.newArrayList(playerInfoData));
+      container.getPlayerInfoDataLists().write(0, Lists.newArrayList(playerInfoData));
 
       // send the packet without notifying any bound packet listeners
       PROTOCOL_MANAGER.sendServerPacket(player, container, false);
@@ -427,15 +466,29 @@ final class ProtocolLibPacketAdapter implements PlatformPacketAdapter<World, Pla
     @NotNull EntityAnimation animation
   ) {
     return (player, npc) -> {
-      // EntityAnimation (https://wiki.vg/Protocol#Entity_Animation_.28clientbound.29)
+      if (MinecraftVersion.v26_3.atOrAbove()
+        && (animation == EntityAnimation.SWING_MAIN_ARM || animation == EntityAnimation.SWING_OFF_HAND)) {
+        // main-/offhand swing is a separate packet
+        EnumWrappers.Hand hand = animation == EntityAnimation.SWING_MAIN_ARM
+          ? EnumWrappers.Hand.MAIN_HAND
+          : EnumWrappers.Hand.OFF_HAND;
+        PacketContainer container = new PacketContainer(PacketType.Play.Server.SWING_ANIMATION);
+        container.getIntegers().write(0, npc.entityId());
+        container.getHands().write(0, hand);
+
+        // modify the animation (default WHACK animation)
+        InternalStructure animationStructure = container.getStructures().read(1);
+        StructureModifier<Enum<?>> animationTypeModifier = animationStructure.getModifier().withType(Enum.class);
+        animationStructure.getIntegers().write(0, 6); // duration
+        animationTypeModifier.write(0, WHACK_ANIMATION_TYPE);
+
+        PROTOCOL_MANAGER.sendServerPacket(player, container, false);
+        return;
+      }
+
+      int animationId = ENTITY_ANIMATION_ID_LOOKUP.get(animation);
       PacketContainer container = new PacketContainer(PacketType.Play.Server.ANIMATION);
-
-      // entity id & animation id
-      container.getIntegers()
-        .write(0, npc.entityId())
-        .write(1, animation.id());
-
-      // send the packet without notifying any bound packet listeners
+      container.getIntegers().write(0, npc.entityId()).write(1, animationId);
       PROTOCOL_MANAGER.sendServerPacket(player, container, false);
     };
   }

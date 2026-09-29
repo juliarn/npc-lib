@@ -1,4 +1,4 @@
 before_install:
   - sdk update
-  - sdk install java 21-zulu
-  - sdk use java 21-zulu
+  - sdk install java 25-zulu
+  - sdk use java 25-zulu
