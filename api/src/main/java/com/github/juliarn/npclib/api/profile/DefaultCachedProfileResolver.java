@@ -71,7 +71,7 @@ final class DefaultCachedProfileResolver implements ProfileResolver.Cached {
     }
 
     // try to complete using the delegate resolver
-    return this.delegate.resolveProfile(profile).thenApply((resolvedProfile) -> {
+    return this.delegate.resolveProfile(profile).thenApply(resolvedProfile -> {
       CacheEntry<UUID> nameCacheEntry = new CacheEntry<>(resolvedProfile.uniqueId(), CACHE_TIME_NS);
       this.nameToUniqueIdCache.put(resolvedProfile.name(), nameCacheEntry);
 

@@ -33,10 +33,19 @@ import org.jetbrains.annotations.NotNull;
 
 public interface NpcEventManager {
 
+  @Contract("_ -> new")
+  static @NotNull NpcEventManager createDefault(@NotNull PlatformLogger logger) {
+    Objects.requireNonNull(logger, "logger");
+    return new DefaultNpcEventManager(logger);
+  }
+
+  /**
+   * @deprecated the debug parameter is not used anymore, use {@link #createDefault(PlatformLogger)} instead.
+   */
+  @Deprecated
   @Contract("_, _ -> new")
   static @NotNull NpcEventManager createDefault(boolean debugEnabled, @NotNull PlatformLogger logger) {
-    Objects.requireNonNull(logger, "logger");
-    return new DefaultNpcEventManager(debugEnabled, logger);
+    return NpcEventManager.createDefault(logger);
   }
 
   @Contract("_ -> param1")

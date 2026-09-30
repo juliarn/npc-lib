@@ -139,7 +139,7 @@ public abstract class CommonPlatformBuilder<W, P, I, E> implements Platform.Buil
 
     // use a new event bus if no specific one was specified
     if (this.eventManager == null) {
-      this.eventManager = NpcEventManager.createDefault(this.debug, this.logger);
+      this.eventManager = NpcEventManager.createDefault(this.logger);
     }
 
     // use a new npc tracker if none is given

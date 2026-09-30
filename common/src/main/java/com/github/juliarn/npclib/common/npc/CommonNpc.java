@@ -214,6 +214,11 @@ public class CommonNpc<W, P, I, E> extends CommonNpcFlaggedObject implements Npc
             }
           }, 30);
         }
+      }).exceptionally(thrown -> {
+        // something went wrong, rollback the player tracking and log the error
+        this.stopTrackingPlayer(player);
+        this.platform.logger().error("Failed to spawn NPC for player", thrown);
+        return null;
       });
     }
 

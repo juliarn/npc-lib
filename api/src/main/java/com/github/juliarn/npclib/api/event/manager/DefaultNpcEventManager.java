@@ -41,15 +41,12 @@ final class DefaultNpcEventManager implements NpcEventManager {
   private static final Comparator<NpcEventSubscription<? super NpcEvent>> SUBSCRIPTION_COMPARABLE =
     Comparator.comparingInt(NpcEventSubscription::order);
 
-  private final boolean debugEnabled;
   private final PlatformLogger platformLogger;
+  private final Map<Class<?>, List<NpcEventSubscription<? super NpcEvent>>> registeredSubscribers;
 
-  private final Map<Class<?>, List<NpcEventSubscription<? super NpcEvent>>> registeredSubscribers =
-    new ConcurrentHashMap<>(16, 0.9f, 1);
-
-  public DefaultNpcEventManager(boolean debugEnabled, @NotNull PlatformLogger logger) {
-    this.debugEnabled = debugEnabled;
+  public DefaultNpcEventManager(@NotNull PlatformLogger logger) {
     this.platformLogger = logger;
+    this.registeredSubscribers = new ConcurrentHashMap<>(16, 0.9f, 1);
   }
 
   private static boolean isEventCancelled(@NotNull NpcEvent event) {
@@ -66,7 +63,6 @@ final class DefaultNpcEventManager implements NpcEventManager {
 
       if (subscribedEventType.isInstance(event) && !subscriptions.isEmpty()) {
         for (NpcEventSubscription<? super E> subscription : subscriptions) {
-          // once the event was cancelled we don't want to post it to any further subscribers
           boolean eventWasCancelled = isEventCancelled(event);
           if (eventWasCancelled) {
             break;
@@ -76,15 +72,9 @@ final class DefaultNpcEventManager implements NpcEventManager {
             subscription.eventConsumer().handle(event);
           } catch (Throwable throwable) {
             EventExceptionHandler.rethrowFatalException(throwable);
-            if (this.debugEnabled) {
-              // not a fatal exception but debug is enabled to we log it anyway
-              this.platformLogger.error(
-                String.format(
-                  "Subscriber %s was unable to handle %s",
-                  subscription.eventConsumer().getClass().getName(),
-                  event.getClass().getSimpleName()),
-                throwable);
-            }
+            String eventType = event.getClass().getSimpleName();
+            String consumerType = subscription.eventConsumer().getClass().getName();
+            this.platformLogger.error("Failed to pass event " + eventType + " to consumer " + consumerType, throwable);
           }
         }
       }
